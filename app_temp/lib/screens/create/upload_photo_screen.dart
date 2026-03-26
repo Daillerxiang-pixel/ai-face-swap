@@ -47,7 +47,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   static const _maxPolls = AppConfig.maxWaitSeconds ~/ 3; // 40 polls × 3s
 
   Template get _template => widget.template;
-  bool get _isVideo => _template.type == 'video';
+  bool get _isVideo => _template.isVideo;
 
   @override
   Widget build(BuildContext context) {

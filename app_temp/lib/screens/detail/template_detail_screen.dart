@@ -90,7 +90,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                     },
                   ),
                   // 视频标识
-                  if (_template.type == 'video')
+                  if (_template.isVideo)
                     Positioned(
                       bottom: 16,
                       right: 16,
@@ -245,7 +245,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                       );
                     },
                     child: Text(
-                      _template.type == 'video' ? '视频换脸' : '立即使用',
+                      _template.isVideo ? '视频换脸' : '立即使用',
                       style: const TextStyle(
                         color: AppTheme.textPrimary,
                         fontSize: 16,

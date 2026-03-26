@@ -26,7 +26,7 @@ class TemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = ImageUtils.imgUrl(template.displayUrl);
-    final isVideo = template.type == 'video';
+    final isVideo = template.isVideo;
 
     return GestureDetector(
       onTap: onTap,

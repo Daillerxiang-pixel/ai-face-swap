@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import '../config/app_config.dart';
 
 /// API 统一响应模型
@@ -56,6 +58,13 @@ class ApiService {
       requestBody: true,
       responseBody: true,
     ));
+
+    // 信任所有 HTTPS 证书（测试环境自签名证书）
+    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) => true;
+      return client;
+    };
   }
 
   /// 获取模板列表
@@ -67,22 +76,32 @@ class ApiService {
     String? scene,
     String? type,
   }) async {
+    // 将英文 type 映射为后端中文值
+    String? backendType;
+    if (type == 'image') backendType = '图片';
+    else if (type == 'video') backendType = '视频';
+
     final response = await _dio.get('/api/templates', queryParameters: {
       if (sort != null) 'sort': sort,
       if (search != null && search.isNotEmpty) 'search': search,
       'limit': limit,
       'page': page,
       if (scene != null) 'scene': scene,
-      if (type != null) 'type': type,
+      if (backendType != null) 'type': backendType,
     });
     return ApiResponse.fromJson(response.data, (data) => data);
   }
 
   /// 获取场景列表
   Future<ApiResponse> getScenes({String? type}) async {
+    // 将英文 type 映射为后端中文值
+    String? backendType;
+    if (type == 'image') backendType = '图片';
+    else if (type == 'video') backendType = '视频';
+
     final response = await _dio.get('/api/templates/meta/scenes',
         queryParameters: {
-          if (type != null) 'type': type,
+          if (backendType != null) 'type': backendType,
         });
     return ApiResponse.fromJson(response.data, (data) => data);
   }

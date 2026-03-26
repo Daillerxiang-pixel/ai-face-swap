@@ -16,6 +16,18 @@ class Template {
     return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
 
+  /// 将后端 type 字段归一化（兼容中文）
+  /// "图片" / "image" → "image"，"视频" / "video" → "video"
+  static String _normalizeType(dynamic value) {
+    final str = value?.toString().trim().toLowerCase() ?? '';
+    if (str == 'image' || str == '图片') return 'image';
+    if (str == 'video' || str == '视频') return 'video';
+    return str.isEmpty ? 'image' : str; // 默认按图片处理
+  }
+
+  /// 是否为视频模板
+  bool get isVideo => type == 'video';
+
   final String id;
   final String name;
   final String? cover;
@@ -73,7 +85,7 @@ class Template {
       videoUrl: json['videoUrl'] ?? json['video_url'],
       category: json['category'],
       scene: json['scene'],
-      type: json['type'],
+      type: _normalizeType(json['type']),
       useCount: _toInt(json['useCount'] ?? json['usageNum'] ?? json['usage_count']),
       isFavorite: _toBool(json['isFavorite'] ?? json['is_favourite']),
       description: json['description'] ?? json['desc'],

@@ -7,6 +7,14 @@ class Generation {
     return int.tryParse(value?.toString() ?? '0') ?? 0;
   }
 
+  /// 将后端 type 字段归一化（兼容中文）
+  static String _normalizeType(dynamic value) {
+    final str = value?.toString().trim().toLowerCase() ?? '';
+    if (str == 'image' || str == '图片') return 'image';
+    if (str == 'video' || str == '视频') return 'video';
+    return str.isEmpty ? 'image' : str;
+  }
+
   final String id;
   final String templateId;
   final String? templateName;
@@ -65,7 +73,7 @@ class Generation {
       sourceFileId: json['sourceFileId']?.toString() ?? json['source_file_id']?.toString(),
       resultImage: json['resultImage']?.toString() ?? json['resultUrl']?.toString() ?? json['result_image']?.toString(),
       status: json['status']?.toString() ?? 'pending',
-      type: json['type']?.toString(),
+      type: _normalizeType(json['type']),
       provider: json['provider']?.toString(),
       errorMessage: json['errorMessage']?.toString() ?? json['errorMsg']?.toString() ?? json['error']?.toString() ?? json['error_message']?.toString(),
       progress: (json['progress'] is int) ? json['progress'] as int : int.tryParse(json['progress']?.toString() ?? '0') ?? 0,

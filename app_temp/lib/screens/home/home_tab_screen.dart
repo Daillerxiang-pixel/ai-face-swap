@@ -104,8 +104,9 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           _lastLoadTime = DateTime.now();
         });
       }
-    } catch (_) {
-      // 加载失败
+    } catch (e) {
+      // 加载失败 — 打印日志便于排查
+      debugPrint('[HomeTab] 数据加载失败: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -419,7 +420,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
     final isFirst = index == 0;
     final isBadgeHot = tpl.badge?.toUpperCase() == 'HOT';
-    final isVideo = tpl.type == 'video';
+    final isVideo = tpl.isVideo;
 
     return Padding(
       padding: const EdgeInsets.only(right: 12),
@@ -557,7 +558,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   /// 推荐卡片
   Widget _buildRecCard(Template tpl) {
     final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
-    final isVideo = tpl.type == 'video';
+    final isVideo = tpl.isVideo;
 
     return GestureDetector(
       onTap: () => _navigateToCreate(context, tpl),
