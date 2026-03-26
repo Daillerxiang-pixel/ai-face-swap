@@ -25,7 +25,6 @@ class AppBottomTabBar extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      height: 64 + bottomPadding,
       decoration: const BoxDecoration(
         color: Color(0xFF0D0D0D),
         border: Border(
@@ -35,50 +34,50 @@ class AppBottomTabBar extends StatelessWidget {
           ),
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: 8,
-          bottom: bottomPadding,
-        ),
-        child: Row(
-          children: List.generate(_tabs.length, (index) {
-            final (iconOut, iconIn, label) = _tabs[index];
-            return Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onTap(index),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        currentIndex == index ? iconIn : iconOut,
-                        key: ValueKey('$index-${currentIndex == index}'),
-                        color: currentIndex == index
-                            ? AppTheme.primary
-                            : AppTheme.textTertiary,
-                        size: 22,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: List.generate(_tabs.length, (index) {
+              final (iconOut, iconIn, label) = _tabs[index];
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(index),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          currentIndex == index ? iconIn : iconOut,
+                          key: ValueKey('$index-${currentIndex == index}'),
+                          color: currentIndex == index
+                              ? AppTheme.primary
+                              : AppTheme.textTertiary,
+                          size: 22,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: currentIndex == index
-                            ? AppTheme.primary
-                            : AppTheme.textTertiary,
-                        fontSize: 10,
-                        fontWeight: currentIndex == index
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: currentIndex == index
+                              ? AppTheme.primary
+                              : AppTheme.textTertiary,
+                          fontSize: 10,
+                          fontWeight: currentIndex == index
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );

@@ -6,10 +6,10 @@ import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/shimmer_widget.dart';
 import '../create/select_template_screen.dart';
-import 'discover_screen.dart';
+import '../detail/template_detail_screen.dart';
 import 'home_screen.dart';
 
-/// 首页 Tab 0 — Banner + 热门横向滚动 + 精选推荐网格
+/// 首页 Tab 0 — Banner + 精选推荐网格
 class HomeTabScreen extends StatefulWidget {
   const HomeTabScreen({super.key});
 
@@ -22,13 +22,10 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   final ApiService _api = ApiService();
   final ScrollController _scrollController = ScrollController();
 
-  /// 热门模板
-  List<Template> _hotTemplates = [];
-
   /// 推荐模板
   List<Template> _recTemplates = [];
 
-  /// Banner 模板（取热门第一个）
+  /// Banner 模板（取推荐第一个）
   Template? _bannerTemplate;
 
   bool _isLoading = true;
@@ -46,7 +43,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   void initState() {
     super.initState();
     _loadData();
-    // 监听 Tab 切换，切回首页时刷新数据
     HomeScreen.visibilityNotifier.addListener(_onTabVisibilityChanged);
   }
 
@@ -60,7 +56,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   /// Tab 可见性变化回调 — 切回首页时智能刷新
   void _onTabVisibilityChanged() {
     if (HomeScreen.visibilityNotifier.currentTab == 0) {
-      // 5 分钟内不重复加载
       final now = DateTime.now();
       if (_lastLoadTime == null ||
           now.difference(_lastLoadTime!).inMinutes > 5) {
@@ -69,7 +64,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     }
   }
 
-  /// 并行加载热门 + 推荐
+  /// 加载推荐数据
   Future<void> _loadData({bool isRefresh = false}) async {
     if (isRefresh) {
       setState(() => _isRefreshing = true);
@@ -78,27 +73,18 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     }
 
     try {
-      final results = await Future.wait([
-        _api.getTemplates(sort: 'usage', limit: 10),
-        _api.getTemplates(limit: 8),
-      ]);
+      final result = await _api.getTemplates(limit: 9);
 
-      final hot = (results[0].data as List?)
+      final rec = (result.data as List?)
               ?.map((e) => Template.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [];
 
-      final rec = (results[1].data as List?)
-              ?.map((e) => Template.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [];
-
-      // Banner 取热门第一个
-      final banner = hot.isNotEmpty ? hot.first : null;
+      // Banner 取推荐第一个
+      final banner = rec.isNotEmpty ? rec.first : null;
 
       if (mounted) {
         setState(() {
-          _hotTemplates = hot;
           _recTemplates = rec;
           _bannerTemplate = banner;
           _lastLoadTime = DateTime.now();
@@ -184,29 +170,23 @@ class _HomeTabScreenState extends State<HomeTabScreen>
             // ===== Banner =====
             SliverToBoxAdapter(child: _buildBanner()),
 
-            // ===== 热门模板 =====
+            // ===== 精选推荐 =====
             SliverToBoxAdapter(
               child: _buildSectionTitle(
-                '🔥 热门模板',
+                '💡 精选推荐',
                 onMore: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const DiscoverScreen(),
+                      builder: (_) => const SelectTemplateScreen(),
                     ),
                   );
                 },
               ),
             ),
-            _isLoading ? _buildHotShimmer() : _buildHotScroll(),
-
-            // ===== 精选推荐 =====
-            SliverToBoxAdapter(
-              child: _buildSectionTitle('💡 精选推荐'),
-            ),
             _isLoading ? _buildRecShimmer() : _buildRecGrid(),
 
             // 底部间距
-            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
         ),
       ),
@@ -223,11 +203,13 @@ class _HomeTabScreenState extends State<HomeTabScreen>
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
       child: GestureDetector(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const SelectTemplateScreen(),
-            ),
-          );
+          if (tpl != null) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TemplateDetailScreen(template: tpl),
+              ),
+            );
+          }
         },
         child: Container(
           height: 180,
@@ -375,145 +357,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     );
   }
 
-  /// 热门模板骨架屏
-  Widget _buildHotShimmer() {
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 140,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          padding: const EdgeInsets.only(left: 20, right: 20),
-          itemCount: 5,
-          itemBuilder: (_, __) => Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ShimmerWidget.rectangular(
-              width: 140,
-              height: 140,
-              borderRadius: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 热门模板横向滚动
-  Widget _buildHotScroll() {
-    if (_hotTemplates.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 140,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          padding: const EdgeInsets.only(left: 20, right: 20),
-          itemCount: _hotTemplates.length,
-          itemBuilder: (context, index) {
-            final tpl = _hotTemplates[index];
-            return _buildHotCard(tpl, index);
-          },
-        ),
-      ),
-    );
-  }
-
-  /// 热门卡片
-  Widget _buildHotCard(Template tpl, int index) {
-    final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
-    final isFirst = index == 0;
-    final isBadgeHot = tpl.badge?.toUpperCase() == 'HOT';
-    final isVideo = tpl.isVideo;
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: GestureDetector(
-        onTap: () => _navigateToCreate(context, tpl),
-        child: Container(
-          width: 140,
-          height: 140,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              if (thumbUrl.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: thumbUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    decoration: BoxDecoration(
-                      gradient: _getGradient(index),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    decoration: BoxDecoration(
-                      gradient: _getGradient(index),
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: _getGradient(index),
-                  ),
-                ),
-
-              // 视频标识
-              if (isVideo)
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-
-              // Badge
-              if (isBadgeHot || isFirst)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(
-                        begin: Alignment(-1, -1),
-                        end: Alignment(1, 1),
-                        colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
-                      ),
-                    ),
-                    child: const Text(
-                      'HOT',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   /// 精选推荐骨架屏
   Widget _buildRecShimmer() {
     return SliverPadding(
@@ -565,7 +408,14 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     final isVideo = tpl.isVideo;
 
     return GestureDetector(
-      onTap: () => _navigateToCreate(context, tpl),
+      onTap: () {
+        // 点击模板 → 进入详情页
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => TemplateDetailScreen(template: tpl),
+          ),
+        );
+      },
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.cardBackground,
@@ -709,15 +559,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
       begin: Alignment(-1, -1),
       end: Alignment(1, 1),
       colors: [g[0], g[1]],
-    );
-  }
-
-  /// 点击模板 → 跳转创作页
-  void _navigateToCreate(BuildContext context, Template template) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const SelectTemplateScreen(),
-      ),
     );
   }
 }

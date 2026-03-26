@@ -115,7 +115,7 @@ async function uploadToPublicUrl(filePath, ctx) {
     const { isOSSAvailable, getOSSBaseURL, uploadToOSS } = require('../utils/oss');
     if (isOSSAvailable()) {
       const key = `uploads/temp/${ctx.genId}_${path.basename(filePath)}`;
-      await uploadToOSS(key, fs.readFileSync(filePath));
+      await uploadToOSS(fs.readFileSync(filePath), key);
       return getOSSBaseURL() + '/' + key;
     }
   } catch (e) {
@@ -143,7 +143,7 @@ async function generateImagePro(ctx) {
   console.log(`[Akool Pro] Source URL: ${sourceUrl}`);
 
   // 模板预览图作为目标图片（需要有公网 URL）
-  let targetUrl = template.previewUrl || template.videoUrl;
+  let targetUrl = template.preview_url || template.video_url;
   if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
     // 如果 previewUrl 是相对路径，拼接 OSS
     try {
@@ -191,7 +191,7 @@ async function generateVideo(ctx) {
   console.log(`[Akool Video] Source URL: ${sourceUrl}`);
 
   // 视频模板的 videoUrl 作为目标视频
-  let videoUrl = template.videoUrl;
+  let videoUrl = template.video_url;
   if (!videoUrl || (!videoUrl.startsWith('http://') && !videoUrl.startsWith('https://'))) {
     throw new Error(`模板视频 URL 无效: ${videoUrl}`);
   }
@@ -205,8 +205,8 @@ async function generateVideo(ctx) {
   // 视频人脸检测需要用视频 URL，但 detect API 支持 URL
   // Akool 的 detect API 也支持视频，但这里我们直接用视频的预览图
   let targetDetect = null;
-  if (template.previewUrl) {
-    let previewUrl = template.previewUrl;
+  if (template.preview_url) {
+    let previewUrl = template.preview_url;
     if (!previewUrl.startsWith('http')) {
       try {
         const { getOSSBaseURL } = require('../utils/oss');
@@ -235,7 +235,7 @@ async function generateVideo(ctx) {
 
   if (targetDetect) {
     requestBody.targetImage = [{
-      path: targetDetect.face_url || template.previewUrl,
+      path: targetDetect.face_url || template.preview_url,
       opts: targetDetect.crop_landmarks || targetDetect.landmarks_str,
     }];
   }
@@ -318,22 +318,35 @@ async function downloadResult(resultUrl, genId) {
   const localPath = path.join(resultDir, `${genId}${ext}`);
   const localUrl = `/uploads/results/${genId}${ext}`;
 
-  // 下载文件
-  await new Promise((resolve, reject) => {
+  // 下载文件（带状态码检查）
+  const downloadWithCheck = (url) => new Promise((resolve, reject) => {
     const file = fs.createWriteStream(localPath);
-    https.get(resultUrl, { rejectUnauthorized: false }, (response) => {
+    const doPipe = (resp) => {
+      if (resp.statusCode >= 400) {
+        fs.unlinkSync(localPath);
+        return reject(new Error('Download failed with HTTP ' + resp.statusCode + ' from ' + url));
+      }
+      resp.pipe(file);
+      file.on('finish', () => { file.close(); resolve(); });
+    };
+    https.get(url, { rejectUnauthorized: false }, (response) => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        // Follow redirect
         https.get(response.headers.location, { rejectUnauthorized: false }, (redirResp) => {
-          redirResp.pipe(file);
-          file.on('finish', () => { file.close(); resolve(); });
+          doPipe(redirResp);
         }).on('error', reject);
       } else {
-        response.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
+        doPipe(response);
       }
     }).on('error', reject);
   });
+  await downloadWithCheck(resultUrl);
+
+  // 验证下载的文件是有效图片/视频（不是 HTML 错误页）
+  const fileBuffer = fs.readFileSync(localPath);
+  if (fileBuffer.length < 1000 || fileBuffer[0] === 0x3C) {
+    fs.unlinkSync(localPath);
+    throw new Error('Downloaded file is not a valid image/video (size=' + fileBuffer.length + ')');
+  }
 
   console.log(`[Akool] Result downloaded: ${localPath}`);
 
@@ -342,7 +355,7 @@ async function downloadResult(resultUrl, genId) {
     const { isOSSAvailable, uploadToOSS, getOSSBaseURL } = require('../utils/oss');
     if (isOSSAvailable()) {
       const ossKey = `uploads/results/${genId}${ext}`;
-      await uploadToOSS(ossKey, fs.readFileSync(localPath));
+      await uploadToOSS(fs.readFileSync(localPath), ossKey);
       const ossUrl = getOSSBaseURL() + '/' + ossKey;
       console.log(`[Akool] Result uploaded to OSS: ${ossUrl}`);
       return { localPath, localUrl: ossUrl };
