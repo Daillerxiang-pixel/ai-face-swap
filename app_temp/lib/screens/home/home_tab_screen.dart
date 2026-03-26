@@ -104,9 +104,13 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           _lastLoadTime = DateTime.now();
         });
       }
-    } catch (e) {
-      // 加载失败 — 打印日志便于排查
-      debugPrint('[HomeTab] 数据加载失败: $e');
+    } catch (e, stack) {
+      debugPrint('[HomeTab] 数据加载失败: $e\n$stack');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载失败: $e')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

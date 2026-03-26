@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import '../config/app_config.dart';
 
 /// API 统一响应模型
@@ -58,13 +56,6 @@ class ApiService {
       requestBody: true,
       responseBody: true,
     ));
-
-    // 信任所有 HTTPS 证书（测试环境自签名证书）
-    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback = (cert, host, port) => true;
-      return client;
-    };
   }
 
   /// 获取模板列表
