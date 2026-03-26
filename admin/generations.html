@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=1280">
+<title>生成记录 - AI换图管理后台</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>[x-cloak]{display:none!important}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft Yahei',sans-serif;font-size:14px;margin:0}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}table{border-collapse:collapse}th{background:#f8fafc;font-weight:500;text-align:left;color:#64748b;font-size:13px;padding:10px 12px;border-bottom:1px solid #e5e7eb}td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#374151;font-size:13px}tbody tr:hover{background:#f8fafc}.btn{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:none;transition:all .15s}.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}.btn-ghost{background:transparent;color:#6366f1}.btn-ghost:hover{background:#eef2ff}.btn-sm{padding:3px 8px;font-size:12px}input,select{font-size:13px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:6px;outline:none}input:focus,select:focus{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.1)}.tab{padding:6px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;transition:all .15s}.tab:hover{color:#374151}.tab.active{color:#6366f1;border-bottom-color:#6366f1;font-weight:500}</style>
+<script src="components.js"></script>
+</head><body class="h-screen overflow-hidden bg-gray-50">
+<script>if(!checkAuth()) throw 'auth';</script>
+<div class="flex h-screen">
+  <aside style="width:240px;min-width:240px;background:linear-gradient(180deg,#1e293b,#0f172a)" class="flex flex-col text-white">
+    <div class="h-14 flex items-center px-5 border-b border-white/10"><div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-2.5"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div><span class="text-base font-bold">AI换图后台</span></div>
+    <nav class="flex-1 py-3 px-3"><ul class="space-y-0.5">
+      <li><a href="index.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>仪表盘</span></a></li>
+      <li><a href="users.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg><span>用户管理</span></a></li>
+      <li><a href="templates.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>模板管理</span></a></li>
+      <li><a href="plans.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg><span>套餐管理</span></a></li>
+      <li><a href="generations.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm bg-indigo-600/90 text-white shadow"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>生成记录</span></a></li>
+      <li><a href="orders.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><span>订单管理</span></a></li>
+    </ul></nav>
+    <div class="px-3 py-3 border-t border-white/10"><a href="#" onclick="event.preventDefault();localStorage.removeItem('admin_token');localStorage.removeItem('admin_info');location.href='login.html'" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg><span>退出登录</span></a></div>
+  </aside>
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+      <h1 class="text-base font-semibold text-gray-800">生成记录</h1>
+    </header>
+    <main class="flex-1 overflow-auto p-6 bg-gray-50" x-data="genPage()">
+      <div class="bg-white rounded-t-lg border border-b-0 border-gray-200/80 px-4 pt-3">
+        <div class="flex items-center gap-1 mb-3">
+          <button class="tab" :class="status===''?'active':''" @click="status='';page=1;load()">全部</button>
+          <button class="tab" :class="status==='completed'?'active':''" @click="status='completed';page=1;load()">成功</button>
+          <button class="tab" :class="status==='failed'?'active':''" @click="status='failed';page=1;load()">失败</button>
+          <button class="tab" :class="status==='processing'?'active':''" @click="status='processing';page=1;load()">处理中</button>
+          <div class="flex-1"></div>
+          <input x-model="search" @keydown.enter="page=1;load()" placeholder="搜索用户/模板" class="w-56">
+          <button class="btn btn-primary" @click="page=1;load()">搜索</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-b-lg border border-gray-200/80">
+        <div x-show="loading" x-html="loadingSpinner()"></div>
+        <div x-show="!loading && items.length===0" x-html="emptyState()"></div>
+        <table x-show="!loading && items.length>0" class="w-full">
+          <thead><tr><th>ID</th><th>用户</th><th>模板</th><th>类型</th><th>状态</th><th>进度</th><th>耗时</th><th>创建时间</th><th>结果</th></tr></thead>
+          <tbody><template x-for="g in items" :key="g.id"><tr>
+            <td class="font-mono text-xs text-gray-400" x-text="g.id.slice(0,8)"></td>
+            <td x-text="g.user_name||'-'"></td>
+            <td x-text="g.template_name||'-'"></td>
+            <td x-html="statusBadge(g.type)"></td>
+            <td x-html="statusBadge(g.status)"></td>
+            <td><div class="flex items-center gap-2"><div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full" :class="g.status==='completed'?'bg-green-500':g.status==='failed'?'bg-red-500':'bg-indigo-500'" :style="'width:'+(g.progress||0)+'%'"></div></div><span class="text-xs text-gray-400" x-text="(g.progress||0)+'%'"></span></div></td>
+            <td class="text-xs text-gray-400">-</td>
+            <td x-text="formatDate(g.created_at)"></td>
+            <td>
+              <template x-if="g.status==='completed'"><a :href="g.result_url" target="_blank" class="btn btn-ghost btn-sm" x-show="g.result_url">查看</a></template>
+              <template x-if="g.status==='failed'"><span class="text-xs text-red-400" x-text="g.error_message||'失败'"></span></template>
+            </td>
+          </tr></template></tbody>
+        </table>
+        <div x-show="!loading && totalPages > 1" class="flex items-center justify-between mt-4 text-sm px-4 pb-3">
+          <span class="text-gray-500" x-text="'共 '+total+' 条记录'"></span>
+          <div class="flex items-center gap-1">
+            <button @click="goPage(page-1)" :disabled="page<=1" class="px-3 py-1 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed">上一页</button>
+            <template x-for="i in pageRange" :key="i"><template x-if="i==='...'"><span class="px-2 text-gray-400">...</span></template><template x-if="i!=='...'"><button @click="goPage(i)" :class="i===page?'bg-indigo-600 text-white border-indigo-600':'text-gray-600 border-gray-300 hover:bg-gray-50'" class="px-3 py-1 text-sm rounded border" x-text="i"></button></template></template>
+            <button @click="goPage(page+1)" :disabled="page>=totalPages" class="px-3 py-1 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed">下一页</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+function genPage() {
+  return {
+    items: [], total: 0, page: 1, limit: 20,
+    status: '', search: '', loading: true,
+    get totalPages() { return Math.ceil(this.total / this.limit) || 1; },
+    get pageRange() {
+      var p = this.page, t = this.totalPages, r = [];
+      if (t <= 7) { for (var i=1;i<=t;i++) r.push(i); }
+      else { r.push(1); if (p>3) r.push('...'); for (var i=Math.max(2,p-1);i<=Math.min(t-1,p+1);i++) r.push(i); if (p<t-2) r.push('...'); r.push(t); }
+      return r;
+    },
+    init() { this.load(); },
+    load() {
+      var self = this;
+      self.loading = true;
+      var url = '/generations?limit=' + self.limit + '&page=' + self.page;
+      if (self.status) url += '&status=' + encodeURIComponent(self.status);
+      API.get(url).then(function(r) {
+        self.items = r.list; self.total = r.total; self.loading = false;
+      }).catch(function(e) { self.loading = false; Toast.error(e.message); });
+    },
+    goPage(p) { this.page = p; this.load(); }
+  };
+}
+</script>
+</body></html>

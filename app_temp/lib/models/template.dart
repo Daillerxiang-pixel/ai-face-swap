@@ -1,0 +1,117 @@
+/// 模板数据模型
+class Template {
+
+  /// 安全地将 dynamic 值转为 bool（兼容 SQLite 的 0/1）
+  static bool _toBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    if (value is String) return value == 'true' || value == '1';
+    return false;
+  }
+
+  /// 安全地将 dynamic 值转为 int
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+
+  final String id;
+  final String name;
+  final String? cover;
+  final String? preview;
+  final String? previewUrl;
+  final String? videoUrl;
+  final String? category;
+  final String? scene;
+  final String? type;
+  final int? useCount;
+  final bool? isFavorite;
+  final String? description;
+  final String? icon;
+  final String? bg;
+  final String? usage;
+  final int? usageNum;
+  final String? badge;
+  final double? rating;
+  final String? provider;
+  final DateTime? createdAt;
+
+  Template({
+    required this.id,
+    required this.name,
+    this.cover,
+    this.preview,
+    this.previewUrl,
+    this.videoUrl,
+    this.category,
+    this.scene,
+    this.type,
+    this.useCount,
+    this.isFavorite,
+    this.description,
+    this.icon,
+    this.bg,
+    this.usage,
+    this.usageNum,
+    this.badge,
+    this.rating,
+    this.provider,
+    this.createdAt,
+  });
+
+  /// 获取显示用图片URL（优先 previewUrl）
+  String get displayUrl => previewUrl ?? preview ?? cover ?? '';
+
+  factory Template.fromJson(Map<String, dynamic> json) {
+    return Template(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      cover: json['cover'],
+      preview: json['preview'],
+      previewUrl: json['previewUrl'] ?? json['preview_url'],
+      videoUrl: json['videoUrl'] ?? json['video_url'],
+      category: json['category'],
+      scene: json['scene'],
+      type: json['type'],
+      useCount: _toInt(json['useCount'] ?? json['usageNum'] ?? json['usage_count']),
+      isFavorite: _toBool(json['isFavorite'] ?? json['is_favourite']),
+      description: json['description'] ?? json['desc'],
+      icon: json['icon'],
+      bg: json['bg'] ?? json['bg_gradient'],
+      usage: json['usage']?.toString(),
+      usageNum: _toInt(json['usageNum']),
+      badge: json['badge']?.toString(),
+      rating: (json['rating'] is num) ? (json['rating'] as num).toDouble() : 0.0,
+      provider: json['provider']?.toString(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'cover': cover,
+      'preview': preview,
+      'previewUrl': previewUrl,
+      'videoUrl': videoUrl,
+      'category': category,
+      'scene': scene,
+      'type': type,
+      'useCount': useCount,
+      'isFavorite': isFavorite,
+      'description': description,
+      'icon': icon,
+      'bg': bg,
+      'usage': usage,
+      'usageNum': usageNum,
+      'badge': badge,
+      'rating': rating,
+      'provider': provider,
+      'createdAt': createdAt?.toIso8601String(),
+    };
+  }
+}

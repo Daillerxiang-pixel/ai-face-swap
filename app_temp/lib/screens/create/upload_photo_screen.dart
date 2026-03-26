@@ -1,0 +1,711 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../config/theme.dart';
+import '../../config/app_config.dart';
+import '../../models/template.dart';
+import '../../services/api_service.dart';
+import '../../utils/image_utils.dart';
+import '../../widgets/shimmer_widget.dart';
+import '../../widgets/toast.dart';
+import 'result_screen.dart';
+
+/// 上传照片页面 — 选择模板后上传照片
+class UploadPhotoScreen extends StatefulWidget {
+  final Template template;
+
+  const UploadPhotoScreen({super.key, required this.template});
+
+  @override
+  State<UploadPhotoScreen> createState() => _UploadPhotoScreenState();
+}
+
+class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
+  final ApiService _api = ApiService();
+  final ImagePicker _picker = ImagePicker();
+
+  /// 用户选择的本地图片
+  File? _selectedImage;
+
+  /// 上传状态
+  bool _isUploading = false;
+  bool _isGenerating = false;
+
+  /// 上传后获得的 fileId
+  String? _fileId;
+
+  /// 生成结果
+  String? _generationId;
+  String? _status;
+  String? _resultUrl;
+  String? _errorMsg;
+  int _progress = 0;
+
+  /// 轮询定时器
+  int _pollCount = 0;
+  static const _maxPolls = AppConfig.maxWaitSeconds ~/ 3; // 40 polls × 3s
+
+  Template get _template => widget.template;
+  bool get _isVideo => _template.type == 'video';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: Text(_isVideo ? '视频换脸' : '图片换脸'),
+      ),
+      body: _isGenerating
+          ? _buildGeneratingView()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 模板预览
+                  _buildTemplatePreview(),
+                  const SizedBox(height: 24),
+
+                  // 上传照片区域
+                  _buildUploadArea(),
+                  const SizedBox(height: 24),
+
+                  // 提示文字
+                  _buildTips(),
+                  const SizedBox(height: 32),
+
+                  // 开始生成按钮
+                  _buildGenerateButton(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  /// 模板预览
+  Widget _buildTemplatePreview() {
+    final previewUrl = ImageUtils.imgUrl(_template.displayUrl);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '模板预览',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 3 / 4,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (previewUrl.isNotEmpty)
+                  CachedNetworkImage(
+                    imageUrl: previewUrl,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppTheme.surfaceBackground,
+                      child: const Icon(Icons.image_not_supported_outlined,
+                          color: AppTheme.textTertiary, size: 48),
+                    ),
+                  )
+                else
+                  Container(
+                    color: AppTheme.surfaceBackground,
+                    child: const Icon(Icons.auto_awesome,
+                        color: AppTheme.textTertiary, size: 48),
+                  ),
+                // 视频标识
+                if (_isVideo)
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 上传照片区域
+  Widget _buildUploadArea() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '上传照片',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _isUploading ? null : _pickImage,
+          child: Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _selectedImage != null
+                    ? AppTheme.primary
+                    : AppTheme.surfaceBackground,
+                width: 1.5,
+              ),
+            ),
+            child: _isUploading
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primary,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          '上传中...',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _selectedImage != null
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          // 重新选择按钮
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.refresh,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 上传成功标记
+                          if (_fileId != null)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF34C759),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Colors.white, size: 14),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      '已上传',
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              color: AppTheme.textTertiary,
+                              size: 48,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '点击选择照片',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '支持 JPG / PNG / WEBP',
+                              style: TextStyle(
+                                color: AppTheme.textTertiary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 提示
+  Widget _buildTips() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.primary.withOpacity(0.15),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            _isVideo ? Icons.videocam_outlined : Icons.lightbulb_outline,
+            color: AppTheme.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _isVideo
+                  ? '视频换脸需要 1-3 分钟处理时间，请耐心等待。建议选择正面、光线良好的照片以获得最佳效果。'
+                  : '建议选择正面、清晰的人像照片，光线良好效果更佳。',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 生成按钮
+  Widget _buildGenerateButton() {
+    final canGenerate = _selectedImage != null && _fileId != null;
+
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: canGenerate ? AppTheme.primaryGradient : null,
+        color: canGenerate ? null : AppTheme.surfaceBackground,
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+      ),
+      child: MaterialButton(
+        onPressed: canGenerate ? _startGenerate : null,
+        disabledColor: Colors.transparent,
+        child: Text(
+          _isVideo ? '开始视频换脸' : '开始换脸',
+          style: TextStyle(
+            color: canGenerate
+                ? AppTheme.textPrimary
+                : AppTheme.textTertiary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 生成中视图
+  Widget _buildGeneratingView() {
+    final isFailed = _status == 'failed';
+    final isCompleted = _status == 'completed';
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 动画
+            if (isFailed)
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF3B30).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_outline,
+                  color: Color(0xFFFF3B30),
+                  size: 40,
+                ),
+              )
+            else
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: CircularProgressIndicator(
+                        value: _progress / 100,
+                        strokeWidth: 4,
+                        backgroundColor: AppTheme.surfaceBackground,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    Icon(
+                      _isVideo ? Icons.videocam : Icons.auto_awesome,
+                      color: AppTheme.primary,
+                      size: 32,
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 24),
+
+            // 状态文字
+            Text(
+              _getProgressText(),
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+
+            // 进度百分比 / 错误信息
+            if (isFailed)
+              Text(
+                _errorMsg ?? '生成失败，请重试',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              )
+            else
+              Text(
+                '$_progress%',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+
+            const SizedBox(height: 32),
+
+            // 按钮
+            if (isFailed)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.textTertiary),
+                        foregroundColor: AppTheme.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                        ),
+                      ),
+                      child: const Text('返回重选'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _startGenerate,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: AppTheme.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                        ),
+                      ),
+                      child: const Text('重试'),
+                    ),
+                  ),
+                ],
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppTheme.textTertiary),
+                    foregroundColor: AppTheme.textPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                    ),
+                  ),
+                  child: const Text('取消'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 获取进度提示文字
+  String _getProgressText() {
+    switch (_status) {
+      case 'completed':
+        return _isVideo ? '视频生成完成！' : '换脸完成！';
+      case 'failed':
+        return '生成失败';
+      default:
+        if (_progress < 10) return '正在提交任务...';
+        if (_progress < 50) return _isVideo ? '视频处理中...' : 'AI 正在分析...';
+        if (_progress < 90) return _isVideo ? '视频合成中...' : '正在生成...';
+        return _isVideo ? '即将完成...' : '马上就好...';
+    }
+  }
+
+  /// 选择照片
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        imageQuality: 90,
+      );
+      if (image == null) return;
+
+      setState(() {
+        _selectedImage = File(image.path);
+        _fileId = null; // 重置上传状态
+      });
+
+      // 自动上传
+      _uploadImage(image.path);
+    } catch (e) {
+      AppToast.error('选择照片失败');
+    }
+  }
+
+  /// 上传照片到服务器
+  Future<void> _uploadImage(String filePath) async {
+    setState(() => _isUploading = true);
+
+    try {
+      final res = await _api.uploadImage(filePath);
+      if (res.success && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        final fileId = data['fileId'] as String;
+        if (mounted) {
+          setState(() {
+            _fileId = fileId;
+            _isUploading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
+        AppToast.error(res.message ?? '上传失败');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+      AppToast.error('上传失败，请检查网络');
+    }
+  }
+
+  /// 提交生成任务
+  Future<void> _startGenerate() async {
+    if (_fileId == null) {
+      AppToast.warning('请先上传照片');
+      return;
+    }
+
+    setState(() {
+      _isGenerating = true;
+      _status = 'processing';
+      _progress = 5;
+      _errorMsg = null;
+      _resultUrl = null;
+      _pollCount = 0;
+    });
+
+    try {
+      final res = await _api.createGeneration(
+        templateId: _template.id,
+        sourceFileId: _fileId!,
+      );
+
+      if (res.success && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        _generationId = data['generationId'] as String?;
+        final genStatus = data['status'] as String?;
+        _progress = (data['progress'] as int?) ?? 10;
+        final async = data['async'] as bool? ?? false;
+
+        // 同步完成
+        if (genStatus == 'completed' && !async) {
+          final resultUrl = data['resultUrl'] as String?;
+          if (resultUrl != null && resultUrl.isNotEmpty) {
+            setState(() {
+              _status = 'completed';
+              _progress = 100;
+              _resultUrl = resultUrl;
+            });
+            _onGenerateComplete();
+            return;
+          }
+        }
+
+        // 失败
+        if (genStatus == 'failed') {
+          setState(() {
+            _status = 'failed';
+            _errorMsg = data['error'] as String?;
+          });
+          return;
+        }
+
+        // 异步 → 开始轮询
+        if (mounted) {
+          setState(() {
+            _status = genStatus ?? 'processing';
+          });
+          _startPolling();
+        }
+      } else {
+        setState(() {
+          _status = 'failed';
+          _errorMsg = res.message ?? '提交生成任务失败';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _status = 'failed';
+        _errorMsg = '网络错误，请重试';
+      });
+    }
+  }
+
+  /// 轮询生成状态
+  void _startPolling() {
+    Future.delayed(const Duration(milliseconds: AppConfig.pollInterval), () async {
+      if (!mounted || _generationId == null) return;
+      if (_status == 'completed' || _status == 'failed') return;
+
+      _pollCount++;
+      if (_pollCount > _maxPolls) {
+        setState(() {
+          _status = 'failed';
+          _errorMsg = '生成超时，请稍后再试';
+        });
+        return;
+      }
+
+      try {
+        final res = await _api.getGenerationStatus(_generationId!);
+        if (res.success && res.data != null) {
+          final data = res.data as Map<String, dynamic>;
+          final newStatus = data['status'] as String?;
+          final newProgress = (data['progress'] as int?) ?? 0;
+          final resultUrl = data['resultUrl'] as String?;
+          final error = data['error'] as String?;
+
+          if (mounted) {
+            setState(() {
+              _status = newStatus ?? 'processing';
+              _progress = newProgress;
+              if (resultUrl != null) _resultUrl = resultUrl;
+              if (error != null) _errorMsg = error;
+            });
+          }
+
+          if (newStatus == 'completed') {
+            _onGenerateComplete();
+            return;
+          }
+
+          if (newStatus == 'failed') {
+            return; // 停止轮询
+          }
+        }
+      } catch (_) {
+        // 网络错误继续轮询
+      }
+
+      // 继续轮询
+      if (mounted && _status != 'completed' && _status != 'failed') {
+        _startPolling();
+      }
+    });
+  }
+
+  /// 生成完成 → 跳转结果页
+  void _onGenerateComplete() {
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ResultScreen(
+            resultUrl: _resultUrl ?? '',
+            templateType: _template.type,
+            templateName: _template.name,
+          ),
+        ),
+      );
+    });
+  }
+}

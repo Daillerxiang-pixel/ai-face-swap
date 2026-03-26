@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=1280">
+<title>仪表盘 - AI换图管理后台</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+[x-cloak]{display:none!important}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;margin:0}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+table{border-collapse:collapse}th{background:#f8fafc;font-weight:500;text-align:left;color:#64748b;font-size:13px;padding:10px 12px;border-bottom:1px solid #e5e7eb;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#374151;font-size:13px}tbody tr{transition:background .15s}tbody tr:hover{background:#f8fafc}
+</style>
+<script src="components.js"></script>
+</head>
+<body class="h-screen overflow-hidden bg-gray-50">
+<script>if(!checkAuth()) throw 'auth';</script>
+
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <aside style="width:240px;min-width:240px;background:linear-gradient(180deg,#1e293b,#0f172a)" class="flex flex-col text-white">
+    <div class="h-14 flex items-center px-5 border-b border-white/10">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-2.5">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </div>
+      <span class="text-base font-bold">AI换图后台</span>
+    </div>
+    <nav class="flex-1 py-3 px-3 overflow-y-auto">
+      <ul class="space-y-0.5">
+        <li><a href="index.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm bg-indigo-600/90 text-white shadow">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span>仪表盘</span></a></li>
+        <li><a href="users.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg><span>用户管理</span></a></li>
+        <li><a href="templates.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>模板管理</span></a></li>
+        <li><a href="plans.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg><span>套餐管理</span></a></li>
+        <li><a href="generations.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>生成记录</span></a></li>
+        <li><a href="orders.html" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><span>订单管理</span></a></li>
+      </ul>
+    </nav>
+    <div class="px-3 py-3 border-t border-white/10">
+      <a href="#" onclick="event.preventDefault();localStorage.removeItem('admin_token');localStorage.removeItem('admin_info');location.href='login.html'" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg><span>退出登录</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+      <h1 class="text-base font-semibold text-gray-800">仪表盘</h1>
+      <div class="flex items-center gap-2 pl-3 border-l border-gray-200">
+        <div class="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+        <span class="text-sm text-gray-600">管理员</span>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-auto p-6 bg-gray-50" x-data="{ loading:true, stats:{}, trend:[], recentGenerations:[], planStats:[], chart:null, pieChart:null }" x-init="
+      API.get('/dashboard').then(d=>{
+        stats=d.stats;trend=d.trend||[];recentGenerations=d.recentGenerations||[];planStats=d.planStats||[];
+        $nextTick(()=>{
+          // Trend
+          if(trend.length){
+            const ctx=document.getElementById('trendChart');
+            if(ctx) new Chart(ctx,{type:'line',data:{labels:trend.map(t=>t.day),datasets:[{label:'生成次数',data:trend.map(t=>t.count),borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#6366f1'}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+          }
+          // Pie
+          if(planStats.length){
+            const ctx2=document.getElementById('planChart');
+            if(ctx2) new Chart(ctx2,{type:'doughnut',data:{labels:planStats.map(p=>p.name),datasets:[{data:planStats.map(p=>p.user_count),backgroundColor:['#94a3b8','#6366f1','#a855f7','#f59e0b'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{padding:12,font:{size:12}}}}}});
+          }
+        });
+      }).finally(()=>loading=false)">
+
+      <div class="flex flex-col gap-5">
+        <!-- Stats -->
+        <div x-show="loading" x-html="loadingSpinner()"></div>
+        <div class="grid grid-cols-6 gap-3" x-show="!loading">
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">总用户数</div><div class="text-2xl font-bold text-gray-800" x-text="stats.totalUsers||0"></div></div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">今日新增</div><div class="text-2xl font-bold text-green-600" x-text="stats.todayUsers||0"></div></div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">总生成次数</div><div class="text-2xl font-bold text-gray-800" x-text="stats.totalGenerations||0"></div></div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">今日生成</div><div class="text-2xl font-bold text-blue-600" x-text="stats.todayGenerations||0"></div></div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">VIP用户</div><div class="text-2xl font-bold text-purple-600" x-text="stats.vipUsers||0"></div></div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4"><div class="text-xs text-gray-400 mb-0.5">活跃模板</div><div class="text-2xl font-bold text-amber-600" x-text="stats.totalTemplates||0"></div></div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-3 gap-4" x-show="!loading">
+          <div class="col-span-2 bg-white rounded-lg border border-gray-200/80 p-4">
+            <div class="text-sm font-medium text-gray-700 mb-3">近 7 天生成趋势</div>
+            <canvas id="trendChart" height="90"></canvas>
+          </div>
+          <div class="bg-white rounded-lg border border-gray-200/80 p-4">
+            <div class="text-sm font-medium text-gray-700 mb-3">套餐用户分布</div>
+            <canvas id="planChart" height="150"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent -->
+        <div class="bg-white rounded-lg border border-gray-200/80">
+          <div class="px-4 py-3 border-b border-gray-100 text-sm font-medium text-gray-700">最近生成记录</div>
+          <div x-show="!loading && recentGenerations.length===0" x-html="emptyState()"></div>
+          <table x-show="!loading && recentGenerations.length>0" class="w-full">
+            <thead><tr><th>ID</th><th>用户</th><th>模板</th><th>类型</th><th>状态</th><th>创建时间</th></tr></thead>
+            <tbody><template x-for="item in recentGenerations"><tr>
+              <td class="font-mono text-xs text-gray-400" x-text="item.id.slice(0,8)"></td>
+              <td x-text="item.user_name||'-'"></td>
+              <td x-text="item.template_name||'-'"></td>
+              <td x-html="statusBadge(item.type)"></td>
+              <td x-html="statusBadge(item.status)"></td>
+              <td x-text="formatDate(item.created_at)"></td>
+            </tr></template></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
