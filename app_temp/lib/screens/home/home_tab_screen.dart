@@ -22,18 +22,10 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   final ApiService _api = ApiService();
   final ScrollController _scrollController = ScrollController();
 
-  /// 推荐模板
   List<Template> _recTemplates = [];
-
-  /// Banner 模板（取推荐第一个）
   Template? _bannerTemplate;
-
   bool _isLoading = true;
-
-  /// 是否正在下拉刷新
   bool _isRefreshing = false;
-
-  /// 上一次加载数据的时间
   DateTime? _lastLoadTime;
 
   @override
@@ -53,7 +45,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     super.dispose();
   }
 
-  /// Tab 可见性变化回调 — 切回首页时智能刷新
   void _onTabVisibilityChanged() {
     if (HomeScreen.visibilityNotifier.currentTab == 0) {
       final now = DateTime.now();
@@ -64,7 +55,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     }
   }
 
-  /// 加载推荐数据
   Future<void> _loadData({bool isRefresh = false}) async {
     if (isRefresh) {
       setState(() => _isRefreshing = true);
@@ -74,13 +64,10 @@ class _HomeTabScreenState extends State<HomeTabScreen>
 
     try {
       final result = await _api.getTemplates(limit: 9);
-
       final rec = (result.data as List?)
               ?.map((e) => Template.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [];
-
-      // Banner 取推荐第一个
       final banner = rec.isNotEmpty ? rec.first : null;
 
       if (mounted) {
@@ -107,7 +94,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     }
   }
 
-  /// 格式化使用次数
   String _formatCount(int? count) {
     if (count == null || count == 0) return '0';
     if (count >= 10000) return '${(count / 10000).toStringAsFixed(1)}K';
@@ -121,25 +107,15 @@ class _HomeTabScreenState extends State<HomeTabScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Column(
-        children: [
-          // 固定标题区域（不滚动）
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppTheme.background,
-                  AppTheme.background.withOpacity(0.85),
-                ],
-              ),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 固定标题区域（不滚动，与 WorksScreen 对齐）
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
                   'AI 换图',
                   style: TextStyle(
                     color: AppTheme.textPrimary,
@@ -147,57 +123,43 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  '发现你的另一种可能',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 可滚动内容
-          Expanded(
-            child: RefreshIndicator(
-              color: AppTheme.primary,
-              backgroundColor: AppTheme.cardBackground,
-              onRefresh: () => _loadData(isRefresh: true),
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  // ===== Banner =====
-                  SliverToBoxAdapter(child: _buildBanner()),
-
-                  // ===== 精选推荐 =====
-                  SliverToBoxAdapter(
-                    child: _buildSectionTitle(
-                      '💡 精选推荐',
-                      onMore: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SelectTemplateScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  _isLoading ? _buildRecShimmer() : _buildRecGrid(),
-
-                  // 底部间距
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-                ],
               ),
             ),
-          ),
-        ],
+            // 可滚动内容
+            Expanded(
+              child: RefreshIndicator(
+                color: AppTheme.primary,
+                backgroundColor: AppTheme.cardBackground,
+                onRefresh: () => _loadData(isRefresh: true),
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildBanner()),
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle(
+                        '💡 精选推荐',
+                        onMore: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SelectTemplateScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    _isLoading ? _buildRecShimmer() : _buildRecGrid(),
+                    const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Banner 大卡片
   Widget _buildBanner() {
     final tpl = _bannerTemplate;
     final bannerPreviewUrl =
@@ -227,7 +189,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           ),
           child: Stack(
             children: [
-              // 背景图（半透明）
               if (bannerPreviewUrl.isNotEmpty)
                 Positioned(
                   top: 0,
@@ -250,8 +211,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                     ),
                   ),
                 ),
-
-              // 装饰 emoji
               const Positioned(
                 right: -10,
                 bottom: -10,
@@ -260,8 +219,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                   style: TextStyle(fontSize: 120, color: Colors.white10),
                 ),
               ),
-
-              // 文字内容
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -330,7 +287,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     );
   }
 
-  /// 区块标题
   Widget _buildSectionTitle(String title, {VoidCallback? onMore}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
@@ -361,7 +317,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     );
   }
 
-  /// 精选推荐骨架屏
   Widget _buildRecShimmer() {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -382,9 +337,10 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     );
   }
 
-  /// 精选推荐网格
   Widget _buildRecGrid() {
-    if (_recTemplates.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (_recTemplates.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -406,14 +362,12 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     );
   }
 
-  /// 推荐卡片
   Widget _buildRecCard(Template tpl) {
     final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
     final isVideo = tpl.isVideo;
 
     return GestureDetector(
       onTap: () {
-        // 点击模板 → 进入详情页
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => TemplateDetailScreen(template: tpl),
@@ -458,8 +412,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                         size: 42,
                       ),
                     ),
-
-                  // 视频标识
                   if (isVideo)
                     Positioned(
                       bottom: 8,
@@ -544,25 +496,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           ],
         ),
       ),
-    );
-  }
-
-  LinearGradient _getGradient(int index) {
-    final gradients = [
-      const [Color(0xFF7C3AED), Color(0xFF3B82F6)],
-      const [Color(0xFFEC4899), Color(0xFF8B5CF6)],
-      const [Color(0xFFF59E0B), Color(0xFFEF4444)],
-      const [Color(0xFF10B981), Color(0xFF06B6D4)],
-      const [Color(0xFF3B82F6), Color(0xFF06B6D4)],
-      const [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-      const [Color(0xFFEF4444), Color(0xFFF59E0B)],
-      const [Color(0xFF06B6D4), Color(0xFF10B981)],
-    ];
-    final g = gradients[index % gradients.length];
-    return LinearGradient(
-      begin: Alignment(-1, -1),
-      end: Alignment(1, 1),
-      colors: [g[0], g[1]],
     );
   }
 }
