@@ -121,74 +121,78 @@ class _HomeTabScreenState extends State<HomeTabScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: RefreshIndicator(
-        color: AppTheme.primary,
-        backgroundColor: AppTheme.cardBackground,
-        onRefresh: () => _loadData(isRefresh: true),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // ===== 顶部标题 =====
-            SliverToBoxAdapter(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppTheme.background,
-                      AppTheme.background.withOpacity(0.85),
-                    ],
+      body: Column(
+        children: [
+          // 固定标题区域（不滚动）
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.background,
+                  AppTheme.background.withOpacity(0.85),
+                ],
+              ),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI 换图',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI 换图',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '发现你的另一种可能',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
+                SizedBox(height: 4),
+                Text(
+                  '发现你的另一种可能',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
+              ],
             ),
+          ),
+          // 可滚动内容
+          Expanded(
+            child: RefreshIndicator(
+              color: AppTheme.primary,
+              backgroundColor: AppTheme.cardBackground,
+              onRefresh: () => _loadData(isRefresh: true),
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // ===== Banner =====
+                  SliverToBoxAdapter(child: _buildBanner()),
 
-            // ===== Banner =====
-            SliverToBoxAdapter(child: _buildBanner()),
-
-            // ===== 精选推荐 =====
-            SliverToBoxAdapter(
-              child: _buildSectionTitle(
-                '💡 精选推荐',
-                onMore: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SelectTemplateScreen(),
+                  // ===== 精选推荐 =====
+                  SliverToBoxAdapter(
+                    child: _buildSectionTitle(
+                      '💡 精选推荐',
+                      onMore: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SelectTemplateScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  _isLoading ? _buildRecShimmer() : _buildRecGrid(),
+
+                  // 底部间距
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+                ],
               ),
             ),
-            _isLoading ? _buildRecShimmer() : _buildRecGrid(),
-
-            // 底部间距
-            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
