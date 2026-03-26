@@ -3,7 +3,7 @@ class AppConfig {
   AppConfig._();
 
   /// API 基础地址
-  static const String apiBaseUrl = 'http://39.102.100.123:8080';
+  static const String apiBaseUrl = 'https://test.kanashortplay.com';
 
   /// OSS 图片基础地址
   static const String ossBaseUrl = 'https://aihuantu.oss-cn-beijing.aliyuncs.com';
