@@ -95,6 +95,31 @@ class _WorksScreenState extends State<WorksScreen> {
     }
   }
 
+  Widget _buildFeatureCard(IconData icon, String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showErrorDialog(Generation item) {
     showDialog(
       context: context,
@@ -152,40 +177,87 @@ class _WorksScreenState extends State<WorksScreen> {
 
                   if (provider.history.isEmpty) {
                     return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.person_outline, size: 56, color: AppTheme.textTertiary),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Sign in to view your creations',
-                              style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
+                            const SizedBox(height: 40),
+                            // App icon
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: const LinearGradient(
+                                  begin: Alignment(-1, -1),
+                                  end: Alignment(1, 1),
+                                  colors: [Color(0xFF7C3AED), Color(0xFF3B82F6)],
+                                ),
+                              ),
+                              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'See Your Creations',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             Text(
-                              'Your AI face swap results will appear here',
+                              'Sign in to view your face swap history and saved works',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 14,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            // Feature highlights
+                            _buildFeatureCard(Icons.lock_outline, '🔒 Unlimited Swaps', 'No daily limits'),
+                            const SizedBox(height: 10),
+                            _buildFeatureCard(Icons.bolt_outlined, '⚡ AI Processing', 'Lightning fast results'),
+                            const SizedBox(height: 10),
+                            _buildFeatureCard(Icons.save_outlined, '💾 Auto Save', 'Works saved automatically'),
+                            const SizedBox(height: 32),
+                            // Sign in button
+                            Container(
+                              width: double.infinity,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: MaterialButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Sign in coming soon')),
+                                  );
+                                },
+                                child: const Text(
+                                  'Sign In to Continue',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Free to get started · No credit card required',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppTheme.textTertiary,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO: implement sign in flow
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Sign in coming soon')),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                                elevation: 0,
-                              ),
-                              child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                            ),
                           ],
                         ),
                       ),

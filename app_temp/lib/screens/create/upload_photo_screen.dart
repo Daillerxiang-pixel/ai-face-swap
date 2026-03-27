@@ -132,7 +132,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                 if (previewUrl.isNotEmpty)
                   CachedNetworkImage(
                     imageUrl: previewUrl,
-                    fit: BoxFit.fitHeight,
+                    fit: BoxFit.contain,
                     errorWidget: (_, __, ___) => Container(
                       color: AppTheme.surfaceBackground,
                       child: const Icon(Icons.image_not_supported_outlined,
@@ -184,7 +184,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         GestureDetector(
           onTap: _isUploading ? null : _pickImage,
           child: Container(
-            height: 140,
+            height: 220,
             decoration: BoxDecoration(
               color: AppTheme.cardBackground,
               borderRadius: BorderRadius.circular(16),
