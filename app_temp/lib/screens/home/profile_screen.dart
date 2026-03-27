@@ -21,42 +21,111 @@ class ProfileScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 20),
           children: [
-            // 头像 + 名字
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-              child: Row(
+            // 头像 + 名字 + 用户信息
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
                 children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment(-1, -1),
-                        end: Alignment(1, 1),
-                        colors: [AppTheme.primary, const Color(0xFF3B82F6)],
-                      ),
-                    ),
-                    child: const Icon(Icons.person, color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // 第一行：头像 + 昵称 + 会员标签
+                  Row(
                     children: [
-                      Text(
-                        'User',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment(-1, -1),
+                            end: Alignment(1, 1),
+                            colors: [AppTheme.primary, const Color(0xFF3B82F6)],
+                          ),
+                        ),
+                        child: const Icon(Icons.person, color: Colors.white, size: 36),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'User',
+                              style: TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3B82F6).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Free Plan',
+                                style: TextStyle(
+                                  color: Color(0xFF3B82F6),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(height: 2),
+                    ],
+                  ),
+                  // 第二行：统计数据
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceBackground,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildStatItem('0', 'Works'),
+                        _buildStatDivider(),
+                        _buildStatItem('0', 'Favorites'),
+                        _buildStatDivider(),
+                        _buildStatItem('3', 'Credits Left'),
+                      ],
+                    ),
+                  ),
+                  // 第三行：账户信息
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Icon(Icons.mail_outline, color: AppTheme.textTertiary, size: 16),
+                      const SizedBox(width: 8),
                       Text(
-                        'Free Plan',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
+                        'Not signed in',
+                        style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sign in coming soon')),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppTheme.primary, width: 1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ),
                     ],
@@ -74,6 +143,39 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(
+      width: 1,
+      height: 28,
+      color: AppTheme.textTertiary.withOpacity(0.2),
     );
   }
 

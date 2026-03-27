@@ -95,6 +95,92 @@ class _WorksScreenState extends State<WorksScreen> {
     }
   }
 
+  /// 未登录/无历史记录 — 登录引导页
+  Widget _buildLoginGuide() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 40),
+          // App icon
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: const LinearGradient(
+                begin: Alignment(-1, -1),
+                end: Alignment(1, 1),
+                colors: [Color(0xFF7C3AED), Color(0xFF3B82F6)],
+              ),
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'See Your Creations',
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sign in to view your face swap history and saved works',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 28),
+          _buildFeatureCard(Icons.lock_outline, '🔒 Unlimited Swaps', 'No daily limits'),
+          const SizedBox(height: 10),
+          _buildFeatureCard(Icons.bolt_outlined, '⚡ AI Processing', 'Lightning fast results'),
+          const SizedBox(height: 10),
+          _buildFeatureCard(Icons.save_outlined, '💾 Auto Save', 'Works saved automatically'),
+          const SizedBox(height: 32),
+          Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: MaterialButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sign in coming soon')),
+                );
+              },
+              child: const Text(
+                'Sign In to Continue',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Free to get started · No credit card required',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textTertiary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeatureCard(IconData icon, String title, String subtitle) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -171,97 +257,25 @@ class _WorksScreenState extends State<WorksScreen> {
             Expanded(
               child: Consumer<GenerationProvider>(
                 builder: (context, provider, _) {
+                  // 显示引导页的条件：加载完成 + 历史为空（无论是否有错误）
+                  final bool shouldShowGuide = !provider.isLoading && provider.history.isEmpty;
+
                   if (provider.isLoading && provider.history.isEmpty) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                    // 最多显示 3 秒 loading，超时后自动切换到引导页
+                    return FutureBuilder(
+                      future: Future.delayed(const Duration(seconds: 3)),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting && provider.isLoading) {
+                          return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                        }
+                        // 超时或加载完成，显示引导页
+                        return _buildLoginGuide();
+                      },
+                    );
                   }
 
-                  if (provider.history.isEmpty) {
-                    return Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 40),
-                            // App icon
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                gradient: const LinearGradient(
-                                  begin: Alignment(-1, -1),
-                                  end: Alignment(1, 1),
-                                  colors: [Color(0xFF7C3AED), Color(0xFF3B82F6)],
-                                ),
-                              ),
-                              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
-                            ),
-                            const SizedBox(height: 24),
-                            const Text(
-                              'See Your Creations',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Sign in to view your face swap history and saved works',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            // Feature highlights
-                            _buildFeatureCard(Icons.lock_outline, '🔒 Unlimited Swaps', 'No daily limits'),
-                            const SizedBox(height: 10),
-                            _buildFeatureCard(Icons.bolt_outlined, '⚡ AI Processing', 'Lightning fast results'),
-                            const SizedBox(height: 10),
-                            _buildFeatureCard(Icons.save_outlined, '💾 Auto Save', 'Works saved automatically'),
-                            const SizedBox(height: 32),
-                            // Sign in button
-                            Container(
-                              width: double.infinity,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                gradient: AppTheme.primaryGradient,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: MaterialButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Sign in coming soon')),
-                                  );
-                                },
-                                child: const Text(
-                                  'Sign In to Continue',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Free to get started · No credit card required',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppTheme.textTertiary,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    );
+                  if (shouldShowGuide) {
+                    return _buildLoginGuide();
                   }
 
                   final groups = _groupByDate(provider.history);
