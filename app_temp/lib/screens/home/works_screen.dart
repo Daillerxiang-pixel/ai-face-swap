@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
@@ -20,19 +21,26 @@ class WorksScreen extends StatefulWidget {
 }
 
 class _WorksScreenState extends State<WorksScreen> {
+  bool _hasLoggedIn = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 先加载用户信息判断登录状态
-      final userProvider = context.read<UserProvider>();
-      userProvider.loadUserProfile().then((_) {
-        // 如果已登录，再加载历史记录
-        if (userProvider.isLoggedIn) {
-          context.read<GenerationProvider>().loadHistory();
-        }
+    _checkLoginStatus();
+  }
+
+  /// 检查本地是否有登录记录（不依赖 API）
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _hasLoggedIn = prefs.getBool('has_logged_in') ?? false;
       });
-    });
+      // 如果已登录，加载历史
+      if (_hasLoggedIn) {
+        context.read<GenerationProvider>().loadHistory();
+      }
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -159,10 +167,17 @@ class _WorksScreenState extends State<WorksScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
             child: MaterialButton(
-              onPressed: () {
+              onPressed: () async {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Sign in coming soon')),
                 );
+                // 模拟登录：设置本地标记并刷新状态
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('has_logged_in', true);
+                if (mounted) {
+                  setState(() { _hasLoggedIn = true; });
+                  context.read<GenerationProvider>().loadHistory();
+                }
               },
               child: const Text(
                 'Sign In to Continue',
@@ -263,44 +278,37 @@ class _WorksScreenState extends State<WorksScreen> {
             ),
             // Content
             Expanded(
-              child: Consumer<UserProvider>(
-                builder: (context, userProvider, _) {
-                  // 未登录 → 显示登录引导页
-                  if (!userProvider.isLoggedIn) {
-                    return _buildLoginGuide();
-                  }
+              child: _hasLoggedIn
+                  ? Consumer<GenerationProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.isLoading && provider.history.isEmpty) {
+                          return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                        }
 
-                  // 已登录 → 显示历史记录
-                  return Consumer<GenerationProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.isLoading && provider.history.isEmpty) {
-                        return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
-                      }
-
-                      if (provider.history.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'No Works Yet',
-                                style: TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                        if (provider.history.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No Works Yet',
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Your face swap creations will appear here',
-                                style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Your face swap creations will appear here',
+                                  style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
                       final groups = _groupByDate(provider.history);
 
@@ -350,9 +358,8 @@ class _WorksScreenState extends State<WorksScreen> {
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  )
+              : _buildLoginGuide(),
             ),
           ],
         ),
