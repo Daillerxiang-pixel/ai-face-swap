@@ -39,7 +39,7 @@ class GenerationProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _api.getUserHistory();
+      final res = await _api.getUserHistory().timeout(const Duration(seconds: 5));
       if (res.success && res.data != null) {
         _history = (res.data as List?)
                 ?.map((e) =>

@@ -257,24 +257,8 @@ class _WorksScreenState extends State<WorksScreen> {
             Expanded(
               child: Consumer<GenerationProvider>(
                 builder: (context, provider, _) {
-                  // 显示引导页的条件：加载完成 + 历史为空（无论是否有错误）
-                  final bool shouldShowGuide = !provider.isLoading && provider.history.isEmpty;
-
-                  if (provider.isLoading && provider.history.isEmpty) {
-                    // 最多显示 3 秒 loading，超时后自动切换到引导页
-                    return FutureBuilder(
-                      future: Future.delayed(const Duration(seconds: 3)),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting && provider.isLoading) {
-                          return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
-                        }
-                        // 超时或加载完成，显示引导页
-                        return _buildLoginGuide();
-                      },
-                    );
-                  }
-
-                  if (shouldShowGuide) {
+                  // 历史为空直接显示引导页（无论是否正在加载、是否有错误）
+                  if (provider.history.isEmpty) {
                     return _buildLoginGuide();
                   }
 
