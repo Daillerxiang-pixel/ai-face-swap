@@ -1,120 +1,98 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import '../../config/theme.dart';
 import '../../widgets/tab_bar.dart';
-import '../../providers/generation_provider.dart';
 import 'home_tab_screen.dart';
 import 'create_screen.dart';
 import 'works_screen.dart';
 import 'profile_screen.dart';
 
-/// 首页（Tab 容器）— 4 Tab: 首页 / 创作 / 作品 / 我的
+/// 主页面 — 4 Tab 导航
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  /// 全局 Tab 控制器（供子页面切换 Tab）
-  static final HomeTabController tabController = HomeTabController();
+  /// Tab 控制器（供 ProfileScreen 切换 Tab 使用）
+  static TabController? tabController;
 
-  /// Tab 可见性通知器 — 切换 Tab 时通知子页面刷新
-  static final HomeTabVisibilityNotifier visibilityNotifier =
-      HomeTabVisibilityNotifier();
+  /// Tab 可见性通知器（供 HomeTabScreen 使用）
+  static final ValueNotifier<int> visibilityNotifier = ValueNotifier(0);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  /// 4 个页面
-  final List<Widget> _screens = const [
-    HomeTabScreen(),
-    CreateScreen(),
-    WorksScreen(),
-    ProfileScreen(),
-  ];
+class _HomeScreenState extends State<HomeScreen>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  final ValueNotifier<int> _tabNotifier = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
-    HomeScreen.tabController.addListener(_onTabFromChild);
+    _tabController = TabController(length: 4, vsync: this);
+    HomeScreen.tabController = _tabController;
+    _tabController.addListener(_onTabChanged);
   }
 
   @override
   void dispose() {
-    HomeScreen.tabController.removeListener(_onTabFromChild);
+    _tabController.removeListener(_onTabChanged);
+    HomeScreen.tabController = null;
+    _tabController.dispose();
     super.dispose();
   }
 
-  /// 子页面触发 Tab 切换
-  void _onTabFromChild() {
-    final target = HomeScreen.tabController.consume();
-    if (target >= 0 && target != _currentIndex) {
-      _switchToTab(target);
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) {
+      _tabNotifier.value = _tabController.index;
+      HomeScreen.visibilityNotifier.value = _tabController.index;
     }
   }
 
-  void _onTabTap(int index) {
-    _switchToTab(index);
-  }
-
-  void _switchToTab(int index) {
-    final prevIndex = _currentIndex;
-    setState(() => _currentIndex = index);
-
-    // 通知子页面 Tab 切换
-    HomeScreen.visibilityNotifier.switchTo(index);
-
-    // 切到作品 Tab 时刷新历史
-    if (index == 2 && prevIndex != 2) {
-      context.read<GenerationProvider>().loadHistory();
+  /// 处理返回手势：非首页 Tab → 回首页，首页 → 退出
+  Future<bool> _onWillPop() async {
+    if (_tabController.index != 0) {
+      _tabController.animateTo(0);
+      return false; // 拦截退出
     }
+    return true; // 允许退出
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: AppBottomTabBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTap,
+    return PopScope(
+      canPop: _tabController.index == 0,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        // 非首页 Tab：切换到首页
+        if (_tabController.index != 0) {
+          _tabController.animateTo(0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            HomeTabScreen(),
+            CreateScreen(),
+            WorksScreen(),
+            ProfileScreen(),
+          ],
+        ),
+        bottomNavigationBar: ValueListenableBuilder<int>(
+          valueListenable: _tabNotifier,
+          builder: (context, currentIndex, _) {
+            return AppBottomTabBar(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                if (index == currentIndex) return;
+                _tabController.animateTo(index);
+              },
+            );
+          },
+        ),
       ),
     );
-  }
-}
-
-/// Tab 切换控制器
-class HomeTabController extends ChangeNotifier {
-  int _targetIndex = -1;
-
-  int get targetIndex => _targetIndex;
-
-  void switchTo(int index) {
-    if (_targetIndex != index) {
-      _targetIndex = index;
-      notifyListeners();
-    }
-  }
-
-  int consume() {
-    final idx = _targetIndex;
-    _targetIndex = -1;
-    return idx;
-  }
-}
-
-/// Tab 可见性通知器
-class HomeTabVisibilityNotifier extends ChangeNotifier {
-  int _currentTab = 0;
-
-  int get currentTab => _currentTab;
-
-  void switchTo(int index) {
-    if (_currentTab != index) {
-      _currentTab = index;
-      notifyListeners();
-    }
   }
 }

@@ -46,7 +46,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   }
 
   void _onTabVisibilityChanged() {
-    if (HomeScreen.visibilityNotifier.currentTab == 0) {
+    if (HomeScreen.visibilityNotifier.value == 0) {
       final now = DateTime.now();
       if (_lastLoadTime == null ||
           now.difference(_lastLoadTime!).inMinutes > 5) {

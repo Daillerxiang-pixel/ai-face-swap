@@ -152,15 +152,42 @@ class _WorksScreenState extends State<WorksScreen> {
 
                   if (provider.history.isEmpty) {
                     return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.palette_outlined, size: 56, color: AppTheme.textTertiary),
-                          const SizedBox(height: 16),
-                          const Text('No Works Yet', style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 6),
-                          Text('Your creations will appear here', style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_outline, size: 56, color: AppTheme.textTertiary),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Sign in to view your creations',
+                              style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Your AI face swap results will appear here',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                // TODO: implement sign in flow
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Sign in coming soon')),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                                elevation: 0,
+                              ),
+                              child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }

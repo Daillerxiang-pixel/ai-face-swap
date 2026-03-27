@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   void _switchToTab(int index) {
-    HomeScreen.tabController?.switchTo(index);
+    HomeScreen.tabController?.animateTo(index);
   }
 
   @override

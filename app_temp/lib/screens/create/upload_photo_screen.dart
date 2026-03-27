@@ -132,7 +132,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                 if (previewUrl.isNotEmpty)
                   CachedNetworkImage(
                     imageUrl: previewUrl,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitHeight,
                     errorWidget: (_, __, ___) => Container(
                       color: AppTheme.surfaceBackground,
                       child: const Icon(Icons.image_not_supported_outlined,

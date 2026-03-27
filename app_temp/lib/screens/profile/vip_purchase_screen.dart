@@ -22,6 +22,21 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_left, color: AppTheme.primary, size: 28),
+              SizedBox(width: 0),
+              Text('Back', style: TextStyle(color: AppTheme.primary, fontSize: 17)),
+            ],
+          ),
+        ),
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [

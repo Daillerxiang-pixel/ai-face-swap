@@ -65,7 +65,7 @@ class CreateScreen extends StatelessWidget {
                 ),
                 onTap: () {
                   // 切换到作品 tab (index 2)
-                  HomeScreen.tabController.switchTo(2);
+                  HomeScreen.tabController?.animateTo(2);
                 },
               ),
             ],
