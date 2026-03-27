@@ -24,13 +24,13 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _api.getUserProfile();
+      final res = await _api.getUserProfile().timeout(const Duration(seconds: 5));
       if (res.success && res.data != null) {
         _user = User.fromJson(res.data as Map<String, dynamic>);
       }
     } catch (_) {
-      // 加载失败使用默认数据
-      _user = User(id: 'user-mock-001', nickname: 'AI换图用户');
+      // API 请求失败 → 视为未登录
+      _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();
