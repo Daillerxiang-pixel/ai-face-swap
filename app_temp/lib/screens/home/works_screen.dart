@@ -6,6 +6,7 @@ import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
@@ -23,7 +24,14 @@ class _WorksScreenState extends State<WorksScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GenerationProvider>().loadHistory();
+      // 先加载用户信息判断登录状态
+      final userProvider = context.read<UserProvider>();
+      userProvider.loadUserProfile().then((_) {
+        // 如果已登录，再加载历史记录
+        if (userProvider.isLoggedIn) {
+          context.read<GenerationProvider>().loadHistory();
+        }
+      });
     });
   }
 
@@ -255,73 +263,93 @@ class _WorksScreenState extends State<WorksScreen> {
             ),
             // Content
             Expanded(
-              child: Consumer<GenerationProvider>(
-                builder: (context, provider, _) {
-                  // 历史为空直接显示引导页（无论是否正在加载、是否有错误）
-                  if (provider.history.isEmpty) {
+              child: Consumer<UserProvider>(
+                builder: (context, userProvider, _) {
+                  // 未登录 → 显示登录引导页
+                  if (!userProvider.isLoggedIn) {
                     return _buildLoginGuide();
                   }
 
-                  final groups = _groupByDate(provider.history);
+                  // 已登录 → 显示历史记录
+                  return Consumer<GenerationProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.isLoading && provider.history.isEmpty) {
+                        return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                      }
 
-                  return RefreshIndicator(
-                    color: AppTheme.primary,
-                    backgroundColor: AppTheme.cardBackground,
-                    onRefresh: _onRefresh,
-                    child: CustomScrollView(
-                      slivers: [
-                        for (final group in groups) ...[
-                          // Sticky date header
-                          SliverStickyHeader(
-                            header: Container(
-                              color: AppTheme.background,
-                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    group.title,
-                                    style: const TextStyle(
-                                      color: AppTheme.textPrimary,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
+                      if (provider.history.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No Works Yet',
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Your face swap creations will appear here',
+                                style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final groups = _groupByDate(provider.history);
+
+                      return RefreshIndicator(
+                        color: AppTheme.primary,
+                        backgroundColor: AppTheme.cardBackground,
+                        onRefresh: _onRefresh,
+                        child: CustomScrollView(
+                          slivers: [
+                            for (final group in groups) ...[
+                              SliverStickyHeader(
+                                header: Container(
+                                  color: AppTheme.background,
+                                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(group.title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                                      if (group.subtitle.isNotEmpty) ...[
+                                        const SizedBox(width: 8),
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 2),
+                                          child: Text(group.subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                sliver: SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                                  sliver: SliverGrid(
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      mainAxisSpacing: 2,
+                                      crossAxisSpacing: 2,
+                                    ),
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) => _buildWorkItem(group.items[index]),
+                                      childCount: group.items.length,
                                     ),
                                   ),
-                                  if (group.subtitle.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 2),
-                                      child: Text(
-                                        group.subtitle,
-                                        style: const TextStyle(
-                                          color: AppTheme.textSecondary,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            sliver: SliverPadding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2),
-                              sliver: SliverGrid(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 2,
-                                  crossAxisSpacing: 2,
-                                ),
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => _buildWorkItem(group.items[index]),
-                                  childCount: group.items.length,
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
-                        const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-                      ],
-                    ),
+                            ],
+                            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+                          ],
+                        ),
+                      );
+                    },
                   );
                 },
               ),
