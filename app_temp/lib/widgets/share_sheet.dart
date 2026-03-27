@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+import '../../config/theme.dart';
+
+/// 分享面板 — 底部弹出
+class ShareSheet {
+  static void show(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => const _ShareSheetContent(),
+    );
+  }
+}
+
+class _ShareSheetContent extends StatelessWidget {
+  const _ShareSheetContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceBackground,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Share',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Options
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _ShareOption(
+                  label: 'Instagram',
+                  gradient: const [Color(0xFF833AB4), Color(0xFFE1306C), Color(0xFFF77737)],
+                  icon: Icons.camera_alt_outlined,
+                ),
+                _ShareOption(
+                  label: 'TikTok',
+                  gradient: const [Color(0xFF010101), Color(0xFF333333)],
+                  icon: Icons.music_note,
+                  border: true,
+                ),
+                _ShareOption(
+                  label: 'WhatsApp',
+                  gradient: const [Color(0xFF25D366), Color(0xFF25D366)],
+                  icon: Icons.chat_bubble,
+                ),
+                _ShareOption(
+                  label: 'Message',
+                  gradient: const [Color(0xFF7C3AED), Color(0xFF7C3AED)],
+                  icon: Icons.send,
+                ),
+                _ShareOption(
+                  label: 'More',
+                  gradient: const [Color(0xFF2C2C2E), Color(0xFF2C2C2E)],
+                  icon: Icons.more_horiz,
+                  iconColor: AppTheme.textSecondary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Cancel
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppTheme.surfaceBackground,
+                  foregroundColor: AppTheme.textPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  side: BorderSide.none,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareOption extends StatelessWidget {
+  final String label;
+  final List<Color> gradient;
+  final IconData icon;
+  final bool border;
+  final Color? iconColor;
+
+  const _ShareOption({
+    required this.label,
+    required this.gradient,
+    required this.icon,
+    this.border = false,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // TODO: implement share
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share to $label coming soon')),
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment(-1, -1),
+                end: Alignment(1, 1),
+                colors: gradient,
+              ),
+              border: border
+                  ? Border.all(color: AppTheme.surfaceBackground)
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor ?? Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
