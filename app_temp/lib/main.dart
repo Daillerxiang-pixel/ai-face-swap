@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'config/theme.dart';
 import 'providers/template_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/generation_provider.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // 沉浸式全屏：显示状态栏和导航栏，但让内容延伸到安全区域外
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
-  // 状态栏和导航栏透明
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -40,8 +38,54 @@ class FaceSwapApp extends StatelessWidget {
         title: 'AI换图',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const HomeScreen(),
+        home: const _EntryPoint(),
+        routes: {
+          '/home': (_) => const HomeScreen(),
+        },
       ),
     );
+  }
+}
+
+/// Entry point — check if onboarding needed
+class _EntryPoint extends StatefulWidget {
+  const _EntryPoint();
+
+  @override
+  State<_EntryPoint> createState() => _EntryPointState();
+}
+
+class _EntryPointState extends State<_EntryPoint> {
+  bool _isLoading = true;
+  bool _showOnboarding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final done = prefs.getBool('onboarding_done') ?? false;
+    if (mounted) {
+      setState(() {
+        _showOnboarding = !done;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      );
+    }
+    return _showOnboarding
+        ? const OnboardingScreen()
+        : const HomeScreen();
   }
 }

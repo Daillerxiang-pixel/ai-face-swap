@@ -26,11 +26,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadVersion() async {
-    final info = await PackageInfoPlus();
+    final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _appVersion = '${info.version}+${info.buildNumber}');
   }
-
-  Future<PackageInfo> PackageInfoPlus() => PackageInfo.fromPlatform();
 
   @override
   Widget build(BuildContext context) {
@@ -48,41 +46,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Account
           _buildGroupTitle('ACCOUNT'),
           _buildMenuList([
-            _MenuItem(Icons.person_outline, 'Profile', iconColor: Colors.purple, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(Icons.workspace_premium_outlined, 'Subscription', iconColor: const Color(0xFFF59E0B), iconBg: const Color(0x26F59E0B)),
+            _MenuItem(icon: Icons.person_outline, label: 'Profile', iconColor: Colors.purple, iconBg: const Color(0x1E7C3AED)),
+            _MenuItem(icon: Icons.workspace_premium_outlined, label: 'Subscription', iconColor: const Color(0xFFF59E0B), iconBg: const Color(0x26F59E0B)),
           ]),
           const SizedBox(height: 24),
 
           // Preferences
           _buildGroupTitle('PREFERENCES'),
           _buildMenuList([
-            _MenuItem(Icons.dark_mode_outlined, 'Dark Mode', toggle: true, toggleValue: _darkMode, onToggle: (v) => setState(() => _darkMode = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(Icons.save_outlined, 'Auto-Save', toggle: true, toggleValue: _autoSave, onToggle: (v) => setState(() => _autoSave = v), iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(Icons.high_quality_outlined, 'Save Quality', value: _saveQuality, iconColor: const Color(0xFF34C759), iconBg: const Color(0x2634C759)),
+            _MenuItem(icon: Icons.dark_mode_outlined, label: 'Dark Mode', toggle: true, toggleValue: _darkMode, onToggle: (v) => setState(() => _darkMode = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
+            _MenuItem(icon: Icons.save_outlined, label: 'Auto-Save', toggle: true, toggleValue: _autoSave, onToggle: (v) => setState(() => _autoSave = v), iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
+            _MenuItem(icon: Icons.high_quality_outlined, label: 'Save Quality', value: _saveQuality, iconColor: const Color(0xFF34C759), iconBg: const Color(0x2634C759)),
           ]),
           const SizedBox(height: 24),
 
           // Notifications
           _buildGroupTitle('NOTIFICATIONS'),
           _buildMenuList([
-            _MenuItem(Icons.notifications_outlined, 'Push Notifications', toggle: true, toggleValue: _pushNotif, onToggle: (v) => setState(() => _pushNotif = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(Icons.email_outlined, 'Email Notifications', toggle: true, toggleValue: _emailNotif, onToggle: (v) => setState(() => _emailNotif = v), iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.notifications_outlined, label: 'Push Notifications', toggle: true, toggleValue: _pushNotif, onToggle: (v) => setState(() => _pushNotif = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
+            _MenuItem(icon: Icons.email_outlined, label: 'Email Notifications', toggle: true, toggleValue: _emailNotif, onToggle: (v) => setState(() => _emailNotif = v), iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
           ]),
           const SizedBox(height: 24),
 
           // Support
           _buildGroupTitle('SUPPORT'),
           _buildMenuList([
-            _MenuItem(Icons.help_outline, 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(Icons.headset_mic_outlined, 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(Icons.description_outlined, 'Terms of Service', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
-            _MenuItem(Icons.privacy_tip_outlined, 'Privacy Policy', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
+            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
+            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
           ]),
           const SizedBox(height: 24),
 
           // Danger
           _buildMenuList([
-            _MenuItem(Icons.delete_outline, 'Delete Account', isDanger: true, iconColor: const Color(0xFFFF3B30), iconBg: const Color(0x1EFF3B30)),
+            _MenuItem(icon: Icons.delete_outline, label: 'Delete Account', isDanger: true, iconColor: const Color(0xFFFF3B30), iconBg: const Color(0x1EFF3B30)),
           ]),
           const SizedBox(height: 16),
 

@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/template.dart';
 import '../../utils/image_utils.dart';
 import '../../providers/template_provider.dart';
+import '../../widgets/share_sheet.dart';
 import '../create/upload_photo_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -114,11 +115,21 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('模板详情'),
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_left, color: AppTheme.primary, size: 28),
+              SizedBox(width: 0),
+              Text('Back', style: TextStyle(color: AppTheme.primary, fontSize: 17)),
+            ],
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            onPressed: () {},
+            onPressed: () => ShareSheet.show(context),
           ),
         ],
       ),

@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   void _switchToTab(int index) {
-    HomeScreen.tabController?.animateTo(index);
+    HomeScreen.tabController?.switchTo(index);
   }
 
   @override
@@ -106,12 +106,12 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: const Icon(Icons.workspace_premium, color: Color(0xFFF59E0B), size: 22),
             ),
-            const Expanded(
+            Expanded(
               child: Padding(
-                padding: EdgeInsets.only(left: 14),
+                padding: const EdgeInsets.only(left: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: const [
                     Text(
                       'Upgrade to VIP',
                       style: TextStyle(
@@ -124,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
                     Text(
                       'Unlimited swaps & premium templates',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Color(0x99FFFFFF),
                         fontSize: 12,
                       ),
                     ),

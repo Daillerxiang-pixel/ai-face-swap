@@ -7,12 +7,10 @@ import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
 import '../../utils/image_utils.dart';
-import '../../widgets/loading_widget.dart';
-import '../../widgets/empty_state_widget.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/share_sheet.dart';
 
-/// 作品页面 — 筛选 + 日期分组 + 视图切换 + 点击交互
-/// 参考 index-v4.html worksPage
+/// 作品页面 — iOS 相册风格：日期分组 + 3列无圆角网格
 class WorksScreen extends StatefulWidget {
   const WorksScreen({super.key});
 
@@ -21,12 +19,6 @@ class WorksScreen extends StatefulWidget {
 }
 
 class _WorksScreenState extends State<WorksScreen> {
-  /// 当前筛选: all / success / fail
-  String _filter = 'all';
-
-  /// 网格列数: 3 或 2
-  int _crossAxisCount = 3;
-
   @override
   void initState() {
     super.initState();
@@ -35,30 +27,17 @@ class _WorksScreenState extends State<WorksScreen> {
     });
   }
 
-  /// 下拉刷新
   Future<void> _onRefresh() async {
     await context.read<GenerationProvider>().loadHistory(refresh: true);
   }
 
-  /// 筛选列表
-  List<Generation> _getFilteredList(List<Generation> all) {
-    switch (_filter) {
-      case 'success':
-        return all.where((w) => w.isCompleted).toList();
-      case 'fail':
-        return all.where((w) => w.isFailed).toList();
-      default:
-        return all;
-    }
-  }
-
-  /// 按日期分组，返回有序 Map<日期标签, List<Generation>>
-  Map<String, List<Generation>> _groupByDate(List<Generation> items) {
+  /// 按日期分组（按日期降序排列）
+  List<_DateGroup> _groupByDate(List<Generation> items) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    final Map<String, List<Generation>> groups = {};
+    final Map<String, _DateGroup> groups = {};
 
     for (final item in items) {
       final createdAt = item.createdAt;
@@ -66,88 +45,77 @@ class _WorksScreenState extends State<WorksScreen> {
 
       final itemDate = DateTime(createdAt.year, createdAt.month, createdAt.day);
 
-      String label;
+      String title;
+      String subtitle;
+      String sortKey;
+
       if (itemDate == today) {
-        label = '今天';
+        title = 'Today';
+        subtitle = _monthDay(createdAt);
+        sortKey = '0';
       } else if (itemDate == yesterday) {
-        label = '昨天';
-      } else if (itemDate.year == now.year) {
-        label = '${createdAt.month}月${createdAt.day}日';
+        title = 'Yesterday';
+        subtitle = _monthDay(createdAt);
+        sortKey = '1';
       } else {
-        label = '${createdAt.year}年${createdAt.month}月${createdAt.day}日';
+        title = _monthDay(createdAt);
+        subtitle = '${createdAt.year}';
+        sortKey = '${itemDate.millisecondsSinceEpoch}';
       }
 
-      groups.putIfAbsent(label, () => []).add(item);
+      groups.putIfAbsent(
+        sortKey,
+        () => _DateGroup(title: title, subtitle: subtitle, sortKey: sortKey, items: []),
+      );
+      groups[sortKey]!.items.add(item);
     }
 
-    return groups;
+    final sortedKeys = groups.keys.toList()..sort();
+    return sortedKeys.map((k) => groups[k]!).toList();
   }
 
-  /// 提取时间 (HH:mm)
-  String _extractTime(DateTime? dt) {
-    if (dt == null) return '';
-    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  String _monthDay(DateTime dt) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 
-  /// 点击作品
   void _onWorkTap(Generation item) {
     if (item.isCompleted && (item.resultImage?.isNotEmpty ?? false)) {
-      _showResultPreview(item);
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => _ResultPreviewScreen(
+            imageUrl: ImageUtils.imgUrl(item.resultImage),
+            isVideo: item.isVideo,
+          ),
+        ),
+      );
     } else if (item.isFailed) {
       _showErrorDialog(item);
     }
   }
 
-  /// 全屏预览结果图
-  void _showResultPreview(Generation item) {
-    final imageUrl = ImageUtils.imgUrl(item.resultImage);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _ResultPreviewScreen(
-          imageUrl: imageUrl,
-          isVideo: item.isVideo,
-        ),
-      ),
-    );
-  }
-
-  /// 显示错误信息弹窗
   void _showErrorDialog(Generation item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.cardBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Colors.redAccent, size: 24),
             SizedBox(width: 8),
-            Text(
-              '生成失败',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('生成失败', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
           ],
         ),
         content: Text(
           item.errorMessage ?? '未知错误，请重试',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              '关闭',
-              style: TextStyle(color: AppTheme.primary),
-            ),
+            child: const Text('关闭', style: TextStyle(color: AppTheme.primary)),
           ),
         ],
       ),
@@ -161,93 +129,104 @@ class _WorksScreenState extends State<WorksScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 顶部标题
+            // Fixed title
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppTheme.background,
-                    AppTheme.background.withOpacity(0.85),
-                  ],
-                ),
-              ),
-              child: const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '作品',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                  ),
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Works',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-
-            // 筛选栏
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-              child: Row(
-                children: [
-                  // 左侧筛选按钮
-                  _buildFilterBtn('全部', 'all'),
-                  const SizedBox(width: 8),
-                  _buildFilterBtn('成功', 'success'),
-                  const SizedBox(width: 8),
-                  _buildFilterBtn('失败', 'fail'),
-
-                  const Spacer(),
-
-                  // 右侧视图切换
-                  _buildViewToggle(),
-                ],
-              ),
-            ),
-
-            // 内容列表
+            // Content
             Expanded(
-              child: RefreshIndicator(
-                color: AppTheme.primary,
-                backgroundColor: AppTheme.cardBackground,
-                onRefresh: _onRefresh,
-                child: Consumer<GenerationProvider>(
-                  builder: (context, provider, _) {
-                    if (provider.isLoading && provider.history.isEmpty) {
-                      return const LoadingWidget(message: '加载中...');
-                    }
+              child: Consumer<GenerationProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoading && provider.history.isEmpty) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                  }
 
-                    final filtered = _getFilteredList(provider.history);
+                  if (provider.history.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.palette_outlined, size: 56, color: AppTheme.textTertiary),
+                          const SizedBox(height: 16),
+                          const Text('No Works Yet', style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          Text('Your creations will appear here', style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                        ],
+                      ),
+                    );
+                  }
 
-                    if (filtered.isEmpty) {
-                      return ListView(
-                        children: const [
-                          SizedBox(height: 120),
-                          EmptyStateWidget(
-                            icon: Icons.palette_outlined,
-                            title: '暂无作品',
-                            subtitle: '快去创作你的第一幅作品吧',
+                  final groups = _groupByDate(provider.history);
+
+                  return RefreshIndicator(
+                    color: AppTheme.primary,
+                    backgroundColor: AppTheme.cardBackground,
+                    onRefresh: _onRefresh,
+                    child: CustomScrollView(
+                      slivers: [
+                        for (final group in groups) ...[
+                          // Sticky date header
+                          SliverStickyHeader(
+                            header: Container(
+                              color: AppTheme.background,
+                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    group.title,
+                                    style: const TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  if (group.subtitle.isNotEmpty) ...[
+                                    const SizedBox(width: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 2),
+                                      child: Text(
+                                        group.subtitle,
+                                        style: const TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            sliver: SliverPadding(
+                              padding: const EdgeInsets.symmetric(horizontal: 2),
+                              sliver: SliverGrid(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 2,
+                                  crossAxisSpacing: 2,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) => _buildWorkItem(group.items[index]),
+                                  childCount: group.items.length,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
-                      );
-                    }
-
-                    final groups = _groupByDate(filtered);
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      itemCount: groups.length,
-                      itemBuilder: (context, index) {
-                        final label = groups.keys.elementAt(index);
-                        final items = groups[label]!;
-
-                        return _buildDateGroup(label, items);
-                      },
-                    );
-                  },
-                ),
+                        const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -256,230 +235,66 @@ class _WorksScreenState extends State<WorksScreen> {
     );
   }
 
-  /// 构建筛选按钮
-  Widget _buildFilterBtn(String label, String filterKey) {
-    final isActive = _filter == filterKey;
-    return GestureDetector(
-      onTap: () {
-        if (_filter == filterKey) return;
-        setState(() => _filter = filterKey);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppTheme.primary.withOpacity(0.15)
-              : AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建视图切换按钮
-  Widget _buildViewToggle() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _crossAxisCount = _crossAxisCount == 3 ? 2 : 3;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          _crossAxisCount == 3
-              ? Icons.grid_view
-              : Icons.view_module_outlined,
-          color: AppTheme.textSecondary,
-          size: 18,
-        ),
-      ),
-    );
-  }
-
-  /// 构建日期分组
-  Widget _buildDateGroup(String dateLabel, List<Generation> items) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 日期标题
-          Padding(
-            padding: const EdgeInsets.only(top: 16, bottom: 10),
-            child: Text(
-              dateLabel,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          // 网格
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _crossAxisCount,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-            ),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return _buildWorkItem(items[index]);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 构建单个作品项
   Widget _buildWorkItem(Generation item) {
-    final isSuccess = item.isCompleted;
     final resultUrl = ImageUtils.imgUrl(item.resultImage);
-    final time = _extractTime(item.createdAt);
+    final isSuccess = item.isCompleted;
     final isVideo = item.isVideo;
 
     return GestureDetector(
       onTap: () => _onWorkTap(item),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          color: AppTheme.cardBackground,
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // 缩略图
-                if (resultUrl.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: resultUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
-                      color: AppTheme.surfaceBackground,
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      color: AppTheme.surfaceBackground,
-                      child: const Icon(
-                        Icons.broken_image,
-                        color: AppTheme.textTertiary,
-                        size: 28,
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    color: AppTheme.surfaceBackground,
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: AppTheme.textTertiary,
-                      size: 28,
-                    ),
-                  ),
+      child: Container(
+        color: AppTheme.surfaceBackground,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Thumbnail
+              if (resultUrl.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: resultUrl,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => const SizedBox(),
+                ),
 
-                // 视频标识
-                if (isVideo)
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.videocam, color: Colors.white, size: 12),
-                          SizedBox(width: 2),
-                          Text(
-                            '视频',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // 右下角时间
-                if (time.isNotEmpty)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
-                          ],
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          time,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // 右上角状态标记
+              // Video play icon (bottom-left small circle)
+              if (isVideo)
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  bottom: 6,
+                  left: 6,
                   child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: isSuccess
-                          ? const Color(0xFF34C759)
-                          : const Color(0xFFFF3B30),
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
                       shape: BoxShape.circle,
                     ),
-                    child: Center(
-                      child: Text(
-                        isSuccess ? '✓' : '✕',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    child: const Center(
+                      child: Icon(Icons.play_arrow, color: Colors.white, size: 13),
                     ),
                   ),
                 ),
-              ],
-            ),
+
+              // Status badge (top-right)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: isSuccess ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      isSuccess ? '✓' : '✕',
+                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -487,7 +302,28 @@ class _WorksScreenState extends State<WorksScreen> {
   }
 }
 
-/// 全屏图片预览页面（支持保存到相册）
+class _DateGroup {
+  final String title;
+  final String subtitle;
+  final String sortKey;
+  final List<Generation> items;
+  const _DateGroup({required this.title, required this.subtitle, required this.sortKey, required this.items});
+}
+
+/// StickyHeader widget for date groups
+class SliverStickyHeader extends StatelessWidget {
+  final Widget header;
+  final Widget sliver;
+
+  const SliverStickyHeader({super.key, required this.header, required this.sliver});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(child: Column(children: [header, sliver]));
+  }
+}
+
+/// 全屏预览（支持保存+分享）
 class _ResultPreviewScreen extends StatefulWidget {
   final String imageUrl;
   final bool isVideo;
@@ -509,39 +345,17 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        titleTextStyle: const TextStyle(color: Colors.white),
         actions: [
-          if (!widget.isVideo)
-            IconButton(
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.download, color: Colors.white),
-              onPressed: _isSaving ? null : _saveToGallery,
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: IconButton(
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.download, color: Colors.white),
-                onPressed: _isSaving ? null : _saveToGallery,
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: Colors.white),
+            onPressed: () => ShareSheet.show(context),
+          ),
+          IconButton(
+            icon: _isSaving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.download, color: Colors.white),
+            onPressed: _isSaving ? null : _saveToGallery,
+          ),
         ],
       ),
       extendBodyBehindAppBar: true,
@@ -553,31 +367,19 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
               child: CachedNetworkImage(
                 imageUrl: widget.imageUrl,
                 fit: BoxFit.contain,
-                placeholder: (_, __) => const Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primary,
-                  ),
-                ),
-                errorWidget: (_, __, ___) => const Center(
-                  child: Icon(
-                    Icons.broken_image,
-                    color: AppTheme.textTertiary,
-                    size: 48,
-                  ),
-                ),
+                placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 48)),
               ),
             ),
-            // 视频标识
             if (widget.isVideo)
-              Center(
-                child: Container(
+              const Center(
+                child: SizedBox(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                    child: Icon(Icons.play_arrow, color: Colors.white, size: 36),
                   ),
-                  child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
                 ),
               ),
           ],
@@ -588,49 +390,38 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
 
   Future<void> _saveToGallery() async {
     if (widget.imageUrl.isEmpty) {
-      AppToast.error('没有可保存的内容');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No content to save')));
       return;
     }
     setState(() => _isSaving = true);
     try {
       final dio = Dio();
-      final response = await dio.get(
-        widget.imageUrl,
-        options: Options(responseType: ResponseType.bytes),
-      );
-
+      final response = await dio.get(widget.imageUrl, options: Options(responseType: ResponseType.bytes));
       if (widget.isVideo) {
-        final result = await ImageGallerySaverPlus.saveFile(
-          response.data,
-          name: 'aihuantu_video_${DateTime.now().millisecondsSinceEpoch}',
-        );
+        final result = await ImageGallerySaverPlus.saveFile(response.data, name: 'aihuantu_video_${DateTime.now().millisecondsSinceEpoch}');
         if (mounted) {
           setState(() => _isSaving = false);
           if (result['isSuccess'] == true) {
-            AppToast.success('视频已保存到相册');
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Video saved to gallery')));
           } else {
-            AppToast.error('保存失败');
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save failed')));
           }
         }
       } else {
-        final result = await ImageGallerySaverPlus.saveImage(
-          response.data,
-          quality: 100,
-          name: 'aihuantu_${DateTime.now().millisecondsSinceEpoch}',
-        );
+        final result = await ImageGallerySaverPlus.saveImage(response.data, quality: 100, name: 'aihuantu_${DateTime.now().millisecondsSinceEpoch}');
         if (mounted) {
           setState(() => _isSaving = false);
           if (result['isSuccess'] == true) {
-            AppToast.success('已保存到相册');
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to gallery')));
           } else {
-            AppToast.error('保存失败');
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save failed')));
           }
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        AppToast.error('保存失败');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save failed')));
       }
     }
   }

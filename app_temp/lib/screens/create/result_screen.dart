@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/share_sheet.dart';
 import 'select_template_screen.dart';
 
 /// 生成结果展示页面
@@ -39,13 +40,21 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('生成结果'),
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_left, color: AppTheme.primary, size: 28),
+              SizedBox(width: 0),
+              Text('Back', style: TextStyle(color: AppTheme.primary, fontSize: 17)),
+            ],
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            onPressed: () {
-              AppToast.info('分享功能开发中');
-            },
+            onPressed: () => ShareSheet.show(context),
           ),
         ],
       ),
@@ -232,25 +241,78 @@ class _ResultScreenState extends State<ResultScreen> {
       );
     }
 
-    // 图片：全屏展示
-    return InteractiveViewer(
-      minScale: 1.0,
-      maxScale: 4.0,
-      child: CachedNetworkImage(
-        imageUrl: _displayUrl,
-        fit: BoxFit.contain,
-        placeholder: (_, __) => Container(
-          color: AppTheme.surfaceBackground,
-          child: const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
+    // 图片：全屏展示 + BEFORE/AFTER 标签 + 水印
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        InteractiveViewer(
+          minScale: 1.0,
+          maxScale: 4.0,
+          child: CachedNetworkImage(
+            imageUrl: _displayUrl,
+            fit: BoxFit.contain,
+            placeholder: (_, __) => Container(
+              color: AppTheme.surfaceBackground,
+              child: const Center(
+                child: CircularProgressIndicator(color: AppTheme.primary),
+              ),
+            ),
+            errorWidget: (_, __, ___) => Container(
+              color: AppTheme.surfaceBackground,
+              child: const Icon(Icons.broken_image,
+                  color: AppTheme.textTertiary, size: 48),
+            ),
           ),
         ),
-        errorWidget: (_, __, ___) => Container(
-          color: AppTheme.surfaceBackground,
-          child: const Icon(Icons.broken_image,
-              color: AppTheme.textTertiary, size: 48),
+        // BEFORE label (top-left)
+        Positioned(
+          top: 12,
+          left: 12,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.55),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'BEFORE',
+              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+            ),
+          ),
         ),
-      ),
+        // AFTER label (top-right)
+        Positioned(
+          top: 12,
+          right: 12,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'AFTER',
+              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+            ),
+          ),
+        ),
+        // AI FaceSwap watermark (bottom-right)
+        Positioned(
+          bottom: 12,
+          right: 12,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text(
+              'AI FaceSwap',
+              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

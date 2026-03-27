@@ -54,31 +54,53 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text(_isVideo ? '视频换脸' : '图片换脸'),
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_left, color: AppTheme.primary, size: 28),
+              SizedBox(width: 0),
+              Text('Back', style: TextStyle(color: AppTheme.primary, fontSize: 17)),
+            ],
+          ),
+        ),
       ),
       body: _isGenerating
           ? _buildGeneratingView()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 模板预览
-                  _buildTemplatePreview(),
-                  const SizedBox(height: 24),
+          : Column(
+              children: [
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // 模板预览
+                        _buildTemplatePreview(),
+                        const SizedBox(height: 24),
 
-                  // 上传照片区域
-                  _buildUploadArea(),
-                  const SizedBox(height: 24),
+                        // 上传照片区域
+                        _buildUploadArea(),
+                        const SizedBox(height: 24),
 
-                  // 提示文字
-                  _buildTips(),
-                  const SizedBox(height: 32),
-
-                  // 开始生成按钮
-                  _buildGenerateButton(),
-                ],
-              ),
+                        // 提示文字
+                        _buildTips(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                // Fixed bottom button
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.background,
+                  ),
+                  child: _buildGenerateButton(),
+                ),
+              ],
             ),
     );
   }
@@ -101,8 +123,9 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         const SizedBox(height: 12),
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: AspectRatio(
-            aspectRatio: 3 / 4,
+          child: SizedBox(
+            height: 160,
+            width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -161,7 +184,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         GestureDetector(
           onTap: _isUploading ? null : _pickImage,
           child: Container(
-            height: 200,
+            height: 140,
             decoration: BoxDecoration(
               color: AppTheme.cardBackground,
               borderRadius: BorderRadius.circular(16),
