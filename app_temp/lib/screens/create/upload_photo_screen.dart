@@ -225,9 +225,12 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
+                            child: Container(
+                              color: AppTheme.surfaceBackground,
+                              child: Image.file(
+                                _selectedImage!,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           // 重新选择按钮
@@ -354,24 +357,27 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   Widget _buildGenerateButton() {
     final canGenerate = _selectedImage != null && _fileId != null;
 
-    return Container(
+    return SizedBox(
+      width: double.infinity,
       height: 52,
-      decoration: BoxDecoration(
-        gradient: canGenerate ? AppTheme.primaryGradient : null,
-        color: canGenerate ? null : AppTheme.surfaceBackground,
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-      ),
-      child: MaterialButton(
-        onPressed: canGenerate ? _startGenerate : null,
-        disabledColor: Colors.transparent,
-        child: Text(
-          _isVideo ? '开始视频换脸' : '开始换脸',
-          style: TextStyle(
-            color: canGenerate
-                ? AppTheme.textPrimary
-                : AppTheme.textTertiary,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: canGenerate ? AppTheme.primaryGradient : null,
+          color: canGenerate ? null : AppTheme.surfaceBackground,
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        ),
+        child: MaterialButton(
+          onPressed: canGenerate ? _startGenerate : null,
+          disabledColor: Colors.transparent,
+          child: Text(
+            _isVideo ? '开始视频换脸' : '开始换脸',
+            style: TextStyle(
+              color: canGenerate
+                  ? AppTheme.textPrimary
+                  : AppTheme.textTertiary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
