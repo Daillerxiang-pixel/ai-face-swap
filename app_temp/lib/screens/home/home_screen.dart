@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../widgets/tab_bar.dart';
+import '../../providers/generation_provider.dart';
+import '../../providers/user_provider.dart';
 import 'home_tab_screen.dart';
 import 'create_screen.dart';
 import 'works_screen.dart';
@@ -43,8 +46,19 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging) {
-      _tabNotifier.value = _tabController.index;
-      HomeScreen.visibilityNotifier.value = _tabController.index;
+      final index = _tabController.index;
+      _tabNotifier.value = index;
+      HomeScreen.visibilityNotifier.value = index;
+
+      // Tab 切换时自动刷新数据
+      if (!mounted) return;
+      if (index == 2) {
+        // Works tab — 刷新历史
+        context.read<GenerationProvider>().loadHistory(refresh: true);
+      } else if (index == 3) {
+        // Profile tab — 刷新用户信息
+        context.read<UserProvider>().loadUserProfile();
+      }
     }
   }
 

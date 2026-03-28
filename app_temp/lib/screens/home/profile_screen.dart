@@ -71,9 +71,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 20),
-          children: [
+        child: RefreshIndicator(
+          color: AppTheme.primary,
+          backgroundColor: AppTheme.cardBackground,
+          onRefresh: () async {
+            await context.read<UserProvider>().loadUserProfile();
+          },
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 20),
+            children: [
             // 头像 + 名字 + 用户信息
             Container(
               margin: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -228,6 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // 菜单
             _buildMenu(context),
           ],
+        ),
         ),
       ),
     );

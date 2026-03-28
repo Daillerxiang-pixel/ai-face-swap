@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
@@ -14,31 +15,46 @@ import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
 
-/// 作品页面 — iOS 相册风格：日期分组 + 3列无圆角网格
-class WorksScreen extends StatefulWidget {
+/// 作品页面 — iOS 相册风格：日期分组 + 3列网格
+class WorksScreen extends StatefulWidget with WidgetsBindingObserver {
   const WorksScreen({super.key});
 
   @override
   State<WorksScreen> createState() => _WorksScreenState();
 }
 
-class _WorksScreenState extends State<WorksScreen> {
+class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 如果已登录，加载历史
       if (AuthService().isLoggedIn) {
         context.read<GenerationProvider>().loadHistory();
       }
     });
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// 应用从后台恢复时自动刷新
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && AuthService().isLoggedIn) {
+      context.read<GenerationProvider>().loadHistory(refresh: true);
+      context.read<UserProvider>().loadUserProfile();
+    }
+  }
+
   Future<void> _onRefresh() async {
     await context.read<GenerationProvider>().loadHistory(refresh: true);
   }
 
-  /// 按日期分组（按日期降序排列）
+  /// 按日期分组（降序）
   List<_DateGroup> _groupByDate(List<Generation> items) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -56,11 +72,11 @@ class _WorksScreenState extends State<WorksScreen> {
       String subtitle;
       String sortKey;
 
-      if (itemDate == today) {
+      if (itemDate.isAtSameMomentAs(today) || itemDate.isAfter(today)) {
         title = 'Today';
         subtitle = _monthDay(createdAt);
         sortKey = '0';
-      } else if (itemDate == yesterday) {
+      } else if (itemDate.isAtSameMomentAs(yesterday)) {
         title = 'Yesterday';
         subtitle = _monthDay(createdAt);
         sortKey = '1';
@@ -102,7 +118,6 @@ class _WorksScreenState extends State<WorksScreen> {
     }
   }
 
-  /// 未登录/无历史记录 — 登录引导页
   Widget _buildLoginGuide() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -110,82 +125,49 @@ class _WorksScreenState extends State<WorksScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 40),
-          // App icon
           Container(
-            width: 72,
-            height: 72,
+            width: 72, height: 72,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: const LinearGradient(
-                begin: Alignment(-1, -1),
-                end: Alignment(1, 1),
+                begin: Alignment(-1, -1), end: Alignment(1, 1),
                 colors: [Color(0xFF7C3AED), Color(0xFF3B82F6)],
               ),
             ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'See Your Creations',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          const Text('See Your Creations', style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text(
             'Sign in to view your face swap history and saved works',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 28),
-          _buildFeatureCard(Icons.lock_outline, '🔒 Unlimited Swaps', 'No daily limits'),
+          _buildFeatureCard(Icons.lock_outline, 'Unlimited Swaps', 'No daily limits'),
           const SizedBox(height: 10),
-          _buildFeatureCard(Icons.bolt_outlined, '⚡ AI Processing', 'Lightning fast results'),
+          _buildFeatureCard(Icons.bolt_outlined, 'AI Processing', 'Lightning fast results'),
           const SizedBox(height: 10),
-          _buildFeatureCard(Icons.save_outlined, '💾 Auto Save', 'Works saved automatically'),
+          _buildFeatureCard(Icons.save_outlined, 'Auto Save', 'Works saved automatically'),
           const SizedBox(height: 32),
           Container(
-            width: double.infinity,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-            ),
+            width: double.infinity, height: 52,
+            decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(14)),
             child: MaterialButton(
               onPressed: () async {
                 final result = await Navigator.pushNamed(context, '/login');
-                // 登录成功后刷新
                 if (result == true && mounted) {
                   setState(() {});
                   context.read<GenerationProvider>().loadHistory();
                   context.read<UserProvider>().loadUserProfile();
                 }
               },
-              child: const Text(
-                'Sign In to Continue',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: const Text('Sign In to Continue', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Free to get started · No credit card required',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textTertiary,
-              fontSize: 12,
-            ),
-          ),
+          Text('Free to get started · No credit card required', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textTertiary, fontSize: 12)),
           const SizedBox(height: 20),
         ],
       ),
@@ -195,10 +177,7 @@ class _WorksScreenState extends State<WorksScreen> {
   Widget _buildFeatureCard(IconData icon, String title, String subtitle) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: AppTheme.cardBackground, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Icon(icon, color: AppTheme.primary, size: 20),
@@ -217,6 +196,44 @@ class _WorksScreenState extends State<WorksScreen> {
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment(-1, -1), end: Alignment(1, 1),
+                  colors: [AppTheme.primary.withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.15)],
+                ),
+              ),
+              child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
+            ),
+            const SizedBox(height: 20),
+            const Text('No Works Yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            const Text('Try your first face swap now!', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 200, height: 48,
+              child: MaterialButton(
+                onPressed: () => HomeScreen.tabController?.animateTo(0),
+                color: AppTheme.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: const Text('Start Creating', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showErrorDialog(Generation item) {
     showDialog(
       context: context,
@@ -230,10 +247,7 @@ class _WorksScreenState extends State<WorksScreen> {
             Text('Generation Failed', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
           ],
         ),
-        content: Text(
-          item.errorMessage ?? 'Unknown error, please retry',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-        ),
+        content: Text(item.errorMessage ?? 'Unknown error, please retry', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -255,23 +269,15 @@ class _WorksScreenState extends State<WorksScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
               alignment: Alignment.centerLeft,
-              child: const Text(
-                'Works',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: const Text('Works', style: TextStyle(color: AppTheme.textPrimary, fontSize: 34, fontWeight: FontWeight.bold)),
             ),
             // Content
             Expanded(
               child: AuthService().isLoggedIn
                   ? Consumer<GenerationProvider>(
                       builder: (context, provider, _) {
-                        // 有数据了就不重复加载
+                        // 首次进入自动加载
                         if (!provider.isLoading && provider.history.isEmpty && provider.error == null) {
-                          // 首次进入或登录后自动加载
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             provider.loadHistory();
                           });
@@ -282,130 +288,62 @@ class _WorksScreenState extends State<WorksScreen> {
                         }
 
                         if (provider.history.isEmpty) {
-                          return Center(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      gradient: LinearGradient(
-                                        begin: Alignment(-1, -1),
-                                        end: Alignment(1, 1),
-                                        colors: [AppTheme.primary.withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.15)],
-                                      ),
-                                    ),
-                                    child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  const Text(
-                                    'No Works Yet',
-                                    style: TextStyle(
-                                      color: AppTheme.textSecondary,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Try your first face swap now!',
-                                    style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  SizedBox(
-                                    width: 200,
-                                    height: 48,
-                                    child: MaterialButton(
-                                      onPressed: () {
-                                        // 跳到首页（Tab0）
-                                        HomeScreen.tabController?.animateTo(0);
-                                      },
-                                      color: AppTheme.primary,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                      child: const Text(
-                                        'Start Creating',
-                                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
+                          return _buildEmptyState();
                         }
 
-                      final groups = _groupByDate(provider.history);
-                      final total = provider.history.length;
+                        final groups = _groupByDate(provider.history);
 
-                      // Debug: 直接用简单列表渲染，确认数据能显示
-                      if (total == 0) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 80, height: 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  gradient: LinearGradient(
-                                    begin: Alignment(-1, -1), end: Alignment(1, 1),
-                                    colors: [AppTheme.primary.withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.15)],
+                        return RefreshIndicator(
+                          color: AppTheme.primary,
+                          backgroundColor: AppTheme.cardBackground,
+                          onRefresh: _onRefresh,
+                          child: CustomScrollView(
+                            slivers: [
+                              for (final group in groups) ...[
+                                SliverStickyHeader(
+                                  header: Container(
+                                    color: AppTheme.background,
+                                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(group.title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                                        if (group.subtitle.isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          Padding(
+                                            padding: const EdgeInsets.only(bottom: 2),
+                                            child: Text(group.subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                          ),
+                                        ],
+                                        const Spacer(),
+                                        Text('${group.items.length}', style: const TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
+                                      ],
+                                    ),
+                                  ),
+                                  sliver: SliverPadding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    sliver: SliverGrid(
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        mainAxisSpacing: 2,
+                                        crossAxisSpacing: 2,
+                                      ),
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, index) => _buildWorkItem(group.items[index]),
+                                        childCount: group.items.length,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
-                              ),
-                              const SizedBox(height: 20),
-                              const Text('No Works Yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 18, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 8),
-                              const Text('Try your first face swap now!', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14)),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: 200, height: 48,
-                                child: MaterialButton(
-                                  onPressed: () => HomeScreen.tabController?.animateTo(0),
-                                  color: AppTheme.primary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                  child: const Text('Start Creating', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
-                                ),
-                              ),
+                              ],
+                              const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
                             ],
                           ),
                         );
-                      }
-
-                      return RefreshIndicator(
-                        color: AppTheme.primary,
-                        backgroundColor: AppTheme.cardBackground,
-                        onRefresh: _onRefresh,
-                        child: CustomScrollView(
-                          slivers: [
-                            // 简单网格，不用 SliverStickyHeader
-                            SliverPadding(
-                              padding: const EdgeInsets.all(2),
-                              sliver: SliverGrid(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 2,
-                                  crossAxisSpacing: 2,
-                                ),
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => _buildWorkItem(provider.history[index]),
-                                  childCount: total,
-                                ),
-                              ),
-                            ),
-                            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-                          ],
-                        ),
-                      );
-                    },
-                  )
-              : _buildLoginGuide(),
+                      },
+                    )
+                  : _buildLoginGuide(),
             ),
           ],
         ),
@@ -427,48 +365,36 @@ class _WorksScreenState extends State<WorksScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Thumbnail
               if (resultUrl.isNotEmpty)
                 CachedNetworkImage(
                   imageUrl: resultUrl,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const SizedBox(),
+                  placeholder: (_, __) => Container(color: AppTheme.surfaceBackground, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)))),
+                  errorWidget: (_, __, ___) => Container(color: AppTheme.surfaceBackground, child: const Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 32)),
                 ),
 
-              // Video play icon (bottom-left small circle)
+              // Video icon
               if (isVideo)
                 Positioned(
-                  bottom: 6,
-                  left: 6,
+                  bottom: 6, left: 6,
                   child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.play_arrow, color: Colors.white, size: 13),
-                    ),
+                    width: 22, height: 22,
+                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                    child: const Center(child: Icon(Icons.play_arrow, color: Colors.white, size: 13)),
                   ),
                 ),
 
-              // Status badge (top-right)
+              // Status badge
               Positioned(
-                top: 4,
-                right: 4,
+                top: 4, right: 4,
                 child: Container(
-                  width: 16,
-                  height: 16,
+                  width: 16, height: 16,
                   decoration: BoxDecoration(
                     color: isSuccess ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(
-                      isSuccess ? '✓' : '✕',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
+                    child: Text(isSuccess ? '✓' : '✕', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -486,19 +412,6 @@ class _DateGroup {
   final String sortKey;
   final List<Generation> items;
   const _DateGroup({required this.title, required this.subtitle, required this.sortKey, required this.items});
-}
-
-/// StickyHeader widget for date groups
-class SliverStickyHeader extends StatelessWidget {
-  final Widget header;
-  final Widget sliver;
-
-  const SliverStickyHeader({super.key, required this.header, required this.sliver});
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(child: Column(children: [header, sliver]));
-  }
 }
 
 /// 全屏预览（支持保存+分享）
@@ -552,8 +465,7 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
             if (widget.isVideo)
               const Center(
                 child: SizedBox(
-                  width: 64,
-                  height: 64,
+                  width: 64, height: 64,
                   child: DecoratedBox(
                     decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
                     child: Icon(Icons.play_arrow, color: Colors.white, size: 36),
@@ -599,7 +511,7 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save failed')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: ${e.toString()}')));
       }
     }
   }
