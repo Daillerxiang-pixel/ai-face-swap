@@ -85,11 +85,20 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
-        final msg = e.response?.data?['error'] ?? e.response?.data?['message'] ?? 'Network error';
-        _showError(msg.toString());
+        String msg = 'Network error';
+        if (e.type == DioExceptionType.connectionError) {
+          msg = 'Connection failed, check your network';
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          msg = 'Connection timed out';
+        } else if (e.response?.data != null) {
+          msg = (e.response!.data is Map) 
+              ? (e.response!.data['error'] ?? e.response!.data['message'] ?? 'Request failed').toString()
+              : 'Server error';
+        }
+        _showError(msg);
       }
     } catch (e) {
-      if (mounted) _showError('Network error, please try again');
+      if (mounted) _showError('Error: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

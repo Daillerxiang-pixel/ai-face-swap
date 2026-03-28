@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'auth_service.dart';
 import '../config/app_config.dart';
 
@@ -49,6 +52,13 @@ class ApiService {
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
     ));
+
+    // 信任所有 HTTPS 证书（Let's Encrypt）
+    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) => true;
+      return client;
+    };
 
     // 请求拦截器 — 自动附加 token
     _dio.interceptors.add(InterceptorsWrapper(
