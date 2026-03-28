@@ -171,7 +171,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '发现',
+                  'Discover',
                   style: TextStyle(
                     color: AppTheme.textPrimary,
                     fontSize: 34,
@@ -197,7 +197,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     fontSize: 14,
                   ),
                   decoration: InputDecoration(
-                    hintText: '搜索模板、风格、场景...',
+                    hintText: 'Search templates, styles...',
                     hintStyle: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
@@ -227,9 +227,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ),
                 child: Row(
                   children: [
-                    _buildSegItem('推荐', 0),
-                    _buildSegItem('热门', 1),
-                    _buildSegItem('最新', 2),
+                    _buildSegItem('Featured', 0),
+                    _buildSegItem('Popular', 1),
+                    _buildSegItem('New', 2),
                     _buildSegItem('VIP', 3),
                   ],
                 ),
@@ -245,15 +245,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 backgroundColor: AppTheme.cardBackground,
                 onRefresh: () => _loadTemplates(isRefresh: true),
                 child: _isLoading
-                    ? const LoadingWidget(message: '加载中...')
+                    ? const LoadingWidget(message: 'Loading...')
                     : _templates.isEmpty
                         ? ListView(
                             children: const [
                               SizedBox(height: 120),
                               EmptyStateWidget(
                                 icon: Icons.search_off_outlined,
-                                title: '暂无结果',
-                                subtitle: '换个关键词试试',
+                                title: 'No results',
+                                subtitle: 'Try a different keyword',
                               ),
                             ],
                           )
@@ -402,7 +402,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${_formatCount(template.useCount)} 次使用',
+                        '${_formatCount(template.useCount)} uses',
                         style: const TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 12,

@@ -452,7 +452,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
             // 进度百分比 / 错误信息
             if (isFailed)
               Text(
-                _errorMsg ?? '生成失败，请重试',
+                _errorMsg ?? 'Generation failed, please retry',
                 style: const TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 14,
@@ -485,7 +485,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                         ),
                       ),
-                      child: const Text('返回重选'),
+                      child: const Text('Go Back'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -500,7 +500,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                         ),
                       ),
-                      child: const Text('重试'),
+                      child: const Text('Retry'),
                     ),
                   ),
                 ],
@@ -520,7 +520,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                     ),
                   ),
-                  child: const Text('取消'),
+                  child: const Text('Cancel'),
                 ),
               ),
           ],
@@ -533,14 +533,14 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   String _getProgressText() {
     switch (_status) {
       case 'completed':
-        return _isVideo ? '视频生成完成！' : '换脸完成！';
+        return _isVideo ? 'Video generation complete!' : 'Face swap complete!';
       case 'failed':
-        return '生成失败';
+        return 'Generation failed';
       default:
-        if (_progress < 10) return '正在提交任务...';
-        if (_progress < 50) return _isVideo ? '视频处理中...' : 'AI 正在分析...';
-        if (_progress < 90) return _isVideo ? '视频合成中...' : '正在生成...';
-        return _isVideo ? '即将完成...' : '马上就好...';
+        if (_progress < 10) return 'Submitting...';
+        if (_progress < 50) return _isVideo ? 'Processing video...' : 'AI analyzing...';
+        if (_progress < 90) return _isVideo ? 'Compositing video...' : 'Generating...';
+        return _isVideo ? 'Almost done...' : 'Finishing up...';
     }
   }
 
@@ -559,7 +559,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                '选择照片',
+                'Select Photo',
                 style: TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 16,
@@ -569,7 +569,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
-                title: const Text('拍照', style: TextStyle(color: AppTheme.textPrimary)),
+                title: const Text('Camera', style: TextStyle(color: AppTheme.textPrimary)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFromSource(ImageSource.camera);
@@ -577,7 +577,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
-                title: const Text('从相册选择', style: TextStyle(color: AppTheme.textPrimary)),
+                title: const Text('From Gallery', style: TextStyle(color: AppTheme.textPrimary)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFromSource(ImageSource.gallery);
@@ -608,7 +608,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       // 自动上传
       _uploadImage(image.path);
     } catch (e) {
-      AppToast.error('选择照片失败');
+      AppToast.error('Failed to select photo');
     }
   }
 
@@ -631,20 +631,20 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         if (mounted) {
           setState(() => _isUploading = false);
         }
-        AppToast.error(res.message ?? '上传失败');
+        AppToast.error(res.message ?? 'Upload failed');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isUploading = false);
       }
-      AppToast.error('上传失败，请检查网络');
+      AppToast.error('Upload failed, check your network');
     }
   }
 
   /// 提交生成任务
   Future<void> _startGenerate() async {
     if (_fileId == null) {
-      AppToast.warning('请先上传照片');
+      AppToast.warning('Please upload a photo first');
       return;
     }
 
@@ -703,13 +703,13 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       } else {
         setState(() {
           _status = 'failed';
-          _errorMsg = res.message ?? '提交生成任务失败';
+          _errorMsg = res.message ?? 'Submit generation failed';
         });
       }
     } catch (e) {
       setState(() {
         _status = 'failed';
-        _errorMsg = '网络错误，请重试';
+        _errorMsg = 'Network error, please retry';
       });
     }
   }
@@ -724,7 +724,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       if (_pollCount > _maxPolls) {
         setState(() {
           _status = 'failed';
-          _errorMsg = '生成超时，请稍后再试';
+          _errorMsg = 'Generation timed out, please retry later';
         });
         return;
       }

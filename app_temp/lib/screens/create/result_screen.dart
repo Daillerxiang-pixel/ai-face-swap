@@ -106,7 +106,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               )
                             : const Icon(Icons.download, size: 18),
                         label: Text(
-                          _isVideo ? '保存视频' : '保存图片',
+                          _isVideo ? 'Save Video' : 'Save Image',
                           style: const TextStyle(fontSize: 15),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -137,7 +137,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         },
                         icon: const Icon(Icons.refresh, size: 18),
                         label: const Text(
-                          '再来一次',
+                          'Try Again',
                           style: TextStyle(fontSize: 15),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -173,7 +173,7 @@ class _ResultScreenState extends State<ResultScreen> {
             Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 64),
             SizedBox(height: 16),
             Text(
-              '结果图片加载失败',
+              'Failed to load result image',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             ),
           ],
@@ -230,7 +230,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   Icon(Icons.videocam, color: Colors.white, size: 14),
                   SizedBox(width: 4),
                   Text(
-                    '视频结果',
+                    'Video Result',
                     style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ],
@@ -319,7 +319,7 @@ class _ResultScreenState extends State<ResultScreen> {
   /// 保存到相册
   Future<void> _saveToGallery() async {
     if (_displayUrl.isEmpty) {
-      AppToast.error('没有可保存的内容');
+      AppToast.error('No content to save');
       return;
     }
 
@@ -344,9 +344,9 @@ class _ResultScreenState extends State<ResultScreen> {
           setState(() => _isSaving = false);
           final isSuccess = result['isSuccess'] == true;
           if (isSuccess) {
-            AppToast.success('视频已保存到相册');
+            AppToast.success('Video saved to gallery');
           } else {
-            AppToast.error('保存失败，请检查相册权限');
+            AppToast.error('Save failed, check gallery permissions');
           }
         }
       } else {
@@ -361,16 +361,16 @@ class _ResultScreenState extends State<ResultScreen> {
           setState(() => _isSaving = false);
           final isSuccess = result['isSuccess'] == true;
           if (isSuccess) {
-            AppToast.success('已保存到相册');
+            AppToast.success('Saved to gallery');
           } else {
-            AppToast.error('保存失败，请检查相册权限');
+            AppToast.error('Save failed, check gallery permissions');
           }
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        AppToast.error('保存失败');
+        AppToast.error('Save failed');
       }
     }
   }

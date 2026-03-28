@@ -78,7 +78,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
       debugPrint('[HomeTab] 数据加载失败: $e\n$stack');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加载失败: $e')),
+          SnackBar(content: Text('Load failed: $e')),
         );
       }
     } finally {

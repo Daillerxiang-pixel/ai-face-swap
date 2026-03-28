@@ -233,17 +233,17 @@ class _WorksScreenState extends State<WorksScreen> {
           children: [
             Icon(Icons.error_outline, color: Colors.redAccent, size: 24),
             SizedBox(width: 8),
-            Text('生成失败', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text('Generation failed', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
           ],
         ),
         content: Text(
-          item.errorMessage ?? '未知错误，请重试',
+          item.errorMessage ?? 'Unknown error, please retry',
           style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('关闭', style: TextStyle(color: AppTheme.primary)),
+            child: const Text('Close', style: TextStyle(color: AppTheme.primary)),
           ),
         ],
       ),

@@ -170,7 +170,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${_template.useCount}人使用',
+                          '${_template.useCount} uses',
                           style: const TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 13,
@@ -271,7 +271,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                       );
                     },
                     child: Text(
-                      _template.isVideo ? '视频换脸' : '立即使用',
+                      _template.isVideo ? 'Video Swap' : 'Try Now',
                       style: const TextStyle(
                         color: AppTheme.textPrimary,
                         fontSize: 16,
@@ -365,7 +365,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   const Text(
-                    '视频模板',
+                    'Video Template',
                     style: TextStyle(color: Colors.white, fontSize: 11),
                   ),
                 ],

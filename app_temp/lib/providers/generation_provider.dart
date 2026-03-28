@@ -73,7 +73,7 @@ class GenerationProvider with ChangeNotifier {
       if (res.success && res.data != null) {
         return res.data as Map<String, dynamic>;
       } else {
-        _error = res.message ?? '创建任务失败';
+        _error = res.message ?? 'Failed to create task';
         notifyListeners();
         return null;
       }
@@ -107,7 +107,7 @@ class GenerationProvider with ChangeNotifier {
         if (_pollCount * AppConfig.pollInterval ~/ 1000 >
             AppConfig.maxWaitSeconds) {
           stopPolling();
-          _error = '生成超时';
+          _error = 'Generation timed out';
           notifyListeners();
           return;
         }

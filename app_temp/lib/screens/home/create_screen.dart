@@ -21,7 +21,7 @@ class CreateScreen extends StatelessWidget {
               const SizedBox(height: 40),
               // 标题
               const Text(
-                'AI换脸创作',
+                'AI Face Swap',
                 style: TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 28,
@@ -30,7 +30,7 @@ class CreateScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                '选择模板，上传照片，一键生成',
+                'Choose a template, upload a photo, and generate with one tap',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 15,
@@ -41,8 +41,8 @@ class CreateScreen extends StatelessWidget {
               _buildFeatureCard(
                 context,
                 icon: Icons.auto_awesome,
-                title: '模板换脸',
-                subtitle: '选择模板，AI自动换脸',
+                title: 'Template Swap',
+                subtitle: 'Pick a template, AI swaps faces instantly',
                 gradient: AppTheme.primaryGradient,
                 onTap: () {
                   Navigator.of(context).push(
@@ -56,8 +56,8 @@ class CreateScreen extends StatelessWidget {
               _buildFeatureCard(
                 context,
                 icon: Icons.photo_library_outlined,
-                title: '我的创作',
-                subtitle: '查看历史生成记录',
+                title: 'My Works',
+                subtitle: 'View your generation history',
                 gradient: const LinearGradient(
                   begin: Alignment(-1, -1),
                   end: Alignment(1, 1),

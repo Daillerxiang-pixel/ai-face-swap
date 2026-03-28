@@ -14,10 +14,10 @@ class AppBottomTabBar extends StatelessWidget {
 
   /// Tab 配置
   static const _tabs = [
-    (Icons.home_outlined, Icons.home, '首页'),
-    (Icons.auto_fix_high_outlined, Icons.auto_fix_high, '创作'),
-    (Icons.grid_view_outlined, Icons.grid_view, '作品'),
-    (Icons.person_outline, Icons.person, '我的'),
+    (Icons.home_outlined, Icons.home, 'Home'),
+    (Icons.auto_fix_high_outlined, Icons.auto_fix_high, 'Create'),
+    (Icons.grid_view_outlined, Icons.grid_view, 'Works'),
+    (Icons.person_outline, Icons.person, 'Profile'),
   ];
 
   @override

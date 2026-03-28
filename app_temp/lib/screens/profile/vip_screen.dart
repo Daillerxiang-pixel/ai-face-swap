@@ -6,8 +6,8 @@ class VipScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('会员中心'), backgroundColor: AppTheme.cardBackground),
-      body: const Center(child: Text('会员中心 - 开发中', style: TextStyle(color: AppTheme.textSecondary))),
+      appBar: AppBar(title: const Text('VIP Center'), backgroundColor: AppTheme.cardBackground),
+      body: const Center(child: Text('VIP Center - Coming Soon', style: TextStyle(color: AppTheme.textSecondary))),
     );
   }
 }
