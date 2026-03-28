@@ -269,6 +269,14 @@ class _WorksScreenState extends State<WorksScreen> {
               child: AuthService().isLoggedIn
                   ? Consumer<GenerationProvider>(
                       builder: (context, provider, _) {
+                        // 有数据了就不重复加载
+                        if (!provider.isLoading && provider.history.isEmpty && provider.error == null) {
+                          // 首次进入或登录后自动加载
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            provider.loadHistory();
+                          });
+                        }
+
                         if (provider.isLoading && provider.history.isEmpty) {
                           return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
                         }
