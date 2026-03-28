@@ -340,6 +340,43 @@ class _WorksScreenState extends State<WorksScreen> {
                         }
 
                       final groups = _groupByDate(provider.history);
+                      final total = provider.history.length;
+
+                      // Debug: 直接用简单列表渲染，确认数据能显示
+                      if (total == 0) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 80, height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment(-1, -1), end: Alignment(1, 1),
+                                    colors: [AppTheme.primary.withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.15)],
+                                  ),
+                                ),
+                                child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
+                              ),
+                              const SizedBox(height: 20),
+                              const Text('No Works Yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 18, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 8),
+                              const Text('Try your first face swap now!', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14)),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: 200, height: 48,
+                                child: MaterialButton(
+                                  onPressed: () => HomeScreen.tabController?.animateTo(0),
+                                  color: AppTheme.primary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  child: const Text('Start Creating', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
 
                       return RefreshIndicator(
                         color: AppTheme.primary,
@@ -347,41 +384,21 @@ class _WorksScreenState extends State<WorksScreen> {
                         onRefresh: _onRefresh,
                         child: CustomScrollView(
                           slivers: [
-                            for (final group in groups) ...[
-                              SliverStickyHeader(
-                                header: Container(
-                                  color: AppTheme.background,
-                                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(group.title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
-                                      if (group.subtitle.isNotEmpty) ...[
-                                        const SizedBox(width: 8),
-                                        Padding(
-                                          padding: const EdgeInsets.only(bottom: 2),
-                                          child: Text(group.subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
+                            // 简单网格，不用 SliverStickyHeader
+                            SliverPadding(
+                              padding: const EdgeInsets.all(2),
+                              sliver: SliverGrid(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 2,
+                                  crossAxisSpacing: 2,
                                 ),
-                                sliver: SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                                  sliver: SliverGrid(
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 3,
-                                      mainAxisSpacing: 2,
-                                      crossAxisSpacing: 2,
-                                    ),
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) => _buildWorkItem(group.items[index]),
-                                      childCount: group.items.length,
-                                    ),
-                                  ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) => _buildWorkItem(provider.history[index]),
+                                  childCount: total,
                                 ),
                               ),
-                            ],
+                            ),
                             const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
                           ],
                         ),
