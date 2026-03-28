@@ -271,7 +271,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                       );
                     },
                     child: Text(
-                      _template.isVideo ? 'Video Swap' : 'Try Now',
+                      _template.isVideo ? 'Video Template' : 'Use Template',
                       style: const TextStyle(
                         color: AppTheme.textPrimary,
                         fontSize: 16,
@@ -365,7 +365,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   const Text(
-                    'Video Template',
+                    'Video',
                     style: TextStyle(color: Colors.white, fontSize: 11),
                   ),
                 ],

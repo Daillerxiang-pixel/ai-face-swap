@@ -197,7 +197,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     fontSize: 14,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search templates, styles...',
+                    hintText: 'Search templates, scenes, styles...',
                     hintStyle: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
@@ -227,9 +227,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ),
                 child: Row(
                   children: [
-                    _buildSegItem('Featured', 0),
-                    _buildSegItem('Popular', 1),
-                    _buildSegItem('New', 2),
+                    _buildSegItem('Recommended', 0),
+                    _buildSegItem('Trending', 1),
+                    _buildSegItem('Newest', 2),
                     _buildSegItem('VIP', 3),
                   ],
                 ),
@@ -253,7 +253,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               EmptyStateWidget(
                                 icon: Icons.search_off_outlined,
                                 title: 'No results',
-                                subtitle: 'Try a different keyword',
+                                subtitle: 'Try different keywords',
                               ),
                             ],
                           )

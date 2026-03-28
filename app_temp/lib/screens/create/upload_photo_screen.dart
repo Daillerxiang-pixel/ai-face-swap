@@ -301,7 +301,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'JPG / PNG / WEBP supported',
+                              'Supports JPG / PNG / WEBP',
                               style: TextStyle(
                                 color: AppTheme.textTertiary,
                                 fontSize: 12,
@@ -339,8 +339,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           Expanded(
             child: Text(
               _isVideo
-                  ? 'Video face swap takes 1-3 minutes. For best results, use a clear, well-lit frontal photo.'
-                  : 'For best results, use a clear, well-lit frontal photo.',
+                  ? 'Video face swap takes 1-3 minutes. For best results, use a clear, front-facing photo with good lighting.'
+                  : 'For best results, use a clear, front-facing photo with good lighting.',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13,
@@ -533,14 +533,14 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   String _getProgressText() {
     switch (_status) {
       case 'completed':
-        return _isVideo ? 'Video generation complete!' : 'Face swap complete!';
+        return _isVideo ? 'Video complete!' : 'Swap complete!';
       case 'failed':
         return 'Generation failed';
       default:
         if (_progress < 10) return 'Submitting...';
-        if (_progress < 50) return _isVideo ? 'Processing video...' : 'AI analyzing...';
+        if (_progress < 50) return _isVideo ? 'Processing video...' : 'AI is analyzing...';
         if (_progress < 90) return _isVideo ? 'Compositing video...' : 'Generating...';
-        return _isVideo ? 'Almost done...' : 'Finishing up...';
+        return _isVideo ? 'Almost done...' : 'Almost there...';
     }
   }
 
@@ -577,7 +577,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
-                title: const Text('From Gallery', style: TextStyle(color: AppTheme.textPrimary)),
+                title: const Text('Photo Library', style: TextStyle(color: AppTheme.textPrimary)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFromSource(ImageSource.gallery);
@@ -637,7 +637,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       if (mounted) {
         setState(() => _isUploading = false);
       }
-      AppToast.error('Upload failed, check your network');
+      AppToast.error('Upload failed, check network');
     }
   }
 
@@ -703,7 +703,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       } else {
         setState(() {
           _status = 'failed';
-          _errorMsg = res.message ?? 'Submit generation failed';
+          _errorMsg = res.message ?? 'Failed to submit task';
         });
       }
     } catch (e) {
@@ -724,7 +724,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       if (_pollCount > _maxPolls) {
         setState(() {
           _status = 'failed';
-          _errorMsg = 'Generation timed out, please retry later';
+          _errorMsg = 'Generation timed out';
         });
         return;
       }

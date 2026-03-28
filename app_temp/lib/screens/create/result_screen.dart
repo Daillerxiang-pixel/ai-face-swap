@@ -173,7 +173,7 @@ class _ResultScreenState extends State<ResultScreen> {
             Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 64),
             SizedBox(height: 16),
             Text(
-              'Failed to load result image',
+              'Failed to load image',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             ),
           ],
@@ -319,7 +319,7 @@ class _ResultScreenState extends State<ResultScreen> {
   /// 保存到相册
   Future<void> _saveToGallery() async {
     if (_displayUrl.isEmpty) {
-      AppToast.error('No content to save');
+      AppToast.error('Nothing to save');
       return;
     }
 
@@ -346,7 +346,7 @@ class _ResultScreenState extends State<ResultScreen> {
           if (isSuccess) {
             AppToast.success('Video saved to gallery');
           } else {
-            AppToast.error('Save failed, check gallery permissions');
+            AppToast.error('Save failed, check storage permission');
           }
         }
       } else {
@@ -363,7 +363,7 @@ class _ResultScreenState extends State<ResultScreen> {
           if (isSuccess) {
             AppToast.success('Saved to gallery');
           } else {
-            AppToast.error('Save failed, check gallery permissions');
+            AppToast.error('Save failed, check storage permission');
           }
         }
       }

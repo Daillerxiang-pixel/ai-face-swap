@@ -168,9 +168,15 @@ class _WorksScreenState extends State<WorksScreen> {
             ),
             child: MaterialButton(
               onPressed: () async {
-                await Navigator.pushNamed(context, '/login');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sign in coming soon')),
+                );
+                // 模拟登录：设置本地标记并刷新状态
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('has_logged_in', true);
                 if (mounted) {
-                  setState(() { _checkLoginStatus(); });
+                  setState(() { _hasLoggedIn = true; });
+                  context.read<GenerationProvider>().loadHistory();
                 }
               },
               child: const Text(
@@ -233,7 +239,7 @@ class _WorksScreenState extends State<WorksScreen> {
           children: [
             Icon(Icons.error_outline, color: Colors.redAccent, size: 24),
             SizedBox(width: 8),
-            Text('Generation failed', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text('Generation Failed', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
           ],
         ),
         content: Text(

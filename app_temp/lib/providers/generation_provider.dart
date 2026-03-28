@@ -48,7 +48,7 @@ class GenerationProvider with ChangeNotifier {
             [];
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Failed to load history';
     } finally {
       _isLoading = false;
       notifyListeners();

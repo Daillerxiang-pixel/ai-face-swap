@@ -30,7 +30,7 @@ class CreateScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Choose a template, upload a photo, and generate with one tap',
+                'Select a template, upload a photo, create in one tap',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 15,
@@ -41,8 +41,8 @@ class CreateScreen extends StatelessWidget {
               _buildFeatureCard(
                 context,
                 icon: Icons.auto_awesome,
-                title: 'Template Swap',
-                subtitle: 'Pick a template, AI swaps faces instantly',
+                title: 'Templates',
+                subtitle: 'Choose a template, AI does the rest',
                 gradient: AppTheme.primaryGradient,
                 onTap: () {
                   Navigator.of(context).push(
@@ -57,7 +57,7 @@ class CreateScreen extends StatelessWidget {
                 context,
                 icon: Icons.photo_library_outlined,
                 title: 'My Works',
-                subtitle: 'View your generation history',
+                subtitle: 'View generation history',
                 gradient: const LinearGradient(
                   begin: Alignment(-1, -1),
                   end: Alignment(1, 1),

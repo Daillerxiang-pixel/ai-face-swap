@@ -10,8 +10,6 @@ import 'screens/home/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/email_login_screen.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/email_login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
