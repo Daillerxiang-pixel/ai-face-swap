@@ -282,25 +282,44 @@ class _WorksScreenState extends State<WorksScreen> {
 
                         if (provider.history.isEmpty) {
                           return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'No Works Yet',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'No Works Yet',
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Your face swap creations will appear here',
-                                  style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Your face swap creations will appear here',
+                                    style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  // Sign out button to reset login state
+                                  TextButton(
+                                    onPressed: () async {
+                                      final prefs = await SharedPreferences.getInstance();
+                                      await prefs.remove('has_logged_in');
+                                      if (mounted) {
+                                        setState(() { _hasLoggedIn = false; });
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Not you? Sign out',
+                                      style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }
