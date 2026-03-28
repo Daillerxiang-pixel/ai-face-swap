@@ -7,6 +7,7 @@ const templateRoutes = require('./routes/templates');
 const generateRoutes = require('./routes/generate');
 const userRoutes = require('./routes/user');
 const uploadRoutes = require('./routes/upload');
+const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/generate', generateRoutes);
 app.use('/api/user', userRoutes);

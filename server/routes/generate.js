@@ -15,10 +15,13 @@ const path = require('path');
 const { getDb } = require('../data/database');
 const providerRegistry = require('../providers');
 const { isOSSAvailable, getOSSBaseURL, uploadToOSS } = require('../utils/oss');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = Router();
 
-const MOCK_USER_ID = 'user-mock-001';
+// All routes require authentication
+router.use(authMiddleware);
+
 const USE_OSS = isOSSAvailable();
 
 // ===== POST /api/generate =====
@@ -65,11 +68,11 @@ router.post('/', async (req, res) => {
     // 3. 创建生成记录
     db.prepare(
       'INSERT INTO generations (id, user_id, template_id, source_image, type, status, provider) VALUES (?,?,?,?,?,?,?)'
-    ).run(genId, MOCK_USER_ID, templateId, sourceRecord.file_path, template.type, 'processing', providerName);
+    ).run(genId, req.userId, templateId, sourceRecord.file_path, template.type, 'processing', providerName);
 
     // 4. 更新使用统计
     db.prepare('UPDATE users SET monthly_usage = monthly_usage + 1, total_generated = total_generated + 1 WHERE id = ?')
-      .run(MOCK_USER_ID);
+      .run(req.userId);
     db.prepare('UPDATE templates SET usage_count = usage_count + 1 WHERE id = ?').run(templateId);
 
     // 5. 如果源文件在 OSS，先下载到本地临时文件

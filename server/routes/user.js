@@ -1,16 +1,18 @@
 const { Router } = require('express');
 const { getDb } = require('../data/database');
+const { authMiddleware } = require('../middleware/auth');
 
 const router = Router();
 
-const MOCK_USER_ID = 'user-mock-001';
+// All routes require authentication
+router.use(authMiddleware);
 
 // GET /api/user/profile
 router.get('/profile', (req, res) => {
   const db = getDb();
-  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated FROM users WHERE id = ?').get(MOCK_USER_ID);
+  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated FROM users WHERE id = ?').get(req.userId);
 
-  if (!user) return res.status(404).json({ success: false, error: '用户不存在' });
+  if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
   res.json({
     success: true,
@@ -30,7 +32,7 @@ router.get('/favorites', (req, res) => {
     FROM favorites f JOIN templates t ON f.template_id = t.id
     WHERE f.user_id = ? AND t.is_active = 1
     ORDER BY f.created_at DESC
-  `).all(MOCK_USER_ID);
+  `).all(req.userId);
 
   res.json({
     success: true,
@@ -57,7 +59,7 @@ router.get('/history', (req, res) => {
     WHERE g.user_id = ?
     ORDER BY g.created_at DESC
     LIMIT ? OFFSET ?
-  `).all(MOCK_USER_ID, parseInt(limit), offset);
+  `).all(req.userId, parseInt(limit), offset);
 
   res.json({ success: true, data: history, page: parseInt(page) });
 });
@@ -66,7 +68,7 @@ router.get('/history', (req, res) => {
 router.get('/favorite/:templateId', (req, res) => {
   const db = getDb();
   const fav = db.prepare('SELECT 1 FROM favorites WHERE user_id = ? AND template_id = ?')
-    .get(MOCK_USER_ID, parseInt(req.params.templateId));
+    .get(req.userId, parseInt(req.params.templateId));
   res.json({ success: true, data: { favorited: !!fav } });
 });
 
