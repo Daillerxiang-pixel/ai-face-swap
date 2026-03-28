@@ -8,9 +8,6 @@ class AppConfig {
   /// OSS 图片基础地址
   static const String ossBaseUrl = 'https://aihuantu.oss-cn-beijing.aliyuncs.com';
 
-  /// 模拟用户ID（开发阶段使用）
-  static const String mockUserId = 'user-mock-001';
-
   /// 每页加载数量
   static const int pageSize = 20;
 

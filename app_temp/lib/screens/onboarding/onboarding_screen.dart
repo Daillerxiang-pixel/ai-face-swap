@@ -148,43 +148,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }),
               ),
             ),
-            // Bottom buttons
+            // Bottom buttons — 用 SafeArea 包裹防止被导航栏遮挡
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 60),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: _onSkip,
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 15,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: _onSkip,
+                      child: const Text(
+                        'Skip',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                  ),
-                  ElevatedButton(
-                    onPressed: _onNext,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
+                    ElevatedButton(
+                      onPressed: _onNext,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        elevation: 0,
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

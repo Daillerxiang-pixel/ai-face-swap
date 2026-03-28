@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
-import '../../providers/user_provider.dart';
+import '../../services/auth_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
@@ -21,26 +21,15 @@ class WorksScreen extends StatefulWidget {
 }
 
 class _WorksScreenState extends State<WorksScreen> {
-  bool _hasLoggedIn = false;
-
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
-  }
-
-  /// 检查本地是否有登录记录（不依赖 API）
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _hasLoggedIn = prefs.getBool('has_logged_in') ?? false;
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       // 如果已登录，加载历史
-      if (_hasLoggedIn) {
+      if (AuthService().isLoggedIn) {
         context.read<GenerationProvider>().loadHistory();
       }
-    }
+    });
   }
 
   Future<void> _onRefresh() async {
@@ -169,9 +158,10 @@ class _WorksScreenState extends State<WorksScreen> {
             child: MaterialButton(
               onPressed: () async {
                 final result = await Navigator.pushNamed(context, '/login');
-                // 登录成功后刷新状态
+                // 登录成功后刷新
                 if (result == true && mounted) {
-                  await _checkLoginStatus();
+                  setState(() {});
+                  context.read<GenerationProvider>().loadHistory();
                 }
               },
               child: const Text(
@@ -273,7 +263,7 @@ class _WorksScreenState extends State<WorksScreen> {
             ),
             // Content
             Expanded(
-              child: _hasLoggedIn
+              child: AuthService().isLoggedIn
                   ? Consumer<GenerationProvider>(
                       builder: (context, provider, _) {
                         if (provider.isLoading && provider.history.isEmpty) {
@@ -306,12 +296,9 @@ class _WorksScreenState extends State<WorksScreen> {
                                   const SizedBox(height: 24),
                                   // Sign out button to reset login state
                                   TextButton(
-                                    onPressed: () async {
-                                      final prefs = await SharedPreferences.getInstance();
-                                      await prefs.remove('has_logged_in');
-                                      if (mounted) {
-                                        setState(() { _hasLoggedIn = false; });
-                                      }
+                                    onPressed: () {
+                                      AuthService().clearToken();
+                                      setState(() {});
                                     },
                                     child: const Text(
                                       'Not you? Sign out',

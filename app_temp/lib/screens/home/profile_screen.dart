@@ -111,8 +111,8 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/login');
+                        onTap: () async {
+                          await Navigator.pushNamed(context, '/login');
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),

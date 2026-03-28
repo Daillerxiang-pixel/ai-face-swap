@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'auth_service.dart';
 import '../config/app_config.dart';
 
 /// API 统一响应模型
@@ -39,22 +40,31 @@ class ApiResponse<T> {
 class ApiService {
   late final Dio _dio;
 
+  /// 暴露 Dio 实例供登录等直接 HTTP 调用使用
+  Dio get dio => _dio;
+
   ApiService() {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        // 不设置 Content-Type，让 Dio 根据请求类型自动设置
-        // multipart/form-data 请求如果被设为 application/json 会导致上传失败
-        'X-User-Id': AppConfig.mockUserId,
+    ));
+
+    // 请求拦截器 — 自动附加 token
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final token = AuthService().token;
+        if (token != null && token.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        handler.next(options);
       },
     ));
 
-    // 请求拦截器
+    // 日志拦截器
     _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
+      requestBody: false,
+      responseBody: false,
     ));
   }
 
