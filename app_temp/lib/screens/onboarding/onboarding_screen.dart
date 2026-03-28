@@ -75,7 +75,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: (i) => setState(() => _currentPage = i),
+                physics: const ClampingScrollPhysics(),
+                onPageChanged: (i) {
+                  setState(() => _currentPage = i);
+                  // 滑动到最后一页时自动进入首页
+                  if (i == _slides.length - 1) {
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      if (mounted) {
+                        _completeOnboarding().then((_) {
+                          if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+                        });
+                      }
+                    });
+                  }
+                },
                 itemCount: _slides.length,
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
