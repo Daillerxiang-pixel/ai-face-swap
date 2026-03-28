@@ -179,7 +179,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   Widget _buildTypeToggle() {
     const labels = ['All', 'Photo', 'Video'];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       child: Container(
         height: 36,
         decoration: BoxDecoration(

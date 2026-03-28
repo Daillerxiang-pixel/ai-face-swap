@@ -26,9 +26,9 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     // 设置本地登录标记
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_logged_in', true);
-    // Pop 回到首页
+    // Pop 返回上一页（Works/Profile），传 true 表示登录成功
     if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.of(context).pop(true);
     }
   }
 

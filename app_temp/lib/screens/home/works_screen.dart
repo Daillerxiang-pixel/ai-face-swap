@@ -168,15 +168,10 @@ class _WorksScreenState extends State<WorksScreen> {
             ),
             child: MaterialButton(
               onPressed: () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sign in coming soon')),
-                );
-                // 模拟登录：设置本地标记并刷新状态
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('has_logged_in', true);
-                if (mounted) {
-                  setState(() { _hasLoggedIn = true; });
-                  context.read<GenerationProvider>().loadHistory();
+                final result = await Navigator.pushNamed(context, '/login');
+                // 登录成功后刷新状态
+                if (result == true && mounted) {
+                  await _checkLoginStatus();
                 }
               },
               child: const Text(

@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 
 /// iOS 风格登录页 — Google / Apple / Email
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
+
+  /// 模拟登录：设置标记后返回 true
+  static Future<void> _mockLoginAndReturn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_logged_in', true);
+    if (context.mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +63,7 @@ class LoginScreen extends StatelessWidget {
                   context,
                   icon: _buildGoogleIcon(),
                   label: 'Continue with Google',
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Google Sign In coming soon')),
-                    );
-                  },
+                  onPressed: () => _mockLoginAndReturn(context),
                 ),
                 const SizedBox(height: 12),
                 // Continue with Apple
@@ -65,11 +71,7 @@ class LoginScreen extends StatelessWidget {
                   context,
                   icon: const Icon(Icons.apple, color: Colors.white, size: 22),
                   label: 'Continue with Apple',
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Apple Sign In coming soon')),
-                    );
-                  },
+                  onPressed: () => _mockLoginAndReturn(context),
                 ),
                 const SizedBox(height: 12),
                 // Sign in with Email
@@ -77,8 +79,12 @@ class LoginScreen extends StatelessWidget {
                   context,
                   icon: const Icon(Icons.mail_outline, color: Colors.white, size: 20),
                   label: 'Sign in with Email',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/email-login');
+                  onPressed: () async {
+                    final result = await Navigator.pushNamed(context, '/email-login');
+                    if (result == true && context.mounted) {
+                      // Email 登录成功，关闭登录页并传递结果
+                      Navigator.of(context).pop(true);
+                    }
                   },
                 ),
                 const SizedBox(height: 40),
