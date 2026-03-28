@@ -112,9 +112,7 @@ class ProfileScreen extends StatelessWidget {
                       const Spacer(),
                       GestureDetector(
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Sign in coming soon')),
-                          );
+                          Navigator.pushNamed(context, '/login');
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),

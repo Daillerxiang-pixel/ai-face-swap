@@ -8,6 +8,10 @@ import 'providers/user_provider.dart';
 import 'providers/generation_provider.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/email_login_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/email_login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,12 +39,14 @@ class FaceSwapApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GenerationProvider()),
       ],
       child: MaterialApp(
-        title: 'AI换图',
+        title: 'AI FaceSwap',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
         home: const _EntryPoint(),
         routes: {
           '/home': (_) => const HomeScreen(),
+          '/login': (_) => const LoginScreen(),
+          '/email-login': (_) => const EmailLoginScreen(),
         },
       ),
     );

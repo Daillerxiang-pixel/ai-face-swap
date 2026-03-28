@@ -113,7 +113,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '模板预览',
+          'Template Preview',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 16,
@@ -173,7 +173,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '上传照片',
+          'Upload Photo',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 16,
@@ -210,7 +210,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          '上传中...',
+                          'Uploading...',
                           style: TextStyle(
                             color: AppTheme.textSecondary,
                             fontSize: 14,
@@ -272,7 +272,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                                         color: Colors.white, size: 14),
                                     SizedBox(width: 3),
                                     Text(
-                                      '已上传',
+                                      'Uploaded',
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 12),
                                     ),
@@ -293,7 +293,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              '点击选择照片',
+                              'Tap to select a photo',
                               style: TextStyle(
                                 color: AppTheme.textSecondary,
                                 fontSize: 14,
@@ -301,7 +301,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '支持 JPG / PNG / WEBP',
+                              'JPG / PNG / WEBP supported',
                               style: TextStyle(
                                 color: AppTheme.textTertiary,
                                 fontSize: 12,
@@ -339,8 +339,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           Expanded(
             child: Text(
               _isVideo
-                  ? '视频换脸需要 1-3 分钟处理时间，请耐心等待。建议选择正面、光线良好的照片以获得最佳效果。'
-                  : '建议选择正面、清晰的人像照片，光线良好效果更佳。',
+                  ? 'Video face swap takes 1-3 minutes. For best results, use a clear, well-lit frontal photo.'
+                  : 'For best results, use a clear, well-lit frontal photo.',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13,
@@ -370,7 +370,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           onPressed: canGenerate ? _startGenerate : null,
           disabledColor: Colors.transparent,
           child: Text(
-            _isVideo ? '开始视频换脸' : '开始换脸',
+            _isVideo ? 'Start Video Swap' : 'Start Swap',
             style: TextStyle(
               color: canGenerate
                   ? AppTheme.textPrimary

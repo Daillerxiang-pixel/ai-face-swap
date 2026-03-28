@@ -9,7 +9,7 @@ import '../../widgets/shimmer_widget.dart';
 import '../../widgets/empty_state_widget.dart';
 import 'upload_photo_screen.dart';
 
-/// 模板浏览页面 — 搜索 + All/Photo/Video 切换 + 分类标签 + 网格
+/// Template browser — All/Photo/Video toggle + scene category tabs + grid
 class SelectTemplateScreen extends StatefulWidget {
   final String? initialType;
 
@@ -21,7 +21,6 @@ class SelectTemplateScreen extends StatefulWidget {
 
 class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   final ApiService _api = ApiService();
-  final TextEditingController _searchController = TextEditingController();
 
   String _currentScene = 'All';
   String? _currentType;
@@ -35,12 +34,6 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
     _currentType = widget.initialType;
     _loadScenes();
     _loadTemplates();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadScenes() async {
@@ -65,8 +58,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   void _loadTemplates() {
     final provider = context.read<TemplateProvider>();
     final scene = _currentScene == 'All' ? null : _currentScene;
-    final search = _searchController.text.trim().isEmpty ? null : _searchController.text.trim();
-    provider.loadTemplates(refresh: true, scene: scene, type: _currentType, search: search);
+    provider.loadTemplates(refresh: true, scene: scene, type: _currentType);
   }
 
   Future<void> _onRefresh() async {
@@ -74,10 +66,6 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
     await _loadScenes();
     _loadTemplates();
     if (mounted) setState(() => _isRefreshing = false);
-  }
-
-  void _onSearch() {
-    _loadTemplates();
   }
 
   @override
@@ -101,11 +89,9 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
       ),
       body: Column(
         children: [
-          // Search bar
-          _buildSearchBar(),
           // All / Photo / Video toggle
           _buildTypeToggle(),
-          // Scene tags
+          // Scene category tabs
           _buildSceneTabs(),
           // Sort row
           Consumer<TemplateProvider>(
@@ -137,9 +123,9 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
                       const SizedBox(height: 120),
                       EmptyStateWidget(
                         icon: Icons.wifi_off_outlined,
-                        title: '加载失败',
+                        title: 'Failed to load',
                         subtitle: provider.error,
-                        actionText: '重试',
+                        actionText: 'Retry',
                         onAction: () => _loadTemplates(),
                       ),
                     ],
@@ -152,8 +138,8 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
                       SizedBox(height: 120),
                       EmptyStateWidget(
                         icon: Icons.image_not_supported_outlined,
-                        title: '暂无模板',
-                        subtitle: '更多模板即将上线',
+                        title: 'No templates yet',
+                        subtitle: 'More templates coming soon',
                       ),
                     ],
                   );
@@ -186,45 +172,6 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-      child: Container(
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: TextField(
-          controller: _searchController,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Search templates...',
-            hintStyle: const TextStyle(color: AppTheme.textTertiary, fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: AppTheme.textTertiary, size: 20),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      _onSearch();
-                    },
-                    child: const Icon(Icons.clear, color: AppTheme.textTertiary, size: 18),
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          textInputAction: TextInputAction.search,
-          onSubmitted: (_) => _onSearch(),
-          onChanged: (v) {
-            // Trigger rebuild for clear icon visibility
-            if (mounted) setState(() {});
-          },
-        ),
       ),
     );
   }
