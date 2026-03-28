@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
@@ -162,6 +163,7 @@ class _WorksScreenState extends State<WorksScreen> {
                 if (result == true && mounted) {
                   setState(() {});
                   context.read<GenerationProvider>().loadHistory();
+                  context.read<UserProvider>().loadUserProfile();
                 }
               },
               child: const Text(

@@ -1,16 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../providers/user_provider.dart';
+import '../../services/auth_service.dart';
 import '../profile/vip_purchase_screen.dart';
 import '../profile/favorites_screen.dart';
 import '../profile/settings_screen.dart';
 import 'home_screen.dart';
 
 /// 个人中心页面
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+  }
+
+  void _checkLogin() {
+    setState(() {
+      _isLoggedIn = AuthService().isLoggedIn;
+    });
+  }
 
   void _switchToTab(int index) {
     HomeScreen.tabController?.animateTo(index);
+  }
+
+  Future<void> _handleSignIn() async {
+    final result = await Navigator.pushNamed(context, '/login');
+    if (result == true) {
+      // 登录成功，刷新用户信息
+      _checkLogin();
+      if (mounted) {
+        context.read<UserProvider>().loadUserProfile();
+      }
+    }
+  }
+
+  Future<void> _handleSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        title: const Text('Sign Out', style: TextStyle(color: AppTheme.textPrimary)),
+        content: const Text('Are you sure you want to sign out?', style: TextStyle(color: AppTheme.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign Out', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      AuthService().clearToken();
+      context.read<UserProvider>().logout();
+      _checkLogin();
+    }
   }
 
   @override
@@ -34,48 +87,59 @@ class ProfileScreen extends StatelessWidget {
                   // 第一行：头像 + 昵称 + 会员标签
                   Row(
                     children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment(-1, -1),
-                            end: Alignment(1, 1),
-                            colors: [AppTheme.primary, const Color(0xFF3B82F6)],
+                      Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                        final user = userProvider.user;
+                        return Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment(-1, -1),
+                              end: Alignment(1, 1),
+                              colors: [AppTheme.primary, const Color(0xFF3B82F6)],
+                            ),
                           ),
-                        ),
-                        child: const Icon(Icons.person, color: Colors.white, size: 36),
-                      ),
+                          child: const Icon(Icons.person, color: Colors.white, size: 36),
+                        );
+                      }),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'User',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF3B82F6).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Free Plan',
-                                style: TextStyle(
-                                  color: Color(0xFF3B82F6),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                            Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                              final nickname = userProvider.user?.nickname ?? 'User';
+                              return Text(
+                                nickname,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              ),
-                            ),
+                              );
+                            }),
+                            const SizedBox(height: 4),
+                            Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                              final isVip = userProvider.isVip;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isVip
+                                      ? const Color(0xFFF59E0B).withOpacity(0.15)
+                                      : const Color(0xFF3B82F6).withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isVip ? 'VIP Member' : 'Free Plan',
+                                  style: TextStyle(
+                                    color: isVip ? const Color(0xFFF59E0B) : const Color(0xFF3B82F6),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -83,49 +147,74 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   // 第二行：统计数据
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceBackground,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildStatItem('0', 'Works'),
-                        _buildStatDivider(),
-                        _buildStatItem('0', 'Favorites'),
-                        _buildStatDivider(),
-                        _buildStatItem('3', 'Credits Left'),
-                      ],
-                    ),
-                  ),
+                  Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                    final user = userProvider.user;
+                    final works = user?.totalGenerations ?? 0;
+                    final credits = user?.remainCredits ?? 0;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceBackground,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildStatItem('$works', 'Works'),
+                          _buildStatDivider(),
+                          _buildStatItem('0', 'Favorites'),
+                          _buildStatDivider(),
+                          _buildStatItem('$credits', 'Credits Left'),
+                        ],
+                      ),
+                    );
+                  }),
                   // 第三行：账户信息
                   const SizedBox(height: 14),
                   Row(
                     children: [
                       Icon(Icons.mail_outline, color: AppTheme.textTertiary, size: 16),
                       const SizedBox(width: 8),
-                      Text(
-                        'Not signed in',
-                        style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                      Expanded(
+                        child: Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                          // 显示 userId 前8位作为标识
+                          final userId = AuthService().userId ?? '';
+                          final displayId = userId.isNotEmpty ? '${userId.substring(0, userId.length > 8 ? 8 : userId.length)}...' : 'Not signed in';
+                          return Text(
+                            _isLoggedIn ? 'ID: $displayId' : 'Not signed in',
+                            style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                          );
+                        }),
                       ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () async {
-                          await Navigator.pushNamed(context, '/login');
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.primary, width: 1),
-                            borderRadius: BorderRadius.circular(14),
+                      if (!_isLoggedIn)
+                        GestureDetector(
+                          onTap: _handleSignIn,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.primary, width: 1),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Text(
+                              'Sign In',
+                              style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
                           ),
-                          child: const Text(
-                            'Sign In',
-                            style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                        )
+                      else
+                        GestureDetector(
+                          onTap: _handleSignOut,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.textTertiary.withOpacity(0.3), width: 1),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Text(
+                              'Sign Out',
+                              style: TextStyle(color: AppTheme.textTertiary, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
