@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'home_screen.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
 import '../../providers/generation_provider.dart';
@@ -279,8 +280,20 @@ class _WorksScreenState extends State<WorksScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.photo_library_outlined, color: AppTheme.textTertiary, size: 64),
-                                  const SizedBox(height: 16),
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      gradient: LinearGradient(
+                                        begin: Alignment(-1, -1),
+                                        end: Alignment(1, 1),
+                                        colors: [AppTheme.primary.withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.15)],
+                                      ),
+                                    ),
+                                    child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
+                                  ),
+                                  const SizedBox(height: 20),
                                   const Text(
                                     'No Works Yet',
                                     style: TextStyle(
@@ -291,20 +304,25 @@ class _WorksScreenState extends State<WorksScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    'Your face swap creations will appear here',
+                                    'Try your first face swap now!',
                                     style: TextStyle(color: AppTheme.textTertiary, fontSize: 14),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 24),
-                                  // Sign out button to reset login state
-                                  TextButton(
-                                    onPressed: () {
-                                      AuthService().clearToken();
-                                      setState(() {});
-                                    },
-                                    child: const Text(
-                                      'Not you? Sign out',
-                                      style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                                  SizedBox(
+                                    width: 200,
+                                    height: 48,
+                                    child: MaterialButton(
+                                      onPressed: () {
+                                        // 跳到首页（Tab0）
+                                        HomeScreen.tabController?.animateTo(0);
+                                      },
+                                      color: AppTheme.primary,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      child: const Text(
+                                        'Start Creating',
+                                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                                      ),
                                     ),
                                   ),
                                 ],
