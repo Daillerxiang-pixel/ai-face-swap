@@ -16,7 +16,16 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// Parse JSON body with error handling - don't crash on malformed/empty body
+app.use((req, res, next) => {
+  express.json()(req, res, (err) => {
+    if (err) {
+      // Invalid JSON body — clear it and continue (don't reject the request)
+      req.body = {};
+    }
+    next();
+  });
+});
 app.use(express.static(path.join(__dirname, '..', 'prototype')));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
