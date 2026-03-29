@@ -28,17 +28,16 @@ class LoginScreen extends StatelessWidget {
               children: [
                 // App Logo
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      begin: Alignment(-1, -1),
-                      end: Alignment(1, 1),
-                      colors: [Color(0xFF7C3AED), Color(0xFF3B82F6)],
-                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(color: const Color(0xFF7C3AED).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                    ],
                   ),
-                  child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset('assets/icons/app_icon.png', width: 80, height: 80, fit: BoxFit.cover),
                 ),
                 const SizedBox(height: 16),
                 const Text(
