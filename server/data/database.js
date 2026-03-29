@@ -149,6 +149,10 @@ function initDb() {
       );
     `);
 
+    // Migrate: add auto_save and theme columns to users table
+    try { db.exec('ALTER TABLE users ADD COLUMN auto_save INTEGER DEFAULT 1'); } catch(e) { /* column already exists */ }
+    try { db.exec("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'dark'"); } catch(e) { /* column already exists */ }
+
     // Seed default admin (password: admin123)
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256').update('admin123').digest('hex');

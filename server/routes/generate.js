@@ -65,17 +65,24 @@ router.post('/', async (req, res) => {
     const providerName = template.provider || 'tencent';
     const provider = providerRegistry.getProvider(providerName);
 
-    // 3. 创建生成记录
-    db.prepare(
-      'INSERT INTO generations (id, user_id, template_id, source_image, type, status, provider) VALUES (?,?,?,?,?,?,?)'
-    ).run(genId, req.userId, templateId, sourceRecord.file_path, template.type, 'processing', providerName);
+    // 3. Check user auto_save setting
+    const user = db.prepare('SELECT auto_save FROM users WHERE id = ?').get(req.userId);
+    const autoSave = user ? (user.auto_save !== 0) : true;
 
-    // 4. 更新使用统计
+    // 4. Create generation record (skip if auto_save = 0)
+    let genIdForDb = genId;
+    if (autoSave) {
+      db.prepare(
+        'INSERT INTO generations (id, user_id, template_id, source_image, type, status, provider) VALUES (?,?,?,?,?,?,?)'
+      ).run(genId, req.userId, templateId, sourceRecord.file_path, template.type, 'processing', providerName);
+    }
+
+    // 5. 更新使用统计
     db.prepare('UPDATE users SET monthly_usage = monthly_usage + 1, total_generated = total_generated + 1 WHERE id = ?')
       .run(req.userId);
     db.prepare('UPDATE templates SET usage_count = usage_count + 1 WHERE id = ?').run(templateId);
 
-    // 5. 如果源文件在 OSS，先下载到本地临时文件
+    // 6. 如果源文件在 OSS，先下载到本地临时文件
     if (sourceFileUrl) {
       const tmpDir = path.join(__dirname, '..', '..', 'uploads', 'tmp');
       if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
@@ -99,8 +106,10 @@ router.post('/', async (req, res) => {
       const result = await providerRegistry.callGenerate(providerName, ctx);
 
       // 保存 predictionId
-      db.prepare("UPDATE generations SET prediction_id = ?, status = 'processing', progress = 10 WHERE id = ?")
-        .run(result.predictionId, genId);
+      if (autoSave) {
+        db.prepare("UPDATE generations SET prediction_id = ?, status = 'processing', progress = 10 WHERE id = ?")
+          .run(result.predictionId, genId);
+      }
 
       console.log(`🎬 [Async] gen=${genId}, provider=${providerName}, prediction=${result.predictionId}`);
 
@@ -120,9 +129,11 @@ router.post('/', async (req, res) => {
       // ===== 同步模式 (腾讯云) =====
       const result = await providerRegistry.callGenerate(providerName, ctx);
 
-      db.prepare(
-        "UPDATE generations SET status = 'completed', progress = 100, result_image = ?, completed_at = datetime('now', 'localtime') WHERE id = ?"
-      ).run(result.resultUrl, genId);
+      if (autoSave) {
+        db.prepare(
+          "UPDATE generations SET status = 'completed', progress = 100, result_image = ?, completed_at = datetime('now', 'localtime') WHERE id = ?"
+        ).run(result.resultUrl, genId);
+      }
 
       console.log(`✅ [Sync] gen=${genId}, provider=${providerName}`);
 
@@ -141,9 +152,11 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error(`❌ Generation failed: gen=${genId}`, error.message);
-    db.prepare(
-      "UPDATE generations SET status = 'failed', error_message = ?, progress = 0 WHERE id = ?"
-    ).run(error.message || '生成失败', genId);
+    if (autoSave) {
+      db.prepare(
+        "UPDATE generations SET status = 'failed', error_message = ?, progress = 0 WHERE id = ?"
+      ).run(error.message || '生成失败', genId);
+    }
 
     res.json({
       success: true,

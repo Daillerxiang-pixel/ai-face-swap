@@ -1,3 +1,7 @@
+/**
+ * User Route — Profile, Favorites, History, Settings
+ */
+
 const { Router } = require('express');
 const { getDb } = require('../data/database');
 const { authMiddleware } = require('../middleware/auth');
@@ -10,10 +14,58 @@ router.use(authMiddleware);
 // GET /api/user/profile
 router.get('/profile', (req, res) => {
   const db = getDb();
-  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated FROM users WHERE id = ?').get(req.userId);
+  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated, auto_save, theme FROM users WHERE id = ?').get(req.userId);
 
   if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
+  res.json({
+    success: true,
+    data: {
+      ...user,
+      remaining: user.subscription_tier === 'monthly' ? 999 : Math.max(0, user.monthly_limit - user.monthly_usage),
+      isVip: user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date()
+    }
+  });
+});
+
+// PUT /api/user/settings — update user settings
+router.put('/settings', (req, res) => {
+  const db = getDb();
+  const { nickname, avatar, auto_save, theme } = req.body;
+
+  // Build dynamic update
+  const fields = [];
+  const values = [];
+
+  if (nickname !== undefined) {
+    fields.push('nickname = ?');
+    values.push(nickname);
+  }
+  if (avatar !== undefined) {
+    fields.push('avatar = ?');
+    values.push(avatar);
+  }
+  if (auto_save !== undefined) {
+    fields.push('auto_save = ?');
+    values.push(auto_save ? 1 : 0);
+  }
+  if (theme !== undefined) {
+    // Only allow 'dark' or 'light'
+    const validThemes = ['dark', 'light'];
+    const t = validThemes.includes(theme) ? theme : 'dark';
+    fields.push('theme = ?');
+    values.push(t);
+  }
+
+  if (fields.length === 0) {
+    return res.status(400).json({ success: false, error: 'No fields to update' });
+  }
+
+  values.push(req.userId);
+  db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+
+  // Return updated profile
+  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated, auto_save, theme FROM users WHERE id = ?').get(req.userId);
   res.json({
     success: true,
     data: {
@@ -28,7 +80,8 @@ router.get('/profile', (req, res) => {
 router.get('/favorites', (req, res) => {
   const db = getDb();
   const favs = db.prepare(`
-    SELECT t.id, t.name, t.icon, t.bg_gradient as bg, t.scene, t.type, t.usage_count, t.badge, t.rating
+    SELECT t.id, t.name, t.icon, t.bg_gradient as bg, t.scene, t.type, t.usage_count, t.badge, t.rating,
+           t.preview_url, t.provider
     FROM favorites f JOIN templates t ON f.template_id = t.id
     WHERE f.user_id = ? AND t.is_active = 1
     ORDER BY f.created_at DESC

@@ -9,6 +9,7 @@ const userRoutes = require('./routes/user');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const favoriteRoutes = require('./routes/favorites');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -29,6 +30,7 @@ app.use('/api/generate', generateRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Init DB and start
 initDb();
