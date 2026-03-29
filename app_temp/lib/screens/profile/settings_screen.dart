@@ -145,13 +145,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       // Update avatar on server
-      await _updateSetting(avatar: url);
+      final success = await _updateSetting(avatar: url);
 
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Avatar updated')),
-        );
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Avatar updated successfully'),
+              backgroundColor: Color(0xFF34C759),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to save avatar to profile'),
+              backgroundColor: Color(0xFFFF3B30),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -163,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _updateSetting({String? nickname, String? avatar, bool? autoSave, String? theme}) async {
+  Future<bool> _updateSetting({String? nickname, String? avatar, bool? autoSave, String? theme}) async {
     setState(() => _isUpdating = true);
     try {
       final success = await context.read<UserProvider>().updateSettings(
@@ -174,9 +188,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       if (mounted && !success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update setting')),
+          const SnackBar(
+            content: Text('Failed to update setting'),
+            backgroundColor: Color(0xFFFF3B30),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
+      return success;
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
