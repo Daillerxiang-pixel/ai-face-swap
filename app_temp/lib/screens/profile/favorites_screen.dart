@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/template.dart';
+import '../../providers/template_provider.dart';
+import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
-import '../create/select_template_screen.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../create/upload_photo_screen.dart';
 
-/// 收藏页面
+/// 收藏页面 — 从 API 加载真实收藏列表
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -13,10 +18,49 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  final ApiService _api = ApiService();
   int _currentTab = 0; // 0: All, 1: Photo, 2: Video
+  List<Template> _favorites = [];
+  bool _isLoading = true;
+  String? _error;
 
-  // Mock empty state — replace with real favorites provider
-  final List<Template> _favorites = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final res = await _api.getFavorites();
+      if (res.success && res.data != null) {
+        final list = (res.data as List).map((e) {
+          final map = e as Map<String, dynamic>;
+          return Template.fromJson({
+            ...map,
+            'isFavorite': true,
+          });
+        }).toList();
+        if (mounted) setState(() => _favorites = list);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Failed to load favorites');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _removeFavorite(Template tpl) async {
+    try {
+      await _api.removeFavorite(tpl.id.toString());
+      setState(() => _favorites.remove(tpl));
+      // Also sync with TemplateProvider
+      if (mounted) {
+        context.read<TemplateProvider>().loadFavorites();
+      }
+    } catch (_) {}
+  }
 
   List<Template> get _filteredFavorites {
     if (_currentTab == 0) return _favorites;
@@ -77,9 +121,29 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
           // Content
           Expanded(
-            child: items.isEmpty
-                ? _buildEmptyState()
-                : _buildGrid(items),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                : _error != null
+                    ? ListView(
+                        children: [
+                          const SizedBox(height: 120),
+                          EmptyStateWidget(
+                            icon: Icons.wifi_off_outlined,
+                            title: 'Failed to load',
+                            subtitle: _error,
+                            actionText: 'Retry',
+                            onAction: _loadFavorites,
+                          ),
+                        ],
+                      )
+                    : items.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            color: AppTheme.primary,
+                            backgroundColor: AppTheme.cardBackground,
+                            onRefresh: _loadFavorites,
+                            child: _buildGrid(items),
+                          ),
           ),
         ],
       ),
@@ -94,10 +158,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         children: [
           Icon(Icons.chevron_left, color: AppTheme.primary, size: 28),
           SizedBox(width: 0),
-          Text(
-            'Back',
-            style: TextStyle(color: AppTheme.primary, fontSize: 17),
-          ),
+          Text('Back', style: TextStyle(color: AppTheme.primary, fontSize: 17)),
         ],
       ),
     );
@@ -110,52 +171,30 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.favorite_border,
-              size: 56,
-              color: AppTheme.textTertiary,
-            ),
+            const Icon(Icons.favorite_border, size: 56, color: AppTheme.textTertiary),
             const SizedBox(height: 16),
-            const Text(
-              'No Favorites Yet',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            const Text('No Favorites Yet', style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(
               'Browse templates and tap the heart icon to save your favorites',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-                height: 1.5,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => const SelectTemplateScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SelectTemplateScreen()),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                 elevation: 0,
               ),
-              child: const Text(
-                'Browse Templates',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
+              child: const Text('Browse Templates', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -165,7 +204,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Widget _buildGrid(List<Template> items) {
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
@@ -176,62 +215,66 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemBuilder: (context, index) {
         final tpl = items[index];
         final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
-        return Container(
-          decoration: BoxDecoration(
-            color: AppTheme.cardBackground,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              if (thumbUrl.isNotEmpty)
-                Positioned.fill(
-                  child: Image.network(
-                    thumbUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppTheme.surfaceBackground,
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UploadPhotoScreen(template: tpl),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                // Thumbnail
+                if (thumbUrl.isNotEmpty)
+                  Positioned.fill(
+                    child: CachedNetworkImage(
+                      imageUrl: thumbUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: AppTheme.surfaceBackground),
+                      errorWidget: (_, __, ___) => Container(color: AppTheme.surfaceBackground),
+                    ),
+                  ),
+                // Heart button (tap to unfavorite)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => _removeFavorite(tpl),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF3B30),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.favorite, color: Colors.white, size: 14),
                     ),
                   ),
                 ),
-              // Heart icon
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF3B30),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-              ),
-              // Info
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: Text(
-                    tpl.name,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                // Template name
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      tpl.name,
+                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

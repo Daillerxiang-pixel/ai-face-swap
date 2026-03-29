@@ -180,9 +180,39 @@ class ApiService {
     return ApiResponse.fromJson(response.data, (data) => data);
   }
 
-  /// 收藏/取消收藏模板
+  /// 收藏/取消收藏模板 (POST toggle)
   Future<ApiResponse> toggleFavorite(String templateId) async {
     final response = await _dio.post('/api/templates/$templateId/favorite');
     return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 收藏模板 (POST /api/favorites)
+  Future<ApiResponse> addFavorite(String templateId) async {
+    final response = await _dio.post('/api/favorites', data: {'template_id': templateId});
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 取消收藏 (DELETE /api/favorites/:templateId)
+  Future<ApiResponse> removeFavorite(String templateId) async {
+    final response = await _dio.delete('/api/favorites/$templateId');
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 更新用户设置
+  Future<ApiResponse> updateUserSettings({
+    String? nickname,
+    String? avatar,
+    bool? autoSave,
+    String? theme,
+  }) async {
+    final body = <String, dynamic>{};
+    if (nickname != null) body['nickname'] = nickname;
+    if (avatar != null) body['avatar'] = avatar;
+    if (autoSave != null) body['auto_save'] = autoSave;
+    if (theme != null) body['theme'] = theme;
+    final response = await _dio.put('/api/user/settings', data: body);
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
   }
 }

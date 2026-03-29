@@ -24,6 +24,8 @@ class User {
   final DateTime? vipExpireAt;
   final int? remainCredits;
   final int? totalGenerations;
+  final bool autoSave;
+  final String theme;
 
   User({
     required this.id,
@@ -34,11 +36,13 @@ class User {
     this.vipExpireAt,
     this.remainCredits,
     this.totalGenerations,
+    this.autoSave = true,
+    this.theme = 'dark',
   });
 
   /// 是否为VIP用户
-  bool get isVip => (vipLevel ?? 0) > 0 &&
-      (vipExpireAt == null || vipExpireAt!.isAfter(DateTime.now()));
+  bool get isVip => (vipLevel ?? 0) > 0 ||
+      (vipExpireAt != null && vipExpireAt!.isAfter(DateTime.now()));
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -52,6 +56,8 @@ class User {
           : null,
       remainCredits: _toInt(json['remainCredits'] ?? json['remaining']),
       totalGenerations: _toInt(json['totalGenerations'] ?? json['total_generated']),
+      autoSave: _toBool(json['auto_save'] ?? 1),
+      theme: json['theme']?.toString() ?? 'dark',
     );
   }
 
@@ -65,6 +71,8 @@ class User {
       'vipExpireAt': vipExpireAt?.toIso8601String(),
       'remainCredits': remainCredits,
       'totalGenerations': totalGenerations,
+      'auto_save': autoSave ? 1 : 0,
+      'theme': theme,
     };
   }
 }

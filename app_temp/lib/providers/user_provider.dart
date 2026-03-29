@@ -17,6 +17,8 @@ class UserProvider with ChangeNotifier {
   bool get isLoggedIn => _user != null;
   bool get isVip => _user?.isVip ?? false;
   int get remainCredits => _user?.remainCredits ?? 0;
+  bool get autoSave => _user?.autoSave ?? true;
+  String get theme => _user?.theme ?? 'dark';
 
   /// 加载用户信息
   Future<void> loadUserProfile() async {
@@ -35,6 +37,29 @@ class UserProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// 更新用户设置
+  Future<bool> updateSettings({
+    String? nickname,
+    String? avatar,
+    bool? autoSave,
+    String? theme,
+  }) async {
+    try {
+      final res = await _api.updateUserSettings(
+        nickname: nickname,
+        avatar: avatar,
+        autoSave: autoSave,
+        theme: theme,
+      );
+      if (res.success && res.data != null) {
+        _user = User.fromJson(res.data as Map<String, dynamic>);
+        notifyListeners();
+        return true;
+      }
+    } catch (_) {}
+    return false;
   }
 
   /// 退出登录

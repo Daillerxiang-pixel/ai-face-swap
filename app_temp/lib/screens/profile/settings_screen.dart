@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../providers/user_provider.dart';
+import '../../services/api_service.dart';
 
-/// 设置页面
+/// 设置页面 — 昵称/头像/自动保存/主题切换
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -11,23 +16,137 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = true;
   bool _autoSave = true;
-  String _saveQuality = 'HD';
-  bool _pushNotif = true;
-  bool _emailNotif = false;
-
+  bool _isDarkMode = true;
   String _appVersion = '';
+  final ApiService _api = ApiService();
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUpdating = false;
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
+    // Sync from provider
+    final user = context.read<UserProvider>().user;
+    _autoSave = user?.autoSave ?? true;
+    _isDarkMode = user?.theme != 'light';
   }
 
   Future<void> _loadVersion() async {
     final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _appVersion = '${info.version}+${info.buildNumber}');
+  }
+
+  /// Show edit nickname dialog
+  void _showEditNickname() {
+    final controller = TextEditingController(text: context.read<UserProvider>().user?.nickname ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        title: const Text('Edit Nickname', style: TextStyle(color: AppTheme.textPrimary)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+          decoration: InputDecoration(
+            hintText: 'Enter nickname',
+            hintStyle: const TextStyle(color: AppTheme.textTertiary),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.surfaceBackground)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+          TextButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(ctx);
+              await _updateSetting(nickname: name);
+            },
+            child: const Text('Save', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show avatar picker
+  void _showAvatarPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardBackground,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(width: 36, height: 4, decoration: BoxDecoration(color: AppTheme.textTertiary, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
+              title: const Text('Camera', style: TextStyle(color: AppTheme.textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAvatar(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
+              title: const Text('Photo Library', style: TextStyle(color: AppTheme.textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAvatar(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAvatar(ImageSource source) async {
+    try {
+      final image = await _imagePicker.pickImage(source: source, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+      if (image == null) return;
+
+      // Upload image
+      final res = await _api.uploadImage(image.path);
+      if (res.success && res.data != null) {
+        final url = (res.data as Map)['url']?.toString() ?? (res.data as Map)['file_path']?.toString();
+        if (url != null && url.isNotEmpty) {
+          await _updateSetting(avatar: url);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to upload avatar')),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateSetting({String? nickname, String? avatar, bool? autoSave, String? theme}) async {
+    setState(() => _isUpdating = true);
+    final success = await context.read<UserProvider>().updateSettings(
+      nickname: nickname,
+      avatar: avatar,
+      autoSave: autoSave,
+      theme: theme,
+    );
+    if (mounted) {
+      setState(() => _isUpdating = false);
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update setting')),
+        );
+      }
+    }
   }
 
   @override
@@ -46,25 +165,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Account
           _buildGroupTitle('ACCOUNT'),
           _buildMenuList([
-            _MenuItem(icon: Icons.person_outline, label: 'Profile', iconColor: Colors.purple, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(icon: Icons.workspace_premium_outlined, label: 'Subscription', iconColor: const Color(0xFFF59E0B), iconBg: const Color(0x26F59E0B)),
+            _MenuItem(
+              icon: Icons.person_outline,
+              label: 'Nickname',
+              iconColor: Colors.purple,
+              iconBg: const Color(0x1E7C3AED),
+              value: context.watch<UserProvider>().user?.nickname ?? 'User',
+              onTap: _showEditNickname,
+            ),
+            _MenuItem(
+              icon: Icons.camera_alt_outlined,
+              label: 'Avatar',
+              iconColor: AppTheme.primary,
+              iconBg: const Color(0x1E7C3AED),
+              value: 'Change',
+              onTap: _showAvatarPicker,
+            ),
           ]),
           const SizedBox(height: 24),
 
           // Preferences
           _buildGroupTitle('PREFERENCES'),
           _buildMenuList([
-            _MenuItem(icon: Icons.dark_mode_outlined, label: 'Dark Mode', toggle: true, toggleValue: _darkMode, onToggle: (v) => setState(() => _darkMode = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(icon: Icons.save_outlined, label: 'Auto-Save', toggle: true, toggleValue: _autoSave, onToggle: (v) => setState(() => _autoSave = v), iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(icon: Icons.high_quality_outlined, label: 'Save Quality', value: _saveQuality, iconColor: const Color(0xFF34C759), iconBg: const Color(0x2634C759)),
+            _MenuItem(
+              icon: Icons.dark_mode_outlined,
+              label: 'Dark Mode',
+              toggle: true,
+              toggleValue: _isDarkMode,
+              onToggle: (v) {
+                setState(() => _isDarkMode = v);
+                _updateSetting(theme: v ? 'dark' : 'light');
+              },
+              iconColor: const Color(0xFF3B82F6),
+              iconBg: const Color(0x1E3B82F6),
+            ),
+            _MenuItem(
+              icon: Icons.save_outlined,
+              label: 'Auto-Save Results',
+              toggle: true,
+              toggleValue: _autoSave,
+              onToggle: (v) {
+                setState(() => _autoSave = v);
+                _updateSetting(autoSave: v);
+              },
+              iconColor: AppTheme.primary,
+              iconBg: const Color(0x1E7C3AED),
+            ),
           ]),
           const SizedBox(height: 24),
 
           // Notifications
           _buildGroupTitle('NOTIFICATIONS'),
           _buildMenuList([
-            _MenuItem(icon: Icons.notifications_outlined, label: 'Push Notifications', toggle: true, toggleValue: _pushNotif, onToggle: (v) => setState(() => _pushNotif = v), iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(icon: Icons.email_outlined, label: 'Email Notifications', toggle: true, toggleValue: _emailNotif, onToggle: (v) => setState(() => _emailNotif = v), iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.notifications_outlined, label: 'Push Notifications', toggle: true, toggleValue: true, onToggle: (_) {}, iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
+            _MenuItem(icon: Icons.email_outlined, label: 'Email Notifications', toggle: true, toggleValue: false, onToggle: (_) {}, iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
           ]),
           const SizedBox(height: 24),
 
@@ -86,10 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Version
           Center(
-            child: Text(
-              'AI FaceSwap v$_appVersion',
-              style: const TextStyle(color: AppTheme.textTertiary, fontSize: 13),
-            ),
+            child: Text('AI FaceSwap v$_appVersion', style: const TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
           ),
         ],
       ),
@@ -112,18 +263,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildGroupTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
+        child: Text(title, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
       ),
     );
   }
@@ -152,12 +295,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Row(
                     children: [
                       Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: item.iconBg,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
+                        width: 30, height: 30,
+                        decoration: BoxDecoration(color: item.iconBg, borderRadius: BorderRadius.circular(7)),
                         child: Icon(item.icon, color: item.iconColor, size: 17),
                       ),
                       const SizedBox(width: 14),
@@ -167,20 +306,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(
                             color: item.isDanger ? const Color(0xFFFF3B30) : AppTheme.textPrimary,
                             fontSize: 16,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
                       if (item.value != null)
                         Padding(
                           padding: const EdgeInsets.only(right: 4),
-                          child: Text(
-                            item.value!,
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
+                          child: Text(item.value!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
                         ),
                       if (item.toggle)
                         _buildToggle(item.toggleValue ?? false, item.onToggle ?? (_) {})
@@ -206,8 +338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
-        width: 44,
-        height: 26,
+        width: 44, height: 26,
         decoration: BoxDecoration(
           color: value ? AppTheme.primary : AppTheme.surfaceBackground,
           borderRadius: BorderRadius.circular(13),
@@ -216,13 +347,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: const Duration(milliseconds: 200),
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            width: 22,
-            height: 22,
+            width: 22, height: 22,
             margin: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
           ),
         ),
       ),
