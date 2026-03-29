@@ -182,8 +182,17 @@ class ApiService {
 
   /// 收藏/取消收藏模板 (POST toggle)
   Future<ApiResponse> toggleFavorite(String templateId) async {
-    final response = await _dio.post('/api/templates/$templateId/favorite');
-    return ApiResponse.fromJson(response.data, (data) => data);
+    // Check current state first
+    final checkRes = await _dio.get('/api/user/favorite/$templateId');
+    final isFav = checkRes.data['data']?['favorited'] == true;
+
+    if (isFav) {
+      final response = await _dio.delete('/api/favorites/$templateId');
+      return ApiResponse.fromJson(response.data, (data) => data);
+    } else {
+      final response = await _dio.post('/api/favorites', data: {'template_id': templateId});
+      return ApiResponse.fromJson(response.data, (data) => data);
+    }
   }
 
   /// 收藏模板 (POST /api/favorites)

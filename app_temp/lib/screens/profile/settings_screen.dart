@@ -114,16 +114,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final image = await _imagePicker.pickImage(source: source, maxWidth: 512, maxHeight: 512, imageQuality: 80);
       if (image == null) return;
 
+      // Show uploading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Uploading avatar...'), duration: Duration(seconds: 30)),
+        );
+      }
+
       // Upload image
       final res = await _api.uploadImage(image.path);
-      if (res.success && res.data != null) {
-        final url = (res.data as Map)['url']?.toString() ?? (res.data as Map)['file_path']?.toString();
-        if (url != null && url.isNotEmpty) {
-          await _updateSetting(avatar: url);
+      if (!res.success || res.data == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload avatar')),
+          );
         }
+        return;
       }
-    } catch (_) {
+      final data = res.data as Map;
+      final url = data['url']?.toString() ?? data['file_path']?.toString() ?? '';
+      if (url.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Upload succeeded but no URL returned')),
+          );
+        }
+        return;
+      }
+
+      // Update avatar on server
+      await _updateSetting(avatar: url);
+
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Avatar updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to upload avatar')),
         );
@@ -133,19 +165,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _updateSetting({String? nickname, String? avatar, bool? autoSave, String? theme}) async {
     setState(() => _isUpdating = true);
-    final success = await context.read<UserProvider>().updateSettings(
-      nickname: nickname,
-      avatar: avatar,
-      autoSave: autoSave,
-      theme: theme,
-    );
-    if (mounted) {
-      setState(() => _isUpdating = false);
-      if (!success) {
+    try {
+      final success = await context.read<UserProvider>().updateSettings(
+        nickname: nickname,
+        avatar: avatar,
+        autoSave: autoSave,
+        theme: theme,
+      );
+      if (mounted && !success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update setting')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
     }
   }
 
