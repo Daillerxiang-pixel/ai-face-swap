@@ -70,7 +70,7 @@ router.post('/image', (req, res, next) => {
     // 记录到数据库
     db.prepare(
       'INSERT INTO upload_files (id, user_id, original_name, file_path, file_size, mime_type) VALUES (?,?,?,?,?,?)'
-    ).run(fileId, 'user-mock-001', req.file.originalname, filePath, req.file.size, req.file.mimetype);
+    ).run(fileId, req.userId || 'anonymous', req.file.originalname, filePath, req.file.size, req.file.mimetype);
 
     res.json({
       success: true,
