@@ -8,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../create/upload_photo_screen.dart';
+import '../create/select_template_screen.dart';
 
 /// 收藏页面 — 从 API 加载真实收藏列表
 class FavoritesScreen extends StatefulWidget {

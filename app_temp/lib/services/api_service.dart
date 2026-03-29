@@ -213,6 +213,4 @@ class ApiService {
     final response = await _dio.put('/api/user/settings', data: body);
     return ApiResponse.fromJson(response.data, (data) => data);
   }
-
-  }
 }
