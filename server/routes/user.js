@@ -79,9 +79,17 @@ router.put('/settings', (req, res) => {
 // GET /api/user/favorites
 router.get('/favorites', (req, res) => {
   const db = getDb();
+
+  // Helper to convert relative URL to public URL
+  const toPublicUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `https://aihuantu.oss-cn-beijing.aliyuncs.com${url}`;
+  };
+
   const favs = db.prepare(`
     SELECT t.id, t.name, t.icon, t.bg_gradient as bg, t.scene, t.type, t.usage_count, t.badge, t.rating,
-           t.preview_url, t.provider
+           t.preview_url, t.video_url, t.provider
     FROM favorites f JOIN templates t ON f.template_id = t.id
     WHERE f.user_id = ? AND t.is_active = 1
     ORDER BY f.created_at DESC
@@ -90,8 +98,19 @@ router.get('/favorites', (req, res) => {
   res.json({
     success: true,
     data: favs.map(t => ({
-      ...t,
-      usage: t.usage_count >= 10000 ? (t.usage_count / 1000).toFixed(1) + 'K' : String(t.usage_count)
+      id: t.id,
+      name: t.name,
+      icon: t.icon,
+      bg: t.bg_gradient,
+      scene: t.scene,
+      type: t.type === '图片' ? 'image' : 'video',
+      usage_count: t.usage_count,
+      usage: t.usage_count >= 10000 ? (t.usage_count / 1000).toFixed(1) + 'K' : String(t.usage_count),
+      badge: t.badge,
+      rating: t.rating,
+      previewUrl: toPublicUrl(t.preview_url),
+      videoUrl: toPublicUrl(t.video_url),
+      provider: t.provider,
     }))
   });
 });

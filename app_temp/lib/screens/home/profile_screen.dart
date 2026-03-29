@@ -95,6 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Consumer<UserProvider>(builder: (ctx, userProvider, _) {
                         final user = userProvider.user;
+                        final hasAvatar = user?.avatar != null && user!.avatar!.isNotEmpty;
                         return Container(
                           width: 72,
                           height: 72,
@@ -103,10 +104,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             gradient: LinearGradient(
                               begin: Alignment(-1, -1),
                               end: Alignment(1, 1),
-                              colors: [AppTheme.primary, const Color(0xFF3B82F6)],
+                              colors: hasAvatar ? [AppTheme.primary, const Color(0xFF3B82F6)] : [AppTheme.primary, const Color(0xFF3B82F6)],
                             ),
                           ),
-                          child: const Icon(Icons.person, color: Colors.white, size: 36),
+                          clipBehavior: Clip.antiAlias,
+                          child: hasAvatar
+                              ? Image.network(user.avatar!, width: 72, height: 72, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white, size: 36))
+                              : const Icon(Icons.person, color: Colors.white, size: 36),
                         );
                       }),
                       const SizedBox(width: 16),
