@@ -69,7 +69,7 @@ class LoginScreen extends StatelessWidget {
                 // Continue with Apple
                 _buildSocialButton(
                   context,
-                  icon: const Icon(Icons.apple, color: Colors.white, size: 22),
+                  icon: const Icon(Icons.apple, color: Colors.black, size: 22),
                   label: 'Continue with Apple',
                   onPressed: () => _mockLoginAndReturn(context),
                 ),
@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                 // Sign in with Email
                 _buildSocialButton(
                   context,
-                  icon: const Icon(Icons.mail_outline, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.mail_outline, color: Colors.black, size: 20),
                   label: 'Sign in with Email',
                   onPressed: () async {
                     final result = await Navigator.pushNamed(context, '/email-login');

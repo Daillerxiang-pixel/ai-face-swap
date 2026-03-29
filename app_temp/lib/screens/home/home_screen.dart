@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../widgets/tab_bar.dart';
@@ -27,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final ValueNotifier<int> _tabNotifier = ValueNotifier(0);
+  DateTime? _lastBackPressed;
 
   @override
   void initState() {
@@ -53,34 +55,48 @@ class _HomeScreenState extends State<HomeScreen>
       // Tab 切换时自动刷新数据
       if (!mounted) return;
       if (index == 2) {
-        // Works tab — 刷新历史
         context.read<GenerationProvider>().loadHistory(refresh: true);
       } else if (index == 3) {
-        // Profile tab — 刷新用户信息
         context.read<UserProvider>().loadUserProfile();
       }
     }
   }
 
-  /// 处理返回手势：非首页 Tab → 回首页，首页 → 退出
-  Future<bool> _onWillPop() async {
+  void _onBackPress() {
+    final now = DateTime.now();
+
     if (_tabController.index != 0) {
+      // 非首页 Tab → 回首页
       _tabController.animateTo(0);
-      return false; // 拦截退出
+      _lastBackPressed = null;
+      return;
     }
-    return true; // 允许退出
+
+    // 首页 Tab → 双击退出
+    if (_lastBackPressed == null || now.difference(_lastBackPressed!).inSeconds > 2) {
+      // 第一次按返回 → 提示
+      _lastBackPressed = now;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      // 2秒内第二次按返回 → 退出应用
+      SystemNavigator.pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _tabController.index == 0,
-      onPopInvokedWithResult: (didPop, _) async {
+      canPop: false, // 拦截所有返回，由 _onBackPress 处理
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        // 非首页 Tab：切换到首页
-        if (_tabController.index != 0) {
-          _tabController.animateTo(0);
-        }
+        _onBackPress();
       },
       child: Scaffold(
         backgroundColor: AppTheme.background,
