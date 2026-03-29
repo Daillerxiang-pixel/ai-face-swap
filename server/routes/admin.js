@@ -38,7 +38,7 @@ router.post('/login', (req, res) => {
   if (hash !== admin.password_hash) return res.status(400).json({ success: false, error: '用户名或密码错误' });
 
   const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: '24h' });
-  db.prepare("UPDATE admins SET last_login_at = datetime('now') WHERE id = ?").run(admin.id);
+  db.prepare("UPDATE admins SET last_login_at = datetime('now', 'localtime') WHERE id = ?").run(admin.id);
 
   res.json({
     success: true,
@@ -82,7 +82,7 @@ router.get('/dashboard', authMiddleware, (req, res) => {
   const trend = db.prepare(`
     SELECT date(created_at) as day, COUNT(*) as count
     FROM generations
-    WHERE created_at >= datetime('now', '-7 days')
+    WHERE created_at >= datetime('now', 'localtime', '-7 days')
     GROUP BY date(created_at)
     ORDER BY day
   `).all();
