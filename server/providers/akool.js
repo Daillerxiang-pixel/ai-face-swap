@@ -88,6 +88,7 @@ async function detectFaces(imageUrl) {
   const result = await akoolRequest('POST', ENDPOINTS.faceDetect, {
     url: imageUrl,
     single_face: true, // 只检测最大的人脸
+    return_face_url: true, // 返回裁剪后的人脸图片 URL
   });
 
   const faces = result.faces_obj?.['0'];
@@ -98,7 +99,7 @@ async function detectFaces(imageUrl) {
   return {
     landmarks_str: faces.landmarks_str?.[0], // 旧格式 - 取第一个元素
     crop_landmarks: faces.crop_landmarks?.[0], // 新格式 - 取第一个元素（数组）
-    face_url: faces.face_urls?.[0], // 人脸裁剪 URL
+    face_url: faces.face_urls?.[0], // 裁剪后的人脸图片 URL
   };
 }
 
