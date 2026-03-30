@@ -59,6 +59,14 @@ class AppTheme {
   static const double spacingLg = 24.0;
   static const double spacingXl = 32.0;
 
+  // ===== 亮色主题颜色 =====
+  static const Color lightBackground = Color(0xFFF2F2F7);
+  static const Color lightCardBackground = Color(0xFFFFFFFF);
+  static const Color lightSurfaceBackground = Color(0xFFE5E5EA);
+  static const Color lightTextPrimary = Color(0xFF000000);
+  static const Color lightTextSecondary = Color(0xFF8E8E93);
+  static const Color lightTextTertiary = Color(0xFFC7C7CC);
+
   // ===== 暗黑主题 =====
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
@@ -144,6 +152,98 @@ class AppTheme {
         ),
         labelLarge: const TextStyle(
           color: textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  // ===== 亮色主题 =====
+  static ThemeData get lightTheme {
+    final base = ThemeData.light(useMaterial3: true);
+    return base.copyWith(
+      scaffoldBackgroundColor: lightBackground,
+      cardColor: lightCardBackground,
+      dividerColor: lightSurfaceBackground,
+      colorScheme: base.colorScheme.copyWith(
+        primary: primary,
+        secondary: gradientEnd,
+        surface: lightCardBackground,
+        onPrimary: lightTextPrimary,
+        onSecondary: lightTextPrimary,
+        onSurface: lightTextPrimary,
+        onSurfaceVariant: lightTextSecondary,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: lightTextPrimary,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
+        iconTheme: IconThemeData(color: lightTextPrimary),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFFFFFFFF),
+        selectedItemColor: primary,
+        unselectedItemColor: lightTextTertiary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+        unselectedLabelStyle: TextStyle(fontSize: 10),
+      ),
+      cardTheme: CardTheme(
+        color: lightCardBackground,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: lightTextPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusSm),
+          ),
+          minimumSize: const Size(double.infinity, 48),
+        ),
+      ),
+      textTheme: base.textTheme.copyWith(
+        headlineLarge: const TextStyle(
+          color: lightTextPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+        headlineMedium: const TextStyle(
+          color: lightTextPrimary,
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+        ),
+        headlineSmall: const TextStyle(
+          color: lightTextPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: const TextStyle(
+          color: lightTextPrimary,
+          fontSize: 16,
+        ),
+        bodyMedium: const TextStyle(
+          color: lightTextPrimary,
+          fontSize: 14,
+        ),
+        bodySmall: const TextStyle(
+          color: lightTextSecondary,
+          fontSize: 12,
+        ),
+        labelLarge: const TextStyle(
+          color: lightTextPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),

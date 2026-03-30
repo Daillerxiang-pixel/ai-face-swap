@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../services/api_service.dart';
 
 /// 设置页面 — 昵称/头像/自动保存/主题切换
@@ -17,7 +18,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoSave = true;
-  bool _isDarkMode = true;
   String _appVersion = '';
   final ApiService _api = ApiService();
   final ImagePicker _imagePicker = ImagePicker();
@@ -27,10 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadVersion();
-    // Sync from provider
     final user = context.read<UserProvider>().user;
     _autoSave = user?.autoSave ?? true;
-    _isDarkMode = user?.theme != 'light';
   }
 
   Future<void> _loadVersion() async {
@@ -243,10 +241,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.dark_mode_outlined,
               label: 'Dark Mode',
               toggle: true,
-              toggleValue: _isDarkMode,
+              toggleValue: context.watch<ThemeProvider>().isDark,
               onToggle: (v) {
-                setState(() => _isDarkMode = v);
-                _updateSetting(theme: v ? 'dark' : 'light');
+                context.read<ThemeProvider>().setTheme(v);
               },
               iconColor: const Color(0xFF3B82F6),
               iconBg: const Color(0x1E3B82F6),

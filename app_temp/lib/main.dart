@@ -7,6 +7,7 @@ import 'services/auth_service.dart';
 import 'providers/template_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/generation_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -14,7 +15,6 @@ import 'screens/auth/email_login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // 启动时恢复登录 token
   await AuthService().loadFromPrefs();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -27,7 +27,6 @@ void main() async {
   runApp(const FaceSwapApp());
 }
 
-/// AI换图应用入口
 class FaceSwapApp extends StatelessWidget {
   const FaceSwapApp({super.key});
 
@@ -35,19 +34,32 @@ class FaceSwapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GenerationProvider()),
       ],
-      child: MaterialApp(
-        title: 'AI FaceSwap',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        home: const _EntryPoint(),
-        routes: {
-          '/home': (_) => const HomeScreen(),
-          '/login': (_) => const LoginScreen(),
-          '/email-login': (_) => const EmailLoginScreen(),
+      child: Consumer2<ThemeProvider, UserProvider>(
+        builder: (context, themeProvider, userProvider, _) {
+          // Sync theme from user settings when user loads
+          if (userProvider.user != null && !userProvider.isLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              themeProvider.initFromUser(userProvider.user?.theme);
+            });
+          }
+          return MaterialApp(
+            title: 'AI FaceSwap',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: const _EntryPoint(),
+            routes: {
+              '/home': (_) => const HomeScreen(),
+              '/login': (_) => const LoginScreen(),
+              '/email-login': (_) => const EmailLoginScreen(),
+            },
+          );
         },
       ),
     );
