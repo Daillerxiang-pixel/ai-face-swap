@@ -202,9 +202,15 @@ router.get('/:id/status', async (req, res) => {
     const pollResult = await providerRegistry.callPoll(gen.provider, gen.predictionId);
 
     if (pollResult.status === 'completed') {
-      // 下载结果到本地
-      const downloaded = await providerRegistry.downloadAsyncResult(gen.provider, pollResult.resultUrl, genId);
-      const finalUrl = downloaded ? downloaded.localUrl : pollResult.resultUrl;
+      // Akool 结果 URL 有 IP 限制，服务器下载会 403
+      // 直接返回原始 URL 给客户端，让客户端直接访问
+      let finalUrl = pollResult.resultUrl;
+      
+      // 对于非 Akool provider，尝试下载到本地/OSS
+      if (gen.provider !== 'akool') {
+        const downloaded = await providerRegistry.downloadAsyncResult(gen.provider, pollResult.resultUrl, genId);
+        if (downloaded) finalUrl = downloaded.localUrl;
+      }
 
       db.prepare(
         "UPDATE generations SET status = 'completed', progress = 100, result_image = ?, completed_at = datetime('now', 'localtime') WHERE id = ?"
