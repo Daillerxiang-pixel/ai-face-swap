@@ -201,19 +201,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeProvider>();
+    
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: theme.background,
       appBar: AppBar(
         leading: _buildBackButton(),
         title: const Text('Settings'),
-        backgroundColor: AppTheme.background,
+        backgroundColor: theme.background,
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 40),
         children: [
           // Account
-          _buildGroupTitle('ACCOUNT'),
+          _buildGroupTitle('ACCOUNT', theme.textSecondary),
           _buildMenuList([
             _MenuItem(
               icon: Icons.person_outline,
@@ -231,19 +233,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: 'Change',
               onTap: _showAvatarPicker,
             ),
-          ]),
+          ], theme.cardBackground),
           const SizedBox(height: 24),
 
           // Preferences
-          _buildGroupTitle('PREFERENCES'),
+          _buildGroupTitle('PREFERENCES', theme.textSecondary),
           _buildMenuList([
             _MenuItem(
               icon: Icons.dark_mode_outlined,
               label: 'Dark Mode',
               toggle: true,
-              toggleValue: context.watch<ThemeProvider>().isDark,
+              toggleValue: theme.isDark,
               onToggle: (v) {
-                context.read<ThemeProvider>().setTheme(v);
+                theme.setTheme(v);
               },
               iconColor: const Color(0xFF3B82F6),
               iconBg: const Color(0x1E3B82F6),
@@ -260,7 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               iconColor: AppTheme.primary,
               iconBg: const Color(0x1E7C3AED),
             ),
-          ]),
+          ], theme.cardBackground),
           const SizedBox(height: 24),
 
           // Notifications
@@ -289,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Version
           Center(
-            child: Text('AI FaceSwap v$_appVersion', style: const TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
+            child: Text('AI FaceSwap v$_appVersion', style: TextStyle(color: context.textTertiaryColor, fontSize: 13)),
           ),
         ],
       ),
@@ -315,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(title, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+        child: Text(title, style: TextStyle(color: context.textSecondaryColor, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
       ),
     );
   }
@@ -325,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(children: items.asMap().entries.map((e) {

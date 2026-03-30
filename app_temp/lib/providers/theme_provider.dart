@@ -10,6 +10,14 @@ class ThemeProvider extends ChangeNotifier {
   bool get isDark => _isDark;
   ThemeMode get themeMode => _isDark ? ThemeMode.dark : ThemeMode.light;
 
+  // Dynamic colors based on current theme
+  Color get background => _isDark ? AppTheme.background : AppTheme.lightBackground;
+  Color get cardBackground => _isDark ? AppTheme.cardBackground : AppTheme.lightCardBackground;
+  Color get surfaceBackground => _isDark ? AppTheme.surfaceBackground : AppTheme.lightSurfaceBackground;
+  Color get textPrimary => _isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+  Color get textSecondary => _isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+  Color get textTertiary => _isDark ? AppTheme.textTertiary : AppTheme.lightTextTertiary;
+
   void initFromUser(String? userTheme) {
     _isDark = userTheme != 'light';
     notifyListeners();

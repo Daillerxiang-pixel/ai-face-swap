@@ -1,38 +1,37 @@
 import 'package:flutter/material.dart';
 
-/// 应用暗黑主题配置（iOS 风格）
+/// 应用主题配置（iOS 风格）
 class AppTheme {
   AppTheme._();
 
-  // ===== 颜色 =====
-  /// 主背景色（body）
+  // ===== 暗色主题颜色（默认）=====
   static const Color background = Color(0xFF000000);
-
-  /// 卡片背景色
   static const Color cardBackground = Color(0xFF1C1C1E);
-
-  /// 三级背景色
   static const Color surfaceBackground = Color(0xFF2C2C2E);
-
-  /// 主文字色
   static const Color textPrimary = Color(0xFFFFFFFF);
-
-  /// 副文字色
   static const Color textSecondary = Color(0xFF8E8E93);
-
-  /// 三级文字色
   static const Color textTertiary = Color(0xFF48484A);
+  static const Color text2 = textSecondary;
+  static const Color text3 = textTertiary;
+  static const Color surface = surfaceBackground;
+  static const Color card = cardBackground;
 
-  /// 主色调（紫色）
+  // ===== 亮色主题颜色 =====
+  static const Color lightBackground = Color(0xFFF2F2F7);
+  static const Color lightCardBackground = Color(0xFFFFFFFF);
+  static const Color lightSurfaceBackground = Color(0xFFE5E5EA);
+  static const Color lightTextPrimary = Color(0xFF000000);
+  static const Color lightTextSecondary = Color(0xFF8E8E93);
+  static const Color lightTextTertiary = Color(0xFFC7C7CC);
+
+  // ===== 通用颜色 =====
   static const Color primary = Color(0xFF7C3AED);
-
-  /// 渐变起始色
   static const Color gradientStart = Color(0xFF7C3AED);
-
-  /// 渐变结束色
   static const Color gradientEnd = Color(0xFF3B82F6);
+  static const Color success = Color(0xFF34C759);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color danger = Color(0xFFEF4444);
 
-  /// 主渐变
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment(-1, -1),
     end: Alignment(1, 1),
@@ -40,16 +39,9 @@ class AppTheme {
   );
 
   // ===== 圆角 =====
-  /// 小圆角
   static const double radiusSm = 10.0;
-
-  /// 中圆角
   static const double radiusMd = 14.0;
-
-  /// 大圆角
   static const double radiusLg = 20.0;
-
-  /// 超大圆角
   static const double radiusXl = 24.0;
 
   // ===== 间距 =====
@@ -59,13 +51,19 @@ class AppTheme {
   static const double spacingLg = 24.0;
   static const double spacingXl = 32.0;
 
-  // ===== 亮色主题颜色 =====
-  static const Color lightBackground = Color(0xFFF2F2F7);
-  static const Color lightCardBackground = Color(0xFFFFFFFF);
-  static const Color lightSurfaceBackground = Color(0xFFE5E5EA);
-  static const Color lightTextPrimary = Color(0xFF000000);
-  static const Color lightTextSecondary = Color(0xFF8E8E93);
-  static const Color lightTextTertiary = Color(0xFFC7C7CC);
+  // ===== 动态颜色获取（根据主题自动切换）=====
+  static Color dynamicBackground(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? background : lightBackground;
+  static Color dynamicCard(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? cardBackground : lightCardBackground;
+  static Color dynamicSurface(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? surfaceBackground : lightSurfaceBackground;
+  static Color dynamicTextPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textPrimary : lightTextPrimary;
+  static Color dynamicTextSecondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textSecondary : lightTextSecondary;
+  static Color dynamicTextTertiary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? textTertiary : lightTextTertiary;
 
   // ===== 暗黑主题 =====
   static ThemeData get darkTheme {
@@ -250,4 +248,15 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// BuildContext 扩展 - 快速获取动态主题颜色
+extension ThemeColors on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Color get backgroundColor => isDark ? AppTheme.background : AppTheme.lightBackground;
+  Color get cardColor => isDark ? AppTheme.cardBackground : AppTheme.lightCardBackground;
+  Color get surfaceColor => isDark ? AppTheme.surfaceBackground : AppTheme.lightSurfaceBackground;
+  Color get textPrimaryColor => isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
+  Color get textSecondaryColor => isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
+  Color get textTertiaryColor => isDark ? AppTheme.textTertiary : AppTheme.lightTextTertiary;
 }
