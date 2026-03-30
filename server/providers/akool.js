@@ -224,17 +224,19 @@ async function generateVideo(ctx) {
   // 视频人脸检测需要用视频 URL，但 detect API 支持 URL
   // Akool 的 detect API 也支持视频，但这里我们直接用视频的预览图
   let targetDetect = null;
+  let targetPreviewUrl = null; // 保存转换后的完整 URL
+  
   if (template.preview_url) {
-    let previewUrl = template.preview_url;
-    if (!previewUrl.startsWith('http')) {
+    targetPreviewUrl = template.preview_url;
+    if (!targetPreviewUrl.startsWith('http')) {
       try {
         const { getOSSBaseURL } = require('../utils/oss');
-        previewUrl = getOSSBaseURL() + (previewUrl.startsWith('/') ? '' : '/') + previewUrl;
+        targetPreviewUrl = getOSSBaseURL() + (targetPreviewUrl.startsWith('/') ? '' : '/') + targetPreviewUrl;
       } catch (e) { /* ignore */ }
     }
-    console.log(`[Akool Video] Detecting target face from preview: ${previewUrl}`);
+    console.log(`[Akool Video] Detecting target face from preview: ${targetPreviewUrl}`);
     try {
-      targetDetect = await detectFaces(previewUrl);
+      targetDetect = await detectFaces(targetPreviewUrl);
       console.log(`[Akool Video] Target landmarks: ${targetDetect.crop_landmarks || targetDetect.landmarks_str}`);
     } catch (e) {
       console.warn(`[Akool Video] Target face detect failed: ${e.message}, will retry without opts`);
@@ -244,7 +246,7 @@ async function generateVideo(ctx) {
   // 调用视频换脸
   const requestBody = {
     sourceImage: [{
-      path: sourceDetect.face_url || sourceUrl,
+      path: sourceDetect.face_url || sourceUrl, // face_url 可能是 null，用原始 URL
       opts: sourceDetect.crop_landmarks || sourceDetect.landmarks_str,
     }],
     face_enhance: 1,
@@ -252,9 +254,9 @@ async function generateVideo(ctx) {
     webhookUrl: '',
   };
 
-  if (targetDetect) {
+  if (targetDetect && targetPreviewUrl) {
     requestBody.targetImage = [{
-      path: targetDetect.face_url || template.preview_url,
+      path: targetDetect.face_url || targetPreviewUrl, // 用转换后的完整 URL
       opts: targetDetect.crop_landmarks || targetDetect.landmarks_str,
     }];
   }
