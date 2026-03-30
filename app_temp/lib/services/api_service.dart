@@ -72,6 +72,22 @@ class ApiService {
         }
         handler.next(options);
       },
+      onError: (error, handler) {
+        // 处理 403 等错误响应，提取错误信息
+        if (error.response?.statusCode == 403 || error.response?.statusCode == 400) {
+          final data = error.response?.data;
+          if (data is Map<String, dynamic>) {
+            // 将错误转换为正常的响应，让业务代码处理
+            return handler.resolve(Response(
+              requestOptions: error.requestOptions,
+              data: data,
+              statusCode: 200,
+              statusMessage: 'OK',
+            ));
+          }
+        }
+        handler.next(error);
+      },
     ));
 
     // 日志拦截器
