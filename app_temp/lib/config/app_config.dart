@@ -15,5 +15,7 @@ class AppConfig {
   static const int pollInterval = 3000;
 
   /// 生成结果最大等待时间（秒）
-  static const int maxWaitSeconds = 120;
+  /// 图片换脸较快（~30秒），视频换脸较慢（~3-5分钟）
+  /// 默认 300 秒（5分钟）
+  static const int maxWaitSeconds = 300;
 }
