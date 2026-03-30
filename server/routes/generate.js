@@ -32,8 +32,24 @@ router.post('/', async (req, res) => {
 
   try {
     // 1. Check user auto_save setting first (needed for error handling)
-    const user = db.prepare('SELECT auto_save FROM users WHERE id = ?').get(req.userId);
+    const user = db.prepare('SELECT auto_save, monthly_usage, monthly_limit FROM users WHERE id = ?').get(req.userId);
     const autoSave = user ? (user.auto_save !== 0) : true;
+
+    // 检查次数限制
+    const monthlyUsage = user?.monthly_usage || 0;
+    const monthlyLimit = user?.monthly_limit || 50;
+    if (monthlyUsage >= monthlyLimit) {
+      return res.status(403).json({
+        success: false,
+        error: '本月使用次数已达上限',
+        errorCode: 'QUOTA_EXCEEDED',
+        data: {
+          monthlyUsage,
+          monthlyLimit,
+          remaining: 0,
+        }
+      });
+    }
 
     // 2. 验证源文件
     const sourceRecord = db.prepare('SELECT * FROM upload_files WHERE id = ?').get(sourceFileId);
