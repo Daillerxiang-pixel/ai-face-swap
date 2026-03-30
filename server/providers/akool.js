@@ -129,11 +129,13 @@ async function uploadToPublicUrl(filePath, ctx) {
  * 生成图片换脸 — 使用 Face Swap Pro (V4)
  * 最高画质，单人脸，不需要人脸检测
  * 
+ * ⚠️ 重要：返回的 `_id` 用于查询结果，不是 `job_id`！
+ * 
  * @param {Object} ctx
  * @param {string} ctx.sourceFilePath - 源图片（用户人脸）文件路径
  * @param {Object} ctx.template - 模板记录
  * @param {string} ctx.genId - 生成记录 ID
- * @returns {Promise<{resultPath: string, resultUrl: string, predictionId: string}>}
+ * @returns {Promise<{predictionId: string, status: string}>}
  */
 async function generateImagePro(ctx) {
   const { sourceFilePath, template, genId } = ctx;
@@ -164,11 +166,16 @@ async function generateImagePro(ctx) {
     single_face_mode: true,
   });
 
-  console.log(`[Akool Pro] Submit success: _id=${result.data?._id}, job_id=${result.data?.job_id}`);
+  // ⚠️ 重要：返回 _id 用于后续查询结果，不是 job_id
+  const _id = result.data?._id;
+  const jobId = result.data?.job_id;
+  
+  console.log(`[Akool Pro] Submit success: _id=${_id}, job_id=${jobId}`);
 
+  // 返回 _id 作为 predictionId，这是查询结果时需要用的 ID
   return {
-    predictionId: result.data?._id || result.data?.job_id,
-    jobId: result.data?.job_id,
+    predictionId: _id,  // ⚠️ 查询结果必须用 _id，不是 job_id
+    jobId: jobId,
     status: 'processing',
   };
 }
@@ -176,6 +183,8 @@ async function generateImagePro(ctx) {
 /**
  * 生成视频换脸 — 使用 Video Faceswap (V3)
  * 需要先做人脸检测获取 opts
+ * 
+ * ⚠️ 重要：返回的 `_id` 用于查询结果，不是 `job_id`！
  * 
  * @param {Object} ctx
  * @param {string} ctx.sourceFilePath - 源图片（用户人脸）文件路径
@@ -241,11 +250,16 @@ async function generateVideo(ctx) {
   }
 
   const result = await akoolRequest('POST', ENDPOINTS.videoV3, requestBody);
-  console.log(`[Akool Video] Submit success: _id=${result.data?._id}, job_id=${result.data?.job_id}`);
+  
+  // ⚠️ 重要：返回 _id 用于后续查询结果，不是 job_id
+  const _id = result.data?._id;
+  const jobId = result.data?.job_id;
+  
+  console.log(`[Akool Video] Submit success: _id=${_id}, job_id=${jobId}`);
 
   return {
-    predictionId: result.data?._id || result.data?.job_id,
-    jobId: result.data?.job_id,
+    predictionId: _id,  // ⚠️ 查询结果必须用 _id，不是 job_id
+    jobId: jobId,
     status: 'processing',
   };
 }
@@ -267,15 +281,20 @@ async function generate(ctx) {
 
 /**
  * 轮询异步任务状态
- * Akool 的所有换脸都是异步的（返回 job_id，需要轮询获取结果）
+ * Akool 的所有换脸都是异步的（返回 _id 和 job_id）
  * 
- * @param {string} predictionId - 任务 ID (_id)
+ * ⚠️ 重要：查询结果必须使用 `_id`，而不是 `job_id`！
+ * 
+ * @param {string} predictionId - 任务 ID (_id，不是 job_id)
  * @returns {Promise<{status: string, progress: number, resultUrl?: string, error?: string}>}
  */
 async function poll(predictionId) {
+  // 确保 predictionId 是 _id 格式（24位十六进制字符串）
+  // 如果传入的是 job_id，需要提示调用方使用 _id
   const result = await akoolRequest('GET', `${ENDPOINTS.getResult}?_ids=${predictionId}`);
 
   if (!result.data || !result.data.result || result.data.result.length === 0) {
+    // 结果为空可能是：1. 任务仍在处理，2. 使用了错误的 ID（job_id 而非 _id）
     return { status: 'processing', progress: 30 };
   }
 
