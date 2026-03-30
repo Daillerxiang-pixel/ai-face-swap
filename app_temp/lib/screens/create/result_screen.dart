@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
+import '../../widgets/video_player_widget.dart';
 import 'select_template_screen.dart';
 
 /// 生成结果展示页面
@@ -182,44 +183,19 @@ class _ResultScreenState extends State<ResultScreen> {
     }
 
     if (_isVideo) {
-      // 视频：显示第一帧 + 播放标识
+      // Video: play with video_player
       return Stack(
         fit: StackFit.expand,
         children: [
-          CachedNetworkImage(
-            imageUrl: _displayUrl,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(
-              color: AppTheme.surfaceBackground,
-              child: const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
-              ),
-            ),
-            errorWidget: (_, __, ___) => Container(
-              color: AppTheme.surfaceBackground,
-              child: const Icon(Icons.broken_image,
-                  color: AppTheme.textTertiary, size: 48),
-            ),
-          ),
-          // 视频标识
-          Center(
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
-            ),
-          ),
-          // 视频标签
+          Container(color: Colors.black),
+          // Video player
+          AppVideoPlayer(url: _displayUrl),
+          // Video label
           Positioned(
             top: 12,
             left: 12,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFF3B30).withOpacity(0.9),
                 borderRadius: BorderRadius.circular(10),

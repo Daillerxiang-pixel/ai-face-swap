@@ -14,6 +14,7 @@ import '../../services/auth_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
+import '../../widgets/video_player_widget.dart';
 
 /// 作品页面 — iOS 相册风格：日期分组 + 3列网格
 class WorksScreen extends StatefulWidget with WidgetsBindingObserver {
@@ -451,29 +452,16 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
       ),
       extendBodyBehindAppBar: true,
       body: Center(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            InteractiveViewer(
-              child: CachedNetworkImage(
-                imageUrl: widget.imageUrl,
-                fit: BoxFit.contain,
-                placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-                errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 48)),
-              ),
-            ),
-            if (widget.isVideo)
-              const Center(
-                child: SizedBox(
-                  width: 64, height: 64,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                    child: Icon(Icons.play_arrow, color: Colors.white, size: 36),
-                  ),
+        child: widget.isVideo
+            ? AppVideoPlayer(url: widget.imageUrl)
+            : InteractiveViewer(
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 48)),
                 ),
               ),
-          ],
-        ),
       ),
     );
   }
