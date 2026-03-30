@@ -201,9 +201,19 @@ async function generateVideo(ctx) {
 
   // 视频模板的 videoUrl 作为目标视频
   let videoUrl = template.video_url;
-  if (!videoUrl || (!videoUrl.startsWith('http://') && !videoUrl.startsWith('https://'))) {
-    throw new Error(`模板视频 URL 无效: ${videoUrl}`);
+  if (!videoUrl) {
+    throw new Error('模板缺少 video_url 字段');
   }
+  // 处理相对路径，拼接 OSS URL
+  if (!videoUrl.startsWith('http://') && !videoUrl.startsWith('https://')) {
+    try {
+      const { getOSSBaseURL } = require('../utils/oss');
+      videoUrl = getOSSBaseURL() + (videoUrl.startsWith('/') ? '' : '/') + videoUrl;
+    } catch (e) {
+      throw new Error(`模板视频 URL 无效，OSS 未配置: ${videoUrl}`);
+    }
+  }
+  console.log(`[Akool Video] Target Video URL: ${videoUrl}`);
 
   // 人脸检测 — 源图片
   console.log('[Akool Video] Detecting source face...');

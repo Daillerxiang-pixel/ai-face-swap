@@ -31,7 +31,11 @@ router.post('/', async (req, res) => {
   const genId = uuidv4();
 
   try {
-    // 1. 验证源文件
+    // 1. Check user auto_save setting first (needed for error handling)
+    const user = db.prepare('SELECT auto_save FROM users WHERE id = ?').get(req.userId);
+    const autoSave = user ? (user.auto_save !== 0) : true;
+
+    // 2. 验证源文件
     const sourceRecord = db.prepare('SELECT * FROM upload_files WHERE id = ?').get(sourceFileId);
     if (!sourceRecord) {
       return res.status(400).json({ success: false, error: '源照片文件不存在，请重新上传' });
@@ -56,7 +60,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, error: '源照片文件不存在，请重新上传' });
     }
 
-    // 2. 验证模板
+    // 3. 验证模板
     const template = db.prepare('SELECT * FROM templates WHERE id = ?').get(templateId);
     if (!template) {
       return res.status(404).json({ success: false, error: '模板不存在' });
@@ -64,10 +68,6 @@ router.post('/', async (req, res) => {
 
     const providerName = template.provider || 'tencent';
     const provider = providerRegistry.getProvider(providerName);
-
-    // 3. Check user auto_save setting
-    const user = db.prepare('SELECT auto_save FROM users WHERE id = ?').get(req.userId);
-    const autoSave = user ? (user.auto_save !== 0) : true;
 
     // 4. Create generation record (skip if auto_save = 0)
     let genIdForDb = genId;
