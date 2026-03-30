@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'home_screen.dart';
 import '../../config/theme.dart';
 import '../../models/generation.dart';
@@ -476,7 +478,13 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
       final dio = Dio();
       final response = await dio.get(widget.imageUrl, options: Options(responseType: ResponseType.bytes));
       if (widget.isVideo) {
-        final result = await ImageGallerySaverPlus.saveFile(response.data, name: 'aihuantu_video_${DateTime.now().millisecondsSinceEpoch}');
+        // 视频需要先保存到临时文件，再用 saveFile 保存到相册
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/temp_video_${DateTime.now().millisecondsSinceEpoch}.mp4');
+        await tempFile.writeAsBytes(response.data);
+        final result = await ImageGallerySaverPlus.saveFile(tempFile.path, name: 'aihuantu_video_${DateTime.now().millisecondsSinceEpoch}');
+        // 清理临时文件
+        if (await tempFile.exists()) await tempFile.delete();
         if (mounted) {
           setState(() => _isSaving = false);
           if (result['isSuccess'] == true) {
