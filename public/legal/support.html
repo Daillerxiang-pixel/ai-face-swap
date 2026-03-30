@@ -29,13 +29,17 @@
         .logo-icon {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 16px;
-            font-size: 36px;
+            overflow: hidden;
+        }
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .logo h1 {
             font-size: 28px;
@@ -121,13 +125,15 @@
 <body>
     <div class="container">
         <div class="logo">
-            <div class="logo-icon">🎨</div>
+            <div class="logo-icon">
+                <img src="app_icon.png" alt="AI换图">
+            </div>
             <h1>AI换图</h1>
-            <p>AI Face Swap</p>
+            <p>智能换脸工具</p>
         </div>
         
         <div class="content">
-            <h2>📞 联系我们</h2>
+            <h2>联系我们</h2>
             
             <div class="contact-item">
                 <div class="contact-icon">📧</div>
@@ -154,7 +160,7 @@
             </div>
             
             <div class="faq">
-                <h2>❓ 常见问题</h2>
+                <h2>常见问题</h2>
                 
                 <div class="faq-item">
                     <h4>如何获取更多模板？</h4>
@@ -174,7 +180,7 @@
         </div>
         
         <div class="footer">
-            <p>© 2026 AI换图. All rights reserved.</p>
+            <p>© 2026 AI换图 版权所有</p>
         </div>
     </div>
 </body>
