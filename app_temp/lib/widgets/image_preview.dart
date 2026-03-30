@@ -52,8 +52,8 @@ class ImagePreview extends StatelessWidget {
     if (resolvedImages.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
-        body: const Center(
-          child: Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 48),
+        body: Center(
+          child: Icon(Icons.broken_image, color: context.appColors.textTertiary, size: 48),
         ),
       );
     }

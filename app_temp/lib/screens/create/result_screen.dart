@@ -39,7 +39,7 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
@@ -77,11 +77,11 @@ class _ResultScreenState extends State<ResultScreen> {
           // 底部操作区
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Color(0xFF0D0D0D),
               border: Border(
                 top: BorderSide(
-                  color: AppTheme.surfaceBackground,
+                  color: context.appColors.surfaceBackground,
                   width: 0.5,
                 ),
               ),
@@ -143,7 +143,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
-                          foregroundColor: AppTheme.textPrimary,
+                          foregroundColor: context.appColors.textPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.circular(AppTheme.radiusSm),
@@ -167,7 +167,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return Container(
         width: double.infinity,
         height: double.infinity,
-        color: AppTheme.cardBackground,
+        color: context.appColors.cardBackground,
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -228,13 +228,13 @@ class _ResultScreenState extends State<ResultScreen> {
             imageUrl: _displayUrl,
             fit: BoxFit.contain,
             placeholder: (_, __) => Container(
-              color: AppTheme.surfaceBackground,
+              color: context.appColors.surfaceBackground,
               child: const Center(
                 child: CircularProgressIndicator(color: AppTheme.primary),
               ),
             ),
             errorWidget: (_, __, ___) => Container(
-              color: AppTheme.surfaceBackground,
+              color: context.appColors.surfaceBackground,
               child: const Icon(Icons.broken_image,
                   color: AppTheme.textTertiary, size: 48),
             ),

@@ -113,7 +113,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
     final coverUrl = ImageUtils.imgUrl(_template.displayUrl);
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
@@ -152,8 +152,8 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                   // 模板名称
                   Text(
                     _template.name,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
+                    style: TextStyle(
+                      color: context.appColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
                     ),
@@ -163,16 +163,16 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.remove_red_eye_outlined,
                           size: 14,
-                          color: AppTheme.textSecondary,
+                          color: context.appColors.textSecondary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${_template.useCount} uses',
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
+                          style: TextStyle(
+                            color: context.appColors.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -185,8 +185,8 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                     const SizedBox(height: 16),
                     Text(
                       _template.description!,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
+                      style: TextStyle(
+                        color: context.appColors.textSecondary,
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -240,7 +240,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
+                    color: context.appColors.cardBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -249,7 +249,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                         : Icons.favorite_border,
                     color: _template.isFavorite ?? false
                         ? Colors.redAccent
-                        : AppTheme.textSecondary,
+                        : context.appColors.textSecondary,
                   ),
                 ),
               ),
@@ -272,8 +272,8 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                     },
                     child: Text(
                       _template.isVideo ? 'Video Template' : 'Use Template',
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                      style: TextStyle(
+                        color: context.appColors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -383,7 +383,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
       imageUrl: coverUrl,
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(
-        color: AppTheme.surfaceBackground,
+        color: context.appColors.surfaceBackground,
         child: const Center(
           child: CircularProgressIndicator(
             color: AppTheme.primary,
@@ -391,7 +391,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
         ),
       ),
       errorWidget: (context, url, error) => Container(
-        color: AppTheme.surfaceBackground,
+        color: context.appColors.surfaceBackground,
         child: const Icon(
           Icons.image_not_supported_outlined,
           color: AppTheme.textTertiary,

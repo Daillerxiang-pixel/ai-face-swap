@@ -50,9 +50,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text('Sign Out', style: TextStyle(color: AppTheme.textPrimary)),
-        content: const Text('Are you sure you want to sign out?', style: TextStyle(color: AppTheme.textSecondary)),
+        backgroundColor: context.appColors.cardBackground,
+        title: Text('Sign Out', style: TextStyle(color: context.appColors.textPrimary)),
+        content: Text('Are you sure you want to sign out?', style: TextStyle(color: context.appColors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign Out', style: TextStyle(color: Colors.red))),
@@ -69,11 +69,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppTheme.primary,
-          backgroundColor: AppTheme.cardBackground,
+          backgroundColor: context.appColors.cardBackground,
           onRefresh: () async {
             await context.read<UserProvider>().loadUserProfile();
           },
@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               margin: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
+                color: context.appColors.cardBackground,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -122,8 +122,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               final nickname = userProvider.user?.nickname ?? 'User';
                               return Text(
                                 nickname,
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
+                                style: TextStyle(
+                                  color: context.appColors.textPrimary,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -164,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceBackground,
+                        color: context.appColors.surfaceBackground,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -182,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      Icon(Icons.mail_outline, color: AppTheme.textTertiary, size: 16),
+                      Icon(Icons.mail_outline, color: context.appColors.textTertiary, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Consumer<UserProvider>(builder: (ctx, userProvider, _) {
@@ -191,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           final displayId = userId.isNotEmpty ? '${userId.substring(0, userId.length > 8 ? 8 : userId.length)}...' : 'Not signed in';
                           return Text(
                             _isLoggedIn ? 'ID: $displayId' : 'Not signed in',
-                            style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                            style: TextStyle(color: context.appColors.textTertiary, fontSize: 13),
                           );
                         }),
                       ),
@@ -216,12 +216,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
-                              border: Border.all(color: AppTheme.textTertiary.withOpacity(0.3), width: 1),
+                              border: Border.all(color: context.appColors.textTertiary.withOpacity(0.3), width: 1),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Sign Out',
-                              style: TextStyle(color: AppTheme.textTertiary, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: context.appColors.textTertiary, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -273,7 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: 1,
       height: 28,
-      color: AppTheme.textTertiary.withOpacity(0.2),
+      color: context.appColors.textTertiary.withOpacity(0.2),
     );
   }
 
@@ -359,7 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
+        color: context.appColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(children: items.asMap().entries.map((e) {
@@ -377,31 +377,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceBackground,
+                        color: context.appColors.surfaceBackground,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(item.icon, color: AppTheme.textSecondary, size: 18),
+                      child: Icon(item.icon, color: context.appColors.textSecondary, size: 18),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         item.label,
-                        style: const TextStyle(
-                          color: AppTheme.textPrimary,
+                        style: TextStyle(
+                          color: context.appColors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: AppTheme.textTertiary, size: 20),
+                    Icon(Icons.chevron_right, color: context.appColors.textTertiary, size: 20),
                   ],
                 ),
               ),
             ),
             if (!isLast)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Divider(height: 0.5, color: AppTheme.surfaceBackground),
+                child: Divider(height: 0.5, color: context.appColors.surfaceBackground),
               ),
           ],
         );

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- 主背景渐变 - 日出暖色 -->
+    <linearGradient id="bgC" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9A56"/>
+      <stop offset="30%" stop-color="#FF6B95"/>
+      <stop offset="60%" stop-color="#C44CDB"/>
+      <stop offset="100%" stop-color="#6E45E2"/>
+    </linearGradient>
+    <!-- 脸部渐变 -->
+    <linearGradient id="faceC" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE0B2"/>
+      <stop offset="100%" stop-color="#FFCC80"/>
+    </linearGradient>
+    <!-- 魔法棒渐变 -->
+    <linearGradient id="wandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#FF6347"/>
+    </linearGradient>
+    <!-- 星光渐变 -->
+    <radialGradient id="starGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FFA500" stop-opacity="0"/>
+    </radialGradient>
+    <!-- 圆形徽章渐变 -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+    <!-- 发光效果 -->
+    <filter id="glowC">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="dropShadow">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- 圆角矩形背景 -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="url(#bgC)"/>
+
+  <!-- 背景光晕 -->
+  <circle cx="512" cy="450" r="300" fill="#FFFFFF" opacity="0.1"/>
+  <circle cx="380" cy="350" r="150" fill="#FFD700" opacity="0.15"/>
+
+  <!-- 大圆形背景装饰 -->
+  <circle cx="512" cy="520" r="280" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-opacity="0.2"/>
+  <circle cx="512" cy="520" r="320" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-opacity="0.15"/>
+
+  <!-- 人脸 -->
+  <g filter="url(#dropShadow)">
+    <!-- 脸型 -->
+    <path d="M340 440 Q340 780 512 820 Q684 780 684 440 Q684 340 512 320 Q340 340 340 440" fill="url(#faceC)"/>
+    <!-- 头发 - 时尚短发 -->
+    <path d="M300 420 Q340 180 512 160 Q684 180 724 420 Q700 280 512 260 Q324 280 300 420" fill="#4A1942"/>
+    <path d="M300 420 Q270 480 285 600 Q290 680 340 750 L370 750 Q330 660 330 560 Q330 480 360 420 Z" fill="#4A1942"/>
+    <path d="M724 420 Q754 480 739 600 Q734 680 684 750 L654 750 Q694 660 694 560 Q694 480 664 420 Z" fill="#4A1942"/>
+    <!-- 顶部头发高光 -->
+    <path d="M380 300 Q450 220 512 210 Q574 220 620 280" stroke="#7B3D7B" stroke-width="20" fill="none" stroke-linecap="round" opacity="0.5"/>
+  </g>
+
+  <!-- 眼睛 - 动漫大眼风格 -->
+  <g>
+    <!-- 左眼 -->
+    <ellipse cx="420" cy="520" rx="65" ry="50" fill="#FFFFFF"/>
+    <ellipse cx="430" cy="525" rx="40" ry="38" fill="#3D2B8C"/>
+    <circle cx="438" cy="520" r="18" fill="#1A1A2E"/>
+    <circle cx="445" cy="512" r="10" fill="#FFFFFF"/>
+    <circle cx="450" cy="525" r="5" fill="#FFFFFF" opacity="0.7"/>
+    <!-- 左眼睫毛 -->
+    <path d="M355 500 Q380 480 420 485 Q460 480 485 500" stroke="#2D1B4E" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- 右眼 -->
+    <ellipse cx="604" cy="520" rx="65" ry="50" fill="#FFFFFF"/>
+    <ellipse cx="594" cy="525" rx="40" ry="38" fill="#3D2B8C"/>
+    <circle cx="586" cy="520" r="18" fill="#1A1A2E"/>
+    <circle cx="579" cy="512" r="10" fill="#FFFFFF"/>
+    <circle cx="574" cy="525" r="5" fill="#FFFFFF" opacity="0.7"/>
+    <!-- 右眼睫毛 -->
+    <path d="M539 500 Q564 480 604 485 Q644 480 669 500" stroke="#2D1B4E" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- 鼻子 -->
+  <ellipse cx="512" cy="610" rx="12" ry="8" fill="#E0A070" opacity="0.6"/>
+
+  <!-- 嘴巴 -->
+  <path d="M460 675 Q512 710 564 675" stroke="#D06060" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="512" cy="680" rx="25" ry="8" fill="#E88080" opacity="0.5"/>
+
+  <!-- 腮红 -->
+  <ellipse cx="360" cy="600" rx="40" ry="25" fill="#FF9999" opacity="0.35"/>
+  <ellipse cx="664" cy="600" rx="40" ry="25" fill="#FF9999" opacity="0.35"/>
+
+  <!-- 魔法棒 -->
+  <g transform="translate(720, 280) rotate(45)" filter="url(#glowC)">
+    <rect x="-8" y="-120" width="16" height="140" rx="8" fill="url(#wandGrad)"/>
+    <rect x="-12" y="-130" width="24" height="20" rx="4" fill="url(#badgeGrad)"/>
+    <!-- 魔法棒尖端 -->
+    <polygon points="0,-145 -15,-120 15,-120" fill="url(#wandGrad)"/>
+  </g>
+
+  <!-- 魔法星星 -->
+  <g filter="url(#strongGlow)">
+    <!-- 大星星 -->
+    <polygon points="820,180 832,215 870,215 840,238 852,275 820,252 788,275 800,238 770,215 808,215" fill="#FFD700"/>
+    <!-- 中星星 -->
+    <polygon points="180,200 188,225 215,225 194,242 202,268 180,250 158,268 166,242 145,225 172,225" fill="#FF69B4"/>
+    <!-- 小星星 -->
+    <polygon points="140,420 145,438 165,438 150,450 156,468 140,455 124,468 130,450 115,438 135,438" fill="#00CED1"/>
+    <polygon points="880,400 885,418 905,418 890,430 896,448 880,435 864,448 870,430 855,418 875,418" fill="#FFD700"/>
+    <polygon points="160,700 165,715 182,715 170,725 175,742 160,732 145,742 150,725 138,715 155,715" fill="#FF69B4"/>
+    <polygon points="870,680 875,695 892,695 880,705 885,722 870,712 855,722 860,705 848,695 865,695" fill="#00CED1"/>
+  </g>
+
+  <!-- 闪光粒子 -->
+  <g filter="url(#glowC)">
+    <circle cx="200" cy="320" r="5" fill="#FFFFFF"/>
+    <circle cx="240" cy="380" r="4" fill="#FFD700"/>
+    <circle cx="180" cy="500" r="4" fill="#FF69B4"/>
+    <circle cx="840" cy="320" r="4" fill="#FFFFFF"/>
+    <circle cx="800" cy="450" r="5" fill="#FFD700"/>
+    <circle cx="850" cy="550" r="4" fill="#00CED1"/>
+    <circle cx="250" cy="700" r="4" fill="#FFD700"/>
+    <circle cx="750" cy="750" r="4" fill="#FF69B4"/>
+    <circle cx="400" cy="200" r="5" fill="#FFFFFF"/>
+    <circle cx="624" cy="200" r="5" fill="#FFD700"/>
+  </g>
+
+  <!-- 圆形 AI 徽章 -->
+  <g transform="translate(512, 380)" filter="url(#glowC)">
+    <circle r="55" fill="#FFFFFF" opacity="0.95"/>
+    <circle r="48" fill="none" stroke="#6E45E2" stroke-width="4"/>
+    <text x="0" y="12" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#6E45E2" text-anchor="middle">AI</text>
+  </g>
+</svg>

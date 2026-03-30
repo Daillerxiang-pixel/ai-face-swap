@@ -28,14 +28,14 @@ class EmptyStateWidget extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppTheme.textTertiary,
+              color: context.appColors.textTertiary,
               size: 56,
             ),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
+              style: TextStyle(
+                color: context.appColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -44,8 +44,8 @@ class EmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 subtitle!,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
+                style: TextStyle(
+                  color: context.appColors.textSecondary,
                   fontSize: 13,
                 ),
                 textAlign: TextAlign.center,

@@ -27,8 +27,44 @@ void main() async {
   runApp(const FaceSwapApp());
 }
 
-class FaceSwapApp extends StatelessWidget {
+class FaceSwapApp extends StatefulWidget {
   const FaceSwapApp({super.key});
+
+  @override
+  State<FaceSwapApp> createState() => _FaceSwapAppState();
+}
+
+class _FaceSwapAppState extends State<FaceSwapApp> {
+  @override
+  void initState() {
+    super.initState();
+    // One-time theme sync from user settings after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = context.read<UserProvider>();
+      final themeProvider = context.read<ThemeProvider>();
+      if (userProvider.user != null) {
+        themeProvider.initFromUser(userProvider.user?.theme);
+      }
+      // Also listen for future user loads (e.g., after login)
+      userProvider.addListener(_onUserChanged);
+    });
+  }
+
+  void _onUserChanged() {
+    final userProvider = context.read<UserProvider>();
+    if (userProvider.user != null) {
+      context.read<ThemeProvider>().initFromUser(userProvider.user?.theme);
+    }
+  }
+
+  @override
+  void dispose() {
+    // Remove listener if possible
+    try {
+      context.read<UserProvider>().removeListener(_onUserChanged);
+    } catch (_) {}
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,29 +75,38 @@ class FaceSwapApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GenerationProvider()),
       ],
-      child: Consumer2<ThemeProvider, UserProvider>(
-        builder: (context, themeProvider, userProvider, _) {
-          // Sync theme from user settings when user loads
-          if (userProvider.user != null && !userProvider.isLoading) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              themeProvider.initFromUser(userProvider.user?.theme);
-            });
-          }
-          return MaterialApp(
-            title: 'AI FaceSwap',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            home: const _EntryPoint(),
-            routes: {
-              '/home': (_) => const HomeScreen(),
-              '/login': (_) => const LoginScreen(),
-              '/email-login': (_) => const EmailLoginScreen(),
-            },
-          );
-        },
-      ),
+      child: const _ThemedApp(),
+    );
+  }
+}
+
+/// Handles theme mode binding without rebuilding the entire widget tree on every notification.
+/// Only MaterialApp rebuilds when themeMode changes, and Flutter's internal theme system
+/// efficiently propagates color changes to child widgets via inheritedTheme.
+class _ThemedApp extends StatelessWidget {
+  const _ThemedApp();
+
+  @override
+  Widget build(BuildContext context) {
+    // This is the ONLY widget that rebuilds on themeMode change.
+    // Child widgets using Theme.of(context) or context.appColors will
+    // also rebuild efficiently through Flutter's inherited widget mechanism.
+    final themeMode = context.select<ThemeProvider, ThemeMode>(
+      (provider) => provider.themeMode,
+    );
+
+    return MaterialApp(
+      title: 'AI FaceSwap',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      home: const _EntryPoint(),
+      routes: {
+        '/home': (_) => const HomeScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/email-login': (_) => const EmailLoginScreen(),
+      },
     );
   }
 }
@@ -98,8 +143,8 @@ class _EntryPointState extends State<_EntryPoint> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppTheme.background,
+      return Scaffold(
+        backgroundColor: context.appColors.background,
         body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }

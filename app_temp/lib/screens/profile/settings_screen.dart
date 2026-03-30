@@ -42,21 +42,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text('Edit Nickname', style: TextStyle(color: AppTheme.textPrimary)),
+        backgroundColor: context.appColors.cardBackground,
+        title: Text('Edit Nickname', style: TextStyle(color: context.appColors.textPrimary)),
         content: TextField(
           controller: controller,
           autofocus: true,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+          style: TextStyle(color: context.appColors.textPrimary, fontSize: 16),
           decoration: InputDecoration(
             hintText: 'Enter nickname',
-            hintStyle: const TextStyle(color: AppTheme.textTertiary),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.surfaceBackground)),
+            hintStyle: TextStyle(color: context.appColors.textTertiary),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: context.appColors.surfaceBackground)),
             focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: context.appColors.textSecondary))),
           TextButton(
             onPressed: () async {
               final name = controller.text.trim();
@@ -75,18 +75,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showAvatarPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardBackground,
+      backgroundColor: context.appColors.cardBackground,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: AppTheme.textTertiary, borderRadius: BorderRadius.circular(2))),
+            Container(width: 36, height: 4, decoration: BoxDecoration(color: context.appColors.textTertiary, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
-              title: const Text('Camera', style: TextStyle(color: AppTheme.textPrimary)),
+              title: Text('Camera', style: TextStyle(color: context.appColors.textPrimary)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickAvatar(ImageSource.camera);
@@ -94,7 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
-              title: const Text('Photo Library', style: TextStyle(color: AppTheme.textPrimary)),
+              title: Text('Photo Library', style: TextStyle(color: context.appColors.textPrimary)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickAvatar(ImageSource.gallery);
@@ -215,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.only(bottom: 40),
         children: [
           // Account
-          _buildGroupTitle('ACCOUNT', theme.textSecondary),
+          _buildGroupTitle('ACCOUNT'),
           _buildMenuList([
             _MenuItem(
               icon: Icons.person_outline,
@@ -233,11 +233,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: 'Change',
               onTap: _showAvatarPicker,
             ),
-          ], theme.cardBackground),
+          ]),
           const SizedBox(height: 24),
 
           // Preferences
-          _buildGroupTitle('PREFERENCES', theme.textSecondary),
+          _buildGroupTitle('PREFERENCES'),
           _buildMenuList([
             _MenuItem(
               icon: Icons.dark_mode_outlined,
@@ -262,14 +262,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               iconColor: AppTheme.primary,
               iconBg: const Color(0x1E7C3AED),
             ),
-          ], theme.cardBackground),
+          ]),
           const SizedBox(height: 24),
 
           // Notifications
           _buildGroupTitle('NOTIFICATIONS'),
           _buildMenuList([
             _MenuItem(icon: Icons.notifications_outlined, label: 'Push Notifications', toggle: true, toggleValue: true, onToggle: (_) {}, iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(icon: Icons.email_outlined, label: 'Email Notifications', toggle: true, toggleValue: false, onToggle: (_) {}, iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.email_outlined, label: 'Email Notifications', toggle: true, toggleValue: false, onToggle: (_) {}, iconColor: context.appColors.textSecondary, iconBg: Color(0x1E8E8E93)),
           ]),
           const SizedBox(height: 24),
 
@@ -278,8 +278,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildMenuList([
             _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
             _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
-            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: AppTheme.textSecondary, iconBg: const Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: context.appColors.textSecondary, iconBg: Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: context.appColors.textSecondary, iconBg: Color(0x1E8E8E93)),
           ]),
           const SizedBox(height: 24),
 
@@ -291,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // Version
           Center(
-            child: Text('AI FaceSwap v$_appVersion', style: TextStyle(color: context.textTertiaryColor, fontSize: 13)),
+            child: Text('AI FaceSwap v$_appVersion', style: TextStyle(color: context.appColors.textTertiary, fontSize: 13)),
           ),
         ],
       ),
@@ -317,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(title, style: TextStyle(color: context.textSecondaryColor, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+        child: Text(title, style: TextStyle(color: context.appColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
       ),
     );
   }
@@ -327,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         decoration: BoxDecoration(
-          color: context.cardColor,
+          color: context.appColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(children: items.asMap().entries.map((e) {
@@ -355,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text(
                           item.label,
                           style: TextStyle(
-                            color: item.isDanger ? const Color(0xFFFF3B30) : AppTheme.textPrimary,
+                            color: item.isDanger ? Color(0xFFFF3B30) : context.appColors.textPrimary,
                             fontSize: 16,
                           ),
                         ),
@@ -363,12 +363,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (item.value != null)
                         Padding(
                           padding: const EdgeInsets.only(right: 4),
-                          child: Text(item.value!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                          child: Text(item.value!, style: TextStyle(color: context.appColors.textSecondary, fontSize: 14)),
                         ),
                       if (item.toggle)
                         _buildToggle(item.toggleValue ?? false, item.onToggle ?? (_) {})
                       else
-                        const Icon(Icons.chevron_right, color: AppTheme.textTertiary, size: 18),
+                        Icon(Icons.chevron_right, color: context.appColors.textTertiary, size: 18),
                     ],
                   ),
                 ),
@@ -391,7 +391,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         width: 44, height: 26,
         decoration: BoxDecoration(
-          color: value ? AppTheme.primary : AppTheme.surfaceBackground,
+          color: value ? AppTheme.primary : context.appColors.surfaceBackground,
           borderRadius: BorderRadius.circular(13),
         ),
         child: AnimatedAlign(

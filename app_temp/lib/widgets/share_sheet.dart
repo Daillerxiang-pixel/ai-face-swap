@@ -6,7 +6,7 @@ class ShareSheet {
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardBackground,
+      backgroundColor: context.appColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -33,16 +33,16 @@ class _ShareSheetContent extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceBackground,
+                  color: context.appColors.surfaceBackground,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Share',
               style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: context.appColors.textPrimary,
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
               ),
@@ -77,7 +77,7 @@ class _ShareSheetContent extends StatelessWidget {
                   label: 'More',
                   gradient: const [Color(0xFF2C2C2E), Color(0xFF2C2C2E)],
                   icon: Icons.more_horiz,
-                  iconColor: AppTheme.textSecondary,
+                  iconColor: context.appColors.textSecondary,
                 ),
               ],
             ),
@@ -89,8 +89,8 @@ class _ShareSheetContent extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: AppTheme.surfaceBackground,
-                  foregroundColor: AppTheme.textPrimary,
+                  backgroundColor: context.appColors.surfaceBackground,
+                  foregroundColor: context.appColors.textPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -150,7 +150,7 @@ class _ShareOption extends StatelessWidget {
                 colors: gradient,
               ),
               border: border
-                  ? Border.all(color: AppTheme.surfaceBackground)
+                  ? Border.all(color: context.appColors.surfaceBackground)
                   : null,
             ),
             child: Icon(
@@ -162,8 +162,8 @@ class _ShareOption extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
+            style: TextStyle(
+              color: context.appColors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),

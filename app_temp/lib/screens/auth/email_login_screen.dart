@@ -113,7 +113,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -145,8 +145,8 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   children: [
                     Text(
                       _isSignUp ? 'Create Account' : 'Sign In',
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                      style: TextStyle(
+                        color: context.appColors.textPrimary,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
@@ -154,8 +154,8 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _isSignUp ? 'Join AI FaceSwap today' : 'Welcome back',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
+                      style: TextStyle(
+                        color: context.appColors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -164,19 +164,19 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                      style: TextStyle(color: context.appColors.textPrimary, fontSize: 16),
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: const TextStyle(color: AppTheme.textSecondary),
+                        labelStyle: TextStyle(color: context.appColors.textSecondary),
                         filled: true,
-                        fillColor: AppTheme.surfaceBackground,
+                        fillColor: context.appColors.surfaceBackground,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.surfaceBackground),
+                          borderSide: BorderSide(color: context.appColors.surfaceBackground),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -189,19 +189,19 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                      style: TextStyle(color: context.appColors.textPrimary, fontSize: 16),
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: const TextStyle(color: AppTheme.textSecondary),
+                        labelStyle: TextStyle(color: context.appColors.textSecondary),
                         filled: true,
-                        fillColor: AppTheme.surfaceBackground,
+                        fillColor: context.appColors.surfaceBackground,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppTheme.surfaceBackground),
+                          borderSide: BorderSide(color: context.appColors.surfaceBackground),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -211,7 +211,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                           onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                           child: Icon(
                             _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: AppTheme.textSecondary,
+                            color: context.appColors.textSecondary,
                             size: 20,
                           ),
                         ),
@@ -223,19 +223,19 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                       TextField(
                         controller: _confirmPasswordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                        style: TextStyle(color: context.appColors.textPrimary, fontSize: 16),
                         decoration: InputDecoration(
                           labelText: 'Confirm Password',
-                          labelStyle: const TextStyle(color: AppTheme.textSecondary),
+                          labelStyle: TextStyle(color: context.appColors.textSecondary),
                           filled: true,
-                          fillColor: AppTheme.surfaceBackground,
+                          fillColor: context.appColors.surfaceBackground,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppTheme.surfaceBackground),
+                            borderSide: BorderSide(color: context.appColors.surfaceBackground),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -298,7 +298,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                       children: [
                         Text(
                           _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                          style: TextStyle(color: context.appColors.textSecondary, fontSize: 14),
                         ),
                         TextButton(
                           onPressed: () => setState(() => _isSignUp = !_isSignUp),

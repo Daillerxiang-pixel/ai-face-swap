@@ -45,7 +45,7 @@ class TemplateCard extends StatelessWidget {
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: AppTheme.surfaceBackground,
+                      color: context.appColors.surfaceBackground,
                       child: const Center(
                         child: SizedBox(
                           width: 24,
@@ -58,10 +58,10 @@ class TemplateCard extends StatelessWidget {
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: AppTheme.surfaceBackground,
-                      child: const Icon(
+                      color: context.appColors.surfaceBackground,
+                      child: Icon(
                         Icons.image_not_supported_outlined,
-                        color: AppTheme.textTertiary,
+                        color: context.appColors.textTertiary,
                         size: 32,
                       ),
                     ),
@@ -159,8 +159,8 @@ class TemplateCard extends StatelessWidget {
                 template.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
+                style: TextStyle(
+                  color: context.appColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),

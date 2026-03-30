@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- 主背景渐变 -->
+    <linearGradient id="bgB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F0C29"/>
+      <stop offset="50%" stop-color="#302B63"/>
+      <stop offset="100%" stop-color="#24243E"/>
+    </linearGradient>
+    <!-- 渐变1 - 青色 -->
+    <linearGradient id="gradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#0099FF"/>
+    </linearGradient>
+    <!-- 渐变2 - 紫色 -->
+    <linearGradient id="gradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B024FF"/>
+      <stop offset="100%" stop-color="#7B2FF7"/>
+    </linearGradient>
+    <!-- 渐变3 - 粉红 -->
+    <linearGradient id="gradPink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B9D"/>
+      <stop offset="100%" stop-color="#FF2D95"/>
+    </linearGradient>
+    <!-- 变换动画渐变 -->
+    <linearGradient id="morphGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="33%" stop-color="#B024FF"/>
+      <stop offset="66%" stop-color="#FF6B9D"/>
+      <stop offset="100%" stop-color="#00D4FF"/>
+    </linearGradient>
+    <!-- 发光 -->
+    <filter id="glowB">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softShadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="15" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- 圆角矩形背景 -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="url(#bgB)"/>
+
+  <!-- 背景粒子/圆点 -->
+  <g opacity="0.3">
+    <circle cx="120" cy="200" r="6" fill="#00D4FF"/>
+    <circle cx="200" cy="350" r="4" fill="#B024FF"/>
+    <circle cx="150" cy="500" r="5" fill="#FF6B9D"/>
+    <circle cx="100" cy="700" r="4" fill="#00D4FF"/>
+    <circle cx="180" cy="820" r="6" fill="#B024FF"/>
+    <circle cx="850" cy="180" r="5" fill="#FF6B9D"/>
+    <circle cx="900" cy="300" r="4" fill="#00D4FF"/>
+    <circle cx="870" cy="500" r="6" fill="#B024FF"/>
+    <circle cx="920" cy="680" r="4" fill="#FF6B9D"/>
+    <circle cx="880" cy="850" r="5" fill="#00D4FF"/>
+    <circle cx="512" cy="120" r="4" fill="#B024FF"/>
+    <circle cx="400" cy="880" r="5" fill="#FF6B9D"/>
+    <circle cx="624" cy="900" r="4" fill="#00D4FF"/>
+  </g>
+
+  <!-- 左侧人脸 (青色调) -->
+  <g filter="url(#softShadow)" transform="translate(-60, 0)">
+    <defs>
+      <clipPath id="faceClipL">
+        <ellipse cx="380" cy="520" rx="180" ry="220"/>
+      </clipPath>
+    </defs>
+    <ellipse cx="380" cy="520" rx="180" ry="220" fill="#00D4FF" opacity="0.9"/>
+    <!-- 眼睛 -->
+    <ellipse cx="320" cy="480" rx="40" ry="25" fill="#FFFFFF"/>
+    <circle cx="325" cy="480" r="20" fill="#0F0C29"/>
+    <circle cx="332" cy="476" r="7" fill="#FFFFFF"/>
+    <ellipse cx="440" cy="480" rx="40" ry="25" fill="#FFFFFF"/>
+    <circle cx="435" cy="480" r="20" fill="#0F0C29"/>
+    <circle cx="428" cy="476" r="7" fill="#FFFFFF"/>
+    <!-- 嘴 -->
+    <path d="M330 600 Q380 650 430 600" stroke="#0F0C29" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- 头发 -->
+    <path d="M200 420 Q250 200 380 180 Q510 200 560 420 Q520 300 380 280 Q240 300 200 420" fill="#0066AA"/>
+    <path d="M200 420 Q180 500 190 620 L220 620 Q210 500 230 420 Z" fill="#0066AA"/>
+    <path d="M560 420 Q580 500 570 620 L540 620 Q550 500 530 420 Z" fill="#0066AA"/>
+  </g>
+
+  <!-- 右侧人脸 (粉色调) -->
+  <g filter="url(#softShadow)" transform="translate(60, 0)">
+    <ellipse cx="644" cy="520" rx="180" ry="220" fill="#FF6B9D" opacity="0.85"/>
+    <!-- 眼睛 -->
+    <ellipse cx="584" cy="480" rx="40" ry="25" fill="#FFFFFF"/>
+    <circle cx="579" cy="480" r="20" fill="#2D1B4E"/>
+    <circle cx="572" cy="476" r="7" fill="#FFFFFF"/>
+    <ellipse cx="704" cy="480" rx="40" ry="25" fill="#FFFFFF"/>
+    <circle cx="709" cy="480" r="20" fill="#2D1B4E"/>
+    <circle cx="716" cy="476" r="7" fill="#FFFFFF"/>
+    <!-- 嘴 -->
+    <path d="M594 600 Q644 650 694 600" stroke="#2D1B4E" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- 头发 -->
+    <path d="M464 420 Q514 200 644 180 Q774 200 824 420 Q784 300 644 280 Q504 300 464 420" fill="#8B1A4A"/>
+    <path d="M464 420 Q444 500 454 620 L484 620 Q474 500 494 420 Z" fill="#8B1A4A"/>
+    <path d="M824 420 Q844 500 834 620 L804 620 Q814 500 794 420 Z" fill="#8B1A4A"/>
+  </g>
+
+  <!-- 中间变换符号 -->
+  <g filter="url(#glowB)">
+    <!-- 左箭头 -->
+    <path d="M420 520 L470 490 L470 510 L520 510 L520 530 L470 530 L470 550 Z" fill="url(#morphGrad)" opacity="0.9"/>
+    <!-- 右箭头 -->
+    <path d="M604 520 L554 490 L554 510 L504 510 L504 530 L554 530 L554 550 Z" fill="url(#morphGrad)" opacity="0.9"/>
+  </g>
+
+  <!-- 变换光效 -->
+  <ellipse cx="512" cy="520" rx="80" ry="100" fill="url(#morphGrad)" opacity="0.2" filter="url(#glowB)"/>
+
+  <!-- 顶部装饰光条 -->
+  <rect x="300" y="140" width="424" height="8" rx="4" fill="url(#morphGrad)" opacity="0.8"/>
+
+  <!-- 底部装饰光条 -->
+  <rect x="300" y="876" width="424" height="8" rx="4" fill="url(#morphGrad)" opacity="0.8"/>
+
+  <!-- 闪光星 -->
+  <g filter="url(#glowB)">
+    <polygon points="512,80 520,110 552,110 528,130 538,162 512,142 486,162 496,130 472,110 504,110" fill="#FFD700"/>
+  </g>
+
+  <!-- 小圆点装饰 -->
+  <circle cx="260" cy="300" r="8" fill="#00D4FF" filter="url(#glowB)"/>
+  <circle cx="764" cy="300" r="8" fill="#FF6B9D" filter="url(#glowB)"/>
+  <circle cx="260" cy="740" r="8" fill="#B024FF" filter="url(#glowB)"/>
+  <circle cx="764" cy="740" r="8" fill="#00D4FF" filter="url(#glowB)"/>
+</svg>

@@ -21,7 +21,7 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
@@ -34,7 +34,7 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
             ],
           ),
         ),
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.appColors.background,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -83,7 +83,7 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
           Text(
             'Get unlimited access to all features',
             style: TextStyle(
-              color: AppTheme.textSecondary.withOpacity(0.6),
+              color: context.appColors.textSecondary.withOpacity(0.6),
               fontSize: 14,
             ),
           ),
@@ -195,12 +195,12 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
                       border: Border.all(
                         color: isSelected
                             ? AppTheme.primary
-                            : AppTheme.surfaceBackground,
+                            : context.appColors.surfaceBackground,
                         width: 1.5,
                       ),
                       color: isSelected
                           ? AppTheme.primary.withOpacity(0.15)
-                          : AppTheme.cardBackground,
+                          : context.appColors.cardBackground,
                     ),
                     child: Column(
                       children: [

@@ -53,7 +53,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
@@ -96,8 +96,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                 // Fixed bottom button
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.background,
+                  decoration: BoxDecoration(
+                    color: context.appColors.background,
                   ),
                   child: _buildGenerateButton(),
                 ),
@@ -135,14 +135,14 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                     imageUrl: previewUrl,
                     fit: BoxFit.contain,
                     errorWidget: (_, __, ___) => Container(
-                      color: AppTheme.surfaceBackground,
+                      color: context.appColors.surfaceBackground,
                       child: const Icon(Icons.image_not_supported_outlined,
                           color: AppTheme.textTertiary, size: 48),
                     ),
                   )
                 else
                   Container(
-                    color: AppTheme.surfaceBackground,
+                    color: context.appColors.surfaceBackground,
                     child: const Icon(Icons.auto_awesome,
                         color: AppTheme.textTertiary, size: 48),
                   ),
@@ -187,12 +187,12 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           child: Container(
             height: 220,
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
+              color: context.appColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _selectedImage != null
                     ? AppTheme.primary
-                    : AppTheme.surfaceBackground,
+                    : context.appColors.surfaceBackground,
                 width: 1.5,
               ),
             ),
@@ -227,7 +227,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15),
                             child: Container(
-                              color: AppTheme.surfaceBackground,
+                              color: context.appColors.surfaceBackground,
                               child: Image.file(
                                 _selectedImage!,
                                 fit: BoxFit.contain,
@@ -289,14 +289,14 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                           children: [
                             Icon(
                               Icons.add_photo_alternate_outlined,
-                              color: AppTheme.textTertiary,
+                              color: context.appColors.textTertiary,
                               size: 48,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               'Tap to select a photo',
                               style: TextStyle(
-                                color: AppTheme.textSecondary,
+                                color: context.appColors.textSecondary,
                                 fontSize: 14,
                               ),
                             ),
@@ -304,7 +304,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                             Text(
                               'Supports JPG / PNG / WEBP',
                               style: TextStyle(
-                                color: AppTheme.textTertiary,
+                                color: context.appColors.textTertiary,
                                 fontSize: 12,
                               ),
                             ),
@@ -364,7 +364,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
       child: Container(
         decoration: BoxDecoration(
           gradient: canGenerate ? AppTheme.primaryGradient : null,
-          color: canGenerate ? null : AppTheme.surfaceBackground,
+          color: canGenerate ? null : context.appColors.surfaceBackground,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         ),
         child: MaterialButton(
@@ -374,8 +374,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
             _isVideo ? 'Start Video Swap' : 'Start Swap',
             style: TextStyle(
               color: canGenerate
-                  ? AppTheme.textPrimary
-                  : AppTheme.textTertiary,
+                  ? context.appColors.textPrimary
+                  : context.appColors.textTertiary,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -424,7 +424,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                       child: CircularProgressIndicator(
                         value: _progress / 100,
                         strokeWidth: 4,
-                        backgroundColor: AppTheme.surfaceBackground,
+                        backgroundColor: context.appColors.surfaceBackground,
                         color: AppTheme.primary,
                       ),
                     ),
@@ -479,8 +479,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppTheme.textTertiary),
-                        foregroundColor: AppTheme.textPrimary,
+                        side: BorderSide(color: context.appColors.textTertiary),
+                        foregroundColor: context.appColors.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -495,7 +495,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                       onPressed: _startGenerate,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
-                        foregroundColor: AppTheme.textPrimary,
+                        foregroundColor: context.appColors.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -515,8 +515,8 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
                     Navigator.of(context).pop();
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppTheme.textTertiary),
-                    foregroundColor: AppTheme.textPrimary,
+                    side: BorderSide(color: context.appColors.textTertiary),
+                    foregroundColor: context.appColors.textPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                     ),
@@ -549,7 +549,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   Future<void> _pickImage() async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.cardBackground,
+      backgroundColor: context.appColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -570,7 +570,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary),
-                title: const Text('Camera', style: TextStyle(color: AppTheme.textPrimary)),
+                title: Text('Camera', style: TextStyle(color: context.appColors.textPrimary)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFromSource(ImageSource.camera);
@@ -578,7 +578,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: AppTheme.primary),
-                title: const Text('Photo Library', style: TextStyle(color: AppTheme.textPrimary)),
+                title: Text('Photo Library', style: TextStyle(color: context.appColors.textPrimary)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFromSource(ImageSource.gallery);
@@ -731,21 +731,21 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
+        backgroundColor: context.appColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Quota Exceeded',
-          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+          style: TextStyle(color: context.appColors.textPrimary, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 48),
-            SizedBox(height: 16),
+            const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 48),
+            const SizedBox(height: 16),
             Text(
               'Your monthly generation quota has been used up.\n\nUpgrade to VIP for unlimited generations!',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+              style: TextStyle(color: context.appColors.textSecondary, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],
@@ -753,7 +753,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: context.appColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {

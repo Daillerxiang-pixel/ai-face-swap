@@ -25,8 +25,8 @@ class LoadingWidget extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               message!,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
+              style: TextStyle(
+                color: context.appColors.textSecondary,
                 fontSize: 14,
               ),
             ),

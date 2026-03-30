@@ -151,7 +151,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -163,17 +163,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppTheme.background,
-                    AppTheme.background.withOpacity(0.85),
+                    context.appColors.background,
+                    context.appColors.background.withOpacity(0.85),
                   ],
                 ),
               ),
-              child: const Align(
+              child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Discover',
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
                   ),
@@ -187,24 +187,24 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: Container(
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceBackground,
+                  color: context.appColors.surfaceBackground,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
+                  style: TextStyle(
+                    color: context.appColors.textPrimary,
                     fontSize: 14,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search templates, scenes, styles...',
-                    hintStyle: const TextStyle(
-                      color: AppTheme.textSecondary,
+                    hintStyle: TextStyle(
+                      color: context.appColors.textSecondary,
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
-                      color: AppTheme.textSecondary,
+                      color: context.appColors.textSecondary,
                       size: 18,
                     ),
                     border: InputBorder.none,
@@ -222,7 +222,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: Container(
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceBackground,
+                  color: context.appColors.surfaceBackground,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -242,7 +242,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             Expanded(
               child: RefreshIndicator(
                 color: AppTheme.primary,
-                backgroundColor: AppTheme.cardBackground,
+                backgroundColor: context.appColors.cardBackground,
                 onRefresh: () => _loadTemplates(isRefresh: true),
                 child: _isLoading
                     ? const LoadingWidget(message: 'Loading...')
@@ -264,7 +264,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                             separatorBuilder: (_, __) => Divider(
                               height: 0.5,
                               color:
-                                  AppTheme.textTertiary.withOpacity(0.35),
+                                  context.appColors.textTertiary.withOpacity(0.35),
                               indent: 70,
                             ),
                             itemBuilder: (context, index) {
@@ -290,7 +290,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           duration: const Duration(milliseconds: 250),
           decoration: BoxDecoration(
             color:
-                isSelected ? AppTheme.cardBackground : Colors.transparent,
+                isSelected ? context.appColors.cardBackground : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             boxShadow: isSelected
                 ? [
@@ -307,8 +307,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               label,
               style: TextStyle(
                 color: isSelected
-                    ? AppTheme.textPrimary
-                    : AppTheme.textSecondary,
+                    ? context.appColors.textPrimary
+                    : context.appColors.textSecondary,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -340,24 +340,24 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         imageUrl: thumbUrl,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Container(
-                          color: AppTheme.surfaceBackground,
+                          color: context.appColors.surfaceBackground,
                           child: const Icon(
                             Icons.image_outlined,
-                            color: AppTheme.textTertiary,
+                            color: context.appColors.textTertiary,
                             size: 24,
                           ),
                         ),
                         errorWidget: (_, __, ___) => Container(
-                          color: AppTheme.surfaceBackground,
+                          color: context.appColors.surfaceBackground,
                           child: const Icon(
                             Icons.image_not_supported_outlined,
-                            color: AppTheme.textTertiary,
+                            color: context.appColors.textTertiary,
                             size: 24,
                           ),
                         ),
                       )
                     : Container(
-                        color: AppTheme.surfaceBackground,
+                        color: context.appColors.surfaceBackground,
                         child: Icon(
                           Icons.auto_awesome,
                           color: AppTheme.primary.withOpacity(0.5),
@@ -378,7 +378,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   Text(
                     template.name,
                     style: const TextStyle(
-                      color: AppTheme.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -396,7 +396,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       Text(
                         ' ${(template.rating ?? 0).toStringAsFixed(1)}',
                         style: const TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: context.appColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -404,7 +404,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       Text(
                         '${_formatCount(template.useCount)} uses',
                         style: const TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: context.appColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -417,7 +417,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             // 右箭头
             const Icon(
               Icons.chevron_right,
-              color: AppTheme.textTertiary,
+              color: context.appColors.textTertiary,
               size: 18,
             ),
           ],

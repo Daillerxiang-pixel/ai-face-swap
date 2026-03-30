@@ -1,5 +1,57 @@
 import 'package:flutter/material.dart';
 
+/// 自定义主题扩展 - 存储应用特有颜色
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  final Color background;
+  final Color cardBackground;
+  final Color surfaceBackground;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textTertiary;
+
+  const AppColors({
+    required this.background,
+    required this.cardBackground,
+    required this.surfaceBackground,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
+  });
+
+  @override
+  AppColors copyWith({
+    Color? background,
+    Color? cardBackground,
+    Color? surfaceBackground,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
+  }) {
+    return AppColors(
+      background: background ?? this.background,
+      cardBackground: cardBackground ?? this.cardBackground,
+      surfaceBackground: surfaceBackground ?? this.surfaceBackground,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      textTertiary: textTertiary ?? this.textTertiary,
+    );
+  }
+
+  @override
+  AppColors lerp(AppColors? other, double t) {
+    if (other is! AppColors) return this;
+    return AppColors(
+      background: Color.lerp(background, other.background, t)!,
+      cardBackground: Color.lerp(cardBackground, other.cardBackground, t)!,
+      surfaceBackground: Color.lerp(surfaceBackground, other.surfaceBackground, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
+    );
+  }
+}
+
 /// 应用主题配置（iOS 风格）
 class AppTheme {
   AppTheme._();
@@ -51,19 +103,25 @@ class AppTheme {
   static const double spacingLg = 24.0;
   static const double spacingXl = 32.0;
 
-  // ===== 动态颜色获取（根据主题自动切换）=====
-  static Color dynamicBackground(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? background : lightBackground;
-  static Color dynamicCard(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? cardBackground : lightCardBackground;
-  static Color dynamicSurface(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? surfaceBackground : lightSurfaceBackground;
-  static Color dynamicTextPrimary(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? textPrimary : lightTextPrimary;
-  static Color dynamicTextSecondary(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? textSecondary : lightTextSecondary;
-  static Color dynamicTextTertiary(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? textTertiary : lightTextTertiary;
+  // ===== 暗色自定义颜色 =====
+  static const appColorsDark = AppColors(
+    background: background,
+    cardBackground: cardBackground,
+    surfaceBackground: surfaceBackground,
+    textPrimary: textPrimary,
+    textSecondary: textSecondary,
+    textTertiary: textTertiary,
+  );
+
+  // ===== 亮色自定义颜色 =====
+  static const appColorsLight = AppColors(
+    background: lightBackground,
+    cardBackground: lightCardBackground,
+    surfaceBackground: lightSurfaceBackground,
+    textPrimary: lightTextPrimary,
+    textSecondary: lightTextSecondary,
+    textTertiary: lightTextTertiary,
+  );
 
   // ===== 暗黑主题 =====
   static ThemeData get darkTheme {
@@ -72,14 +130,17 @@ class AppTheme {
       scaffoldBackgroundColor: background,
       cardColor: cardBackground,
       dividerColor: surfaceBackground,
+      extensions: <ThemeExtension<dynamic>>[appColorsDark],
       colorScheme: base.colorScheme.copyWith(
         primary: primary,
         secondary: gradientEnd,
         surface: cardBackground,
+        surfaceContainerHighest: surfaceBackground,
         onPrimary: textPrimary,
         onSecondary: textPrimary,
         onSurface: textPrimary,
         onSurfaceVariant: textSecondary,
+        outline: textTertiary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -164,14 +225,17 @@ class AppTheme {
       scaffoldBackgroundColor: lightBackground,
       cardColor: lightCardBackground,
       dividerColor: lightSurfaceBackground,
+      extensions: <ThemeExtension<dynamic>>[appColorsLight],
       colorScheme: base.colorScheme.copyWith(
         primary: primary,
         secondary: gradientEnd,
         surface: lightCardBackground,
+        surfaceContainerHighest: lightSurfaceBackground,
         onPrimary: lightTextPrimary,
         onSecondary: lightTextPrimary,
         onSurface: lightTextPrimary,
         onSurfaceVariant: lightTextSecondary,
+        outline: lightTextTertiary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -250,13 +314,8 @@ class AppTheme {
   }
 }
 
-/// BuildContext 扩展 - 快速获取动态主题颜色
+/// BuildContext 扩展 - 通过 ThemeExtension 获取自定义颜色（Flutter 原生主题系统）
 extension ThemeColors on BuildContext {
-  bool get isDark => Theme.of(this).brightness == Brightness.dark;
-  Color get backgroundColor => isDark ? AppTheme.background : AppTheme.lightBackground;
-  Color get cardColor => isDark ? AppTheme.cardBackground : AppTheme.lightCardBackground;
-  Color get surfaceColor => isDark ? AppTheme.surfaceBackground : AppTheme.lightSurfaceBackground;
-  Color get textPrimaryColor => isDark ? AppTheme.textPrimary : AppTheme.lightTextPrimary;
-  Color get textSecondaryColor => isDark ? AppTheme.textSecondary : AppTheme.lightTextSecondary;
-  Color get textTertiaryColor => isDark ? AppTheme.textTertiary : AppTheme.lightTextTertiary;
+  /// 获取自定义颜色（跟随主题自动切换，Flutter 原生机制高效更新）
+  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
 }

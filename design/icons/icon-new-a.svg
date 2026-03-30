@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- 主背景渐变 -->
+    <linearGradient id="bgA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="50%" stop-color="#F72585"/>
+      <stop offset="100%" stop-color="#7209B7"/>
+    </linearGradient>
+    <!-- 高光渐变 -->
+    <radialGradient id="glowA" cx="30%" cy="25%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <!-- 脸部渐变 -->
+    <linearGradient id="faceA" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD6A5"/>
+      <stop offset="100%" stop-color="#FFAA60"/>
+    </linearGradient>
+    <!-- AI 神经网络渐变 -->
+    <linearGradient id="neuralA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="50%" stop-color="#7B2FFF"/>
+      <stop offset="100%" stop-color="#FF2D95"/>
+    </linearGradient>
+    <!-- 阴影 -->
+    <filter id="shadowA">
+      <feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    <!-- 发光效果 -->
+    <filter id="neonGlow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 圆角矩形背景 -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="url(#bgA)"/>
+  <!-- 高光 -->
+  <rect x="40" y="40" width="944" height="944" rx="200" ry="200" fill="url(#glowA)"/>
+
+  <!-- 装饰圆环 -->
+  <circle cx="512" cy="512" r="380" fill="none" stroke="url(#neuralA)" stroke-width="3" stroke-opacity="0.4"/>
+  <circle cx="512" cy="512" r="340" fill="none" stroke="url(#neuralA)" stroke-width="2" stroke-opacity="0.3"/>
+
+  <!-- 神经网络连线背景 -->
+  <g opacity="0.6">
+    <line x1="200" y1="300" x2="350" y2="400" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="350" y1="400" x2="512" y2="350" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="512" y1="350" x2="680" y2="420" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="680" y1="420" x2="820" y2="340" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="200" y1="450" x2="350" y2="520" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="350" y1="520" x2="512" y2="480" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="512" y1="480" x2="680" y2="550" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="680" y1="550" x2="820" y2="500" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="200" y1="600" x2="350" y2="650" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="350" y1="650" x2="512" y2="620" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="512" y1="620" x2="680" y2="680" stroke="url(#neuralA)" stroke-width="2"/>
+    <line x1="680" y1="680" x2="820" y2="640" stroke="url(#neuralA)" stroke-width="2"/>
+  </g>
+
+  <!-- 神经网络节点 -->
+  <g filter="url(#neonGlow)">
+    <circle cx="200" cy="300" r="12" fill="#00F5FF"/>
+    <circle cx="350" cy="400" r="10" fill="#7B2FFF"/>
+    <circle cx="512" cy="350" r="14" fill="#00F5FF"/>
+    <circle cx="680" cy="420" r="10" fill="#7B2FFF"/>
+    <circle cx="820" cy="340" r="12" fill="#FF2D95"/>
+    <circle cx="200" cy="450" r="10" fill="#7B2FFF"/>
+    <circle cx="350" cy="520" r="12" fill="#FF2D95"/>
+    <circle cx="512" cy="480" r="16" fill="#00F5FF"/>
+    <circle cx="680" cy="550" r="10" fill="#7B2FFF"/>
+    <circle cx="820" cy="500" r="12" fill="#FF2D95"/>
+    <circle cx="200" cy="600" r="10" fill="#00F5FF"/>
+    <circle cx="350" cy="650" r="12" fill="#7B2FFF"/>
+    <circle cx="512" cy="620" r="14" fill="#FF2D95"/>
+    <circle cx="680" cy="680" r="10" fill="#00F5FF"/>
+    <circle cx="820" cy="640" r="12" fill="#7B2FFF"/>
+  </g>
+
+  <!-- 人脸轮廓 -->
+  <g filter="url(#shadowA)">
+    <!-- 头发底 -->
+    <ellipse cx="512" cy="560" rx="200" ry="240" fill="url(#faceA)"/>
+    <!-- 脸型 -->
+    <path d="M312 480 Q312 780 512 820 Q712 780 712 480 Q712 380 512 360 Q312 380 312 480" fill="url(#faceA)"/>
+    <!-- 刘海/头发 -->
+    <path d="M300 420 Q350 200 512 180 Q674 200 724 420 Q700 300 512 280 Q324 300 300 420" fill="#2D1B69"/>
+    <!-- 头发侧面左 -->
+    <path d="M300 420 Q280 500 290 650 Q295 720 340 780 L360 780 Q330 700 325 620 Q320 520 340 420 Z" fill="#2D1B69"/>
+    <!-- 头发侧面右 -->
+    <path d="M724 420 Q744 500 734 650 Q729 720 684 780 L664 780 Q694 700 699 620 Q704 520 684 420 Z" fill="#2D1B69"/>
+  </g>
+
+  <!-- 眼睛 -->
+  <g>
+    <!-- 左眼 -->
+    <ellipse cx="420" cy="520" rx="55" ry="35" fill="#FFFFFF"/>
+    <circle cx="430" cy="520" r="28" fill="#1A1A2E"/>
+    <circle cx="440" cy="515" r="10" fill="#FFFFFF"/>
+    <!-- 右眼 -->
+    <ellipse cx="604" cy="520" rx="55" ry="35" fill="#FFFFFF"/>
+    <circle cx="594" cy="520" r="28" fill="#1A1A2E"/>
+    <circle cx="584" cy="515" r="10" fill="#FFFFFF"/>
+  </g>
+
+  <!-- 微笑 -->
+  <path d="M440 660 Q512 720 584 660" stroke="#C06030" stroke-width="8" fill="none" stroke-linecap="round"/>
+
+  <!-- AI 闪光星 -->
+  <g filter="url(#neonGlow)">
+    <polygon points="750,220 760,250 790,250 765,270 775,300 750,280 725,300 735,270 710,250 740,250" fill="#FFD700"/>
+    <polygon points="850,380 856,400 876,400 860,412 866,432 850,420 834,432 840,412 824,400 844,400" fill="#00F5FF"/>
+    <polygon points="180,380 186,400 206,400 190,412 196,432 180,420 164,432 170,412 154,400 174,400" fill="#FF2D95"/>
+    <polygon points="280,180 286,200 306,200 290,212 296,232 280,220 264,232 270,212 254,200 274,200" fill="#7B2FFF"/>
+  </g>
+
+  <!-- AI 徽章 -->
+  <g transform="translate(680, 680)">
+    <circle r="70" fill="#1A1A2E" opacity="0.9"/>
+    <circle r="60" fill="none" stroke="url(#neuralA)" stroke-width="4"/>
+    <text x="0" y="8" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="url(#neuralA)" text-anchor="middle">AI</text>
+  </g>
+</svg>

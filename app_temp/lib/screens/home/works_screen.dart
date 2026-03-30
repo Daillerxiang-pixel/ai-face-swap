@@ -140,12 +140,12 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
           ),
           const SizedBox(height: 24),
-          const Text('See Your Creations', style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
+          Text('See Your Creations', style: TextStyle(color: context.appColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text(
             'Sign in to view your face swap history and saved works',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
+            style: TextStyle(color: context.appColors.textSecondary, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 28),
           _buildFeatureCard(Icons.lock_outline, 'Unlimited Swaps', 'No daily limits'),
@@ -170,7 +170,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             ),
           ),
           const SizedBox(height: 12),
-          Text('Free to get started · No credit card required', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textTertiary, fontSize: 12)),
+          Text('Free to get started · No credit card required', textAlign: TextAlign.center, style: TextStyle(color: context.appColors.textTertiary, fontSize: 12)),
           const SizedBox(height: 20),
         ],
       ),
@@ -180,7 +180,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
   Widget _buildFeatureCard(IconData icon, String title, String subtitle) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: AppTheme.cardBackground, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: context.appColors.cardBackground, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Icon(icon, color: AppTheme.primary, size: 20),
@@ -189,8 +189,8 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-                Text(subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text(title, style: TextStyle(color: context.appColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(subtitle, style: TextStyle(color: context.appColors.textSecondary, fontSize: 12)),
               ],
             ),
           ),
@@ -218,9 +218,9 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
               child: Icon(Icons.auto_awesome, color: AppTheme.primary.withOpacity(0.7), size: 36),
             ),
             const SizedBox(height: 20),
-            const Text('No Works Yet', style: TextStyle(color: AppTheme.textSecondary, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text('No Works Yet', style: TextStyle(color: context.appColors.textSecondary, fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            const Text('Try your first face swap now!', style: TextStyle(color: AppTheme.textTertiary, fontSize: 14), textAlign: TextAlign.center),
+            Text('Try your first face swap now!', style: TextStyle(color: context.appColors.textTertiary, fontSize: 14), textAlign: TextAlign.center),
             const SizedBox(height: 24),
             SizedBox(
               width: 200, height: 48,
@@ -241,7 +241,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
+        backgroundColor: context.appColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
@@ -250,7 +250,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             Text('Generation Failed', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w600)),
           ],
         ),
-        content: Text(item.errorMessage ?? 'Unknown error, please retry', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+        content: Text(item.errorMessage ?? 'Unknown error, please retry', style: TextStyle(color: context.appColors.textSecondary, fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -264,7 +264,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -272,7 +272,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
               alignment: Alignment.centerLeft,
-              child: const Text('Works', style: TextStyle(color: AppTheme.textPrimary, fontSize: 34, fontWeight: FontWeight.bold)),
+              child: Text('Works', style: TextStyle(color: context.appColors.textPrimary, fontSize: 34, fontWeight: FontWeight.bold)),
             ),
             // Content
             Expanded(
@@ -298,29 +298,29 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
 
                         return RefreshIndicator(
                           color: AppTheme.primary,
-                          backgroundColor: AppTheme.cardBackground,
+                          backgroundColor: context.appColors.cardBackground,
                           onRefresh: _onRefresh,
                           child: CustomScrollView(
                             slivers: [
                               for (final group in groups) ...[
                                 SliverStickyHeader(
                                   header: Container(
-                                    color: AppTheme.background,
+                                    color: context.appColors.background,
                                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
                                     alignment: Alignment.centerLeft,
                                     child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
-                                        Text(group.title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                                        Text(group.title, style: TextStyle(color: context.appColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
                                         if (group.subtitle.isNotEmpty) ...[
                                           const SizedBox(width: 8),
                                           Padding(
                                             padding: const EdgeInsets.only(bottom: 2),
-                                            child: Text(group.subtitle, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                            child: Text(group.subtitle, style: TextStyle(color: context.appColors.textSecondary, fontSize: 13)),
                                           ),
                                         ],
                                         const Spacer(),
-                                        Text('${group.items.length}', style: const TextStyle(color: AppTheme.textTertiary, fontSize: 13)),
+                                        Text('${group.items.length}', style: TextStyle(color: context.appColors.textTertiary, fontSize: 13)),
                                       ],
                                     ),
                                   ),
@@ -362,7 +362,7 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
     return GestureDetector(
       onTap: () => _onWorkTap(item),
       child: Container(
-        color: AppTheme.surfaceBackground,
+        color: context.appColors.surfaceBackground,
         child: AspectRatio(
           aspectRatio: 1,
           child: Stack(
@@ -372,8 +372,8 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
                 CachedNetworkImage(
                   imageUrl: resultUrl,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: AppTheme.surfaceBackground, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)))),
-                  errorWidget: (_, __, ___) => Container(color: AppTheme.surfaceBackground, child: const Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 32)),
+                  placeholder: (_, __) => Container(color: context.appColors.surfaceBackground, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)))),
+                  errorWidget: (_, __, ___) => Container(color: context.appColors.surfaceBackground, child: Icon(Icons.broken_image, color: context.appColors.textTertiary, size: 32)),
                 ),
 
               // Video icon
@@ -461,7 +461,7 @@ class _ResultPreviewScreenState extends State<_ResultPreviewScreen> {
                   imageUrl: widget.imageUrl,
                   fit: BoxFit.contain,
                   placeholder: (_, __) => const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: AppTheme.textTertiary, size: 48)),
+                  errorWidget: (_, __, ___) => Center(child: Icon(Icons.broken_image, color: context.appColors.textTertiary, size: 48)),
                 ),
               ),
       ),

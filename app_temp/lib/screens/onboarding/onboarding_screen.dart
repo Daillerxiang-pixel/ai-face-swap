@@ -68,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -119,8 +119,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           slide.title,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
+                          style: TextStyle(
+                            color: context.appColors.textPrimary,
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
                           ),
@@ -129,8 +129,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           slide.subtitle,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
+                          style: TextStyle(
+                            color: context.appColors.textSecondary,
                             fontSize: 15,
                             height: 1.6,
                           ),
@@ -154,7 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: isActive ? 24 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: isActive ? AppTheme.primary : AppTheme.surfaceBackground,
+                      color: isActive ? AppTheme.primary : context.appColors.surfaceBackground,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   );
@@ -171,10 +171,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     TextButton(
                       onPressed: _onSkip,
-                      child: const Text(
+                      child: Text(
                         'Skip',
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: context.appColors.textSecondary,
                           fontSize: 15,
                         ),
                       ),

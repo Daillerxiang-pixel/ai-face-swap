@@ -74,11 +74,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final items = _filteredFavorites;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: _buildBackButton(),
         title: const Text('Favorites'),
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.appColors.background,
         elevation: 0,
       ),
       body: Column(
@@ -88,7 +88,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
+                color: context.appColors.cardBackground,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -107,7 +107,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         child: Text(
                           e.value,
                           style: TextStyle(
-                            color: isActive ? Colors.white : AppTheme.textSecondary,
+                            color: isActive ? Colors.white : context.appColors.textSecondary,
                             fontSize: 13,
                             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                           ),
@@ -141,7 +141,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ? _buildEmptyState()
                         : RefreshIndicator(
                             color: AppTheme.primary,
-                            backgroundColor: AppTheme.cardBackground,
+                            backgroundColor: context.appColors.cardBackground,
                             onRefresh: _loadFavorites,
                             child: _buildGrid(items),
                           ),
@@ -172,14 +172,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.favorite_border, size: 56, color: AppTheme.textTertiary),
+            Icon(Icons.favorite_border, size: 56, color: context.appColors.textTertiary),
             const SizedBox(height: 16),
-            const Text('No Favorites Yet', style: TextStyle(color: AppTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w600)),
+            Text('No Favorites Yet', style: TextStyle(color: context.appColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(
               'Browse templates and tap the heart icon to save your favorites',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
+              style: TextStyle(color: context.appColors.textSecondary, fontSize: 14, height: 1.5),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -226,7 +226,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
+              color: context.appColors.cardBackground,
               borderRadius: BorderRadius.circular(14),
             ),
             clipBehavior: Clip.antiAlias,
@@ -238,8 +238,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     child: CachedNetworkImage(
                       imageUrl: thumbUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppTheme.surfaceBackground),
-                      errorWidget: (_, __, ___) => Container(color: AppTheme.surfaceBackground),
+                      placeholder: (_, __) => Container(color: context.appColors.surfaceBackground),
+                      errorWidget: (_, __, ___) => Container(color: context.appColors.surfaceBackground),
                     ),
                   ),
                 // Heart button (tap to unfavorite)
@@ -268,7 +268,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     padding: const EdgeInsets.all(10),
                     child: Text(
                       tpl.name,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: context.appColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

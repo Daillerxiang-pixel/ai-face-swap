@@ -71,7 +71,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
@@ -147,7 +147,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
 
                 return RefreshIndicator(
                   color: AppTheme.primary,
-                  backgroundColor: AppTheme.cardBackground,
+                  backgroundColor: context.appColors.cardBackground,
                   onRefresh: _onRefresh,
                   child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -183,7 +183,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
       child: Container(
         height: 36,
         decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
+          color: context.appColors.cardBackground,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -216,7 +216,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
           child: Text(
             labels[index],
             style: TextStyle(
-              color: isActive ? Colors.white : AppTheme.textSecondary,
+              color: isActive ? Colors.white : context.appColors.textSecondary,
               fontSize: 13,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -257,14 +257,14 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primary : AppTheme.cardBackground,
+                      color: isSelected ? AppTheme.primary : context.appColors.cardBackground,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Center(
                       child: Text(
                         scene,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppTheme.textSecondary,
+                          color: isSelected ? Colors.white : context.appColors.textSecondary,
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                         ),
@@ -284,7 +284,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
         children: [
           Text(
             '$count templates',
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.appColors.textSecondary, fontSize: 13),
           ),
           const Spacer(),
           const Row(

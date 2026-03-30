@@ -25,11 +25,11 @@ class AppBottomTabBar extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Color(0xFF0D0D0D),
         border: Border(
           top: BorderSide(
-            color: AppTheme.surfaceBackground,
+            color: context.appColors.surfaceBackground,
             width: 0.5,
           ),
         ),
@@ -55,7 +55,7 @@ class AppBottomTabBar extends StatelessWidget {
                           key: ValueKey('$index-${currentIndex == index}'),
                           color: currentIndex == index
                               ? AppTheme.primary
-                              : AppTheme.textTertiary,
+                              : context.appColors.textTertiary,
                           size: 22,
                         ),
                       ),
@@ -65,7 +65,7 @@ class AppBottomTabBar extends StatelessWidget {
                         style: TextStyle(
                           color: currentIndex == index
                               ? AppTheme.primary
-                              : AppTheme.textTertiary,
+                              : context.appColors.textTertiary,
                           fontSize: 10,
                           fontWeight: currentIndex == index
                               ? FontWeight.w600

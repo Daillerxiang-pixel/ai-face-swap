@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen>
         _onBackPress();
       },
       child: Scaffold(
-        backgroundColor: context.backgroundColor,
+        backgroundColor: context.appColors.background,
         body: TabBarView(
           controller: _tabController,
           physics: const NeverScrollableScrollPhysics(),

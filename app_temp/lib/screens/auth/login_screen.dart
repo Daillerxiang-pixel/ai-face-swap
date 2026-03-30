@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -40,19 +40,19 @@ class LoginScreen extends StatelessWidget {
                   child: Image.asset('assets/icons/app_icon.png', width: 80, height: 80, fit: BoxFit.cover),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'AI FaceSwap',
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: context.appColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Swap faces with AI in seconds',
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: context.appColors.textSecondary,
                     fontSize: 14,
                   ),
                 ),
@@ -87,11 +87,11 @@ class LoginScreen extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 40),
-                const Text(
+                Text(
                   'By continuing you agree to our Terms & Privacy Policy',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppTheme.textTertiary,
+                    color: context.appColors.textTertiary,
                     fontSize: 12,
                   ),
                 ),

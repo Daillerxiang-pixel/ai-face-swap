@@ -11,7 +11,7 @@ class CreateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -20,19 +20,19 @@ class CreateScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 40),
               // 标题
-              const Text(
+              Text(
                 'AI Face Swap',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Select a template, upload a photo, create in one tap',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: context.appColors.textSecondary,
                   fontSize: 15,
                 ),
               ),
@@ -101,7 +101,7 @@ class CreateScreen extends StatelessWidget {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: AppTheme.textPrimary, size: 28),
+              child: Icon(icon, color: context.appColors.textPrimary, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -110,8 +110,8 @@ class CreateScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
+                    style: TextStyle(
+                      color: context.appColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -120,16 +120,16 @@ class CreateScreen extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: AppTheme.textPrimary.withOpacity(0.8),
+                      color: context.appColors.textPrimary.withOpacity(0.8),
                       fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              color: AppTheme.textPrimary,
+              color: context.appColors.textPrimary,
               size: 16,
             ),
           ],

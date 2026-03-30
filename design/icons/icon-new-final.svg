@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- 主背景渐变 -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7B2FFF"/>
+      <stop offset="50%" stop-color="#5B21B6"/>
+      <stop offset="100%" stop-color="#3B0D7A"/>
+    </linearGradient>
+    <!-- 脸部渐变 -->
+    <linearGradient id="faceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <!-- 渐变文字 -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#DDD6FE"/>
+    </linearGradient>
+    <!-- 面具渐变 -->
+    <linearGradient id="maskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C084FC"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <!-- 发光效果 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softShadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- 圆角矩形背景 -->
+  <rect x="0" y="0" width="1024" height="1024" rx="220" ry="220" fill="url(#bgGrad)"/>
+
+  <!-- 背景光晕 -->
+  <ellipse cx="512" cy="480" rx="350" ry="300" fill="#A78BFA" opacity="0.15"/>
+  <circle cx="300" cy="300" r="200" fill="#C084FC" opacity="0.1"/>
+
+  <!-- 人脸 -->
+  <g filter="url(#softShadow)">
+    <!-- 脸型 -->
+    <path d="M300 420 Q300 800 512 860 Q724 800 724 420 Q724 310 512 280 Q300 310 300 420" fill="url(#faceGrad)"/>
+    <!-- 头发 -->
+    <path d="M270 400 Q300 150 512 120 Q724 150 754 400 Q720 260 512 240 Q304 260 270 400" fill="#4C1D95"/>
+    <!-- 两侧头发 -->
+    <path d="M270 400 Q240 500 255 650 Q265 750 310 820 L345 820 Q300 740 295 630 Q290 510 320 400 Z" fill="#4C1D95"/>
+    <path d="M754 400 Q784 500 769 650 Q759 750 714 820 L679 820 Q724 740 729 630 Q734 510 704 400 Z" fill="#4C1D95"/>
+  </g>
+
+  <!-- 面具元素 -->
+  <g filter="url(#glow)" transform="translate(512, 520)">
+    <!-- 面具轮廓 -->
+    <path d="M-160 -80 Q-160 -180 0 -200 Q160 -180 160 -80 L160 60 Q120 100 0 110 Q-120 100 -160 60 Z" fill="url(#maskGrad)" opacity="0.9"/>
+    <!-- 面具眼睛孔 -->
+    <ellipse cx="-65" cy="-40" rx="45" ry="30" fill="#3B0D7A"/>
+    <ellipse cx="65" cy="-40" rx="45" ry="30" fill="#3B0D7A"/>
+    <!-- 面具嘴巴孔 -->
+    <path d="M-50 40 Q0 70 50 40 Q0 55 -50 40" fill="#3B0D7A"/>
+    <!-- 面具边缘高光 -->
+    <path d="M-155 -75 Q-155 -175 0 -195 Q155 -175 155 -75" stroke="#E9D5FF" stroke-width="4" fill="none" opacity="0.4"/>
+  </g>
+
+  <!-- AI 字母 -->
+  <g filter="url(#glow)">
+    <!-- A -->
+    <text x="370" y="780" font-family="Arial, Helvetica, sans-serif" font-size="220" font-weight="bold" fill="url(#textGrad)">AI</text>
+  </g>
+
+  <!-- 装饰星星 -->
+  <g filter="url(#glow)">
+    <polygon points="850,180 858,210 890,210 864,232 876,265 850,242 824,265 836,232 810,210 842,210" fill="#FFD700"/>
+    <polygon points="160,250 166,272 190,272 172,287 178,310 160,295 142,310 148,287 130,272 154,272" fill="#C084FC"/>
+    <polygon points="880,750 886,770 908,770 890,785 896,806 880,790 864,806 870,785 852,770 874,770" fill="#FFD700" opacity="0.8"/>
+    <polygon points="130,700 136,720 158,720 140,735 146,756 130,740 114,756 120,735 102,720 124,720" fill="#C084FC" opacity="0.8"/>
+  </g>
+
+  <!-- 闪光粒子 -->
+  <g opacity="0.7">
+    <circle cx="200" cy="400" r="6" fill="#FFFFFF"/>
+    <circle cx="820" cy="420" r="5" fill="#FFFFFF"/>
+    <circle cx="300" cy="850" r="5" fill="#C084FC"/>
+    <circle cx="720" cy="870" r="6" fill="#C084FC"/>
+    <circle cx="512" cy="180" r="5" fill="#FFD700"/>
+  </g>
+
+  <!-- 底部装饰线 -->
+  <rect x="280" y="880" width="464" height="6" rx="3" fill="#C084FC" opacity="0.6"/>
+</svg>

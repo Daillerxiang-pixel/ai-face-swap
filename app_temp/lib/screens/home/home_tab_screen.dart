@@ -102,7 +102,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     final videoCount = _allTemplates.where((t) => t.type == 'video').length;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -110,10 +110,10 @@ class _HomeTabScreenState extends State<HomeTabScreen>
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
               alignment: Alignment.centerLeft,
-              child: const Text(
+              child: Text(
                 'AI FaceSwap',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: context.appColors.textPrimary,
                   fontSize: 34,
                   fontWeight: FontWeight.bold,
                 ),
@@ -123,7 +123,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
             Expanded(
               child: RefreshIndicator(
                 color: AppTheme.primary,
-                backgroundColor: AppTheme.cardBackground,
+                backgroundColor: context.appColors.cardBackground,
                 onRefresh: _loadData,
                 child: ListView(
                   controller: _scrollController,
@@ -399,7 +399,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
         children: [
           Text(
             title,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: context.appColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const Spacer(),
           if (onMore != null)
@@ -433,7 +433,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
             child: Container(
               width: 150,
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
+                color: context.appColors.cardBackground,
                 borderRadius: BorderRadius.circular(14),
               ),
               clipBehavior: Clip.antiAlias,
@@ -448,7 +448,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                         if (thumbUrl.isNotEmpty)
                           CachedNetworkImage(imageUrl: thumbUrl, fit: BoxFit.cover)
                         else
-                          Container(color: AppTheme.surfaceBackground),
+                          Container(color: context.appColors.surfaceBackground),
                         // BA labels
                         Positioned(
                           top: 8,
@@ -505,7 +505,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                             Expanded(
                               child: Text(
                                 'User #${tpl.id}',
-                                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                                style: TextStyle(color: context.appColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -514,14 +514,14 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                             const SizedBox(width: 2),
                             Text(
                               _formatCount(tpl.useCount),
-                              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                              style: TextStyle(color: context.appColors.textSecondary, fontSize: 11),
                             ),
                           ],
                         ),
                         const SizedBox(height: 2),
                         Text(
                           tpl.name,
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          style: TextStyle(color: context.appColors.textSecondary, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -578,7 +578,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           },
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
+              color: context.appColors.cardBackground,
               borderRadius: BorderRadius.circular(14),
             ),
             clipBehavior: Clip.antiAlias,
@@ -592,7 +592,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                       if (thumbUrl.isNotEmpty)
                         CachedNetworkImage(imageUrl: thumbUrl, fit: BoxFit.cover)
                       else
-                        Container(color: AppTheme.surfaceBackground),
+                        Container(color: context.appColors.surfaceBackground),
                       if (isVideo)
                         Positioned(
                           bottom: 8,
@@ -613,7 +613,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                     children: [
                       Text(
                         tpl.name,
-                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: context.appColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -623,7 +623,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                         children: [
                           Text(
                             _formatCount(tpl.useCount),
-                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                            style: TextStyle(color: context.appColors.textSecondary, fontSize: 11),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
