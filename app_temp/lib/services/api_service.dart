@@ -12,6 +12,7 @@ class ApiResponse<T> {
   final int? page;
   final int? limit;
   final String? message;
+  final String? errorCode; // 错误码，如 QUOTA_EXCEEDED
 
   ApiResponse({
     required this.success,
@@ -19,6 +20,7 @@ class ApiResponse<T> {
     this.page,
     this.limit,
     this.message,
+    this.errorCode,
   });
 
   factory ApiResponse.fromJson(
@@ -34,7 +36,8 @@ class ApiResponse<T> {
       limit: json['limit'] is int
           ? json['limit']
           : int.tryParse(json['limit']?.toString() ?? ''),
-      message: json['message'],
+      message: json['message'] ?? json['error'],
+      errorCode: json['errorCode'],
     );
   }
 }

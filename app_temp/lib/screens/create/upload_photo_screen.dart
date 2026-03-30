@@ -701,10 +701,15 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           _startPolling();
         }
       } else {
-        setState(() {
-          _status = 'failed';
-          _errorMsg = res.message ?? 'Failed to submit task';
-        });
+        // 检查是否是次数不足
+        if (res.errorCode == 'QUOTA_EXCEEDED') {
+          _showQuotaExceededDialog();
+        } else {
+          setState(() {
+            _status = 'failed';
+            _errorMsg = res.message ?? 'Failed to submit task';
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -712,6 +717,58 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         _errorMsg = 'Network error, please retry';
       });
     }
+  }
+
+  /// 显示次数不足弹窗
+  void _showQuotaExceededDialog() {
+    setState(() {
+      _isGenerating = false;
+      _status = 'failed';
+      _errorMsg = 'Monthly quota exceeded';
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Quota Exceeded',
+          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 48),
+            SizedBox(height: 16),
+            Text(
+              'Your monthly generation quota has been used up.\n\nUpgrade to VIP for unlimited generations!',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // 跳转到 VIP 页面
+              Navigator.pushNamed(context, '/vip');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Upgrade VIP', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 轮询生成状态
