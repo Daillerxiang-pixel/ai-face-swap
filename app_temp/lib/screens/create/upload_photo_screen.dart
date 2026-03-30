@@ -9,6 +9,7 @@ import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/shimmer_widget.dart';
 import '../../widgets/toast.dart';
+import '../profile/vip_purchase_screen.dart';
 import 'result_screen.dart';
 
 /// 上传照片页面 — 选择模板后上传照片
@@ -757,8 +758,11 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // 跳转到 VIP 页面
-              Navigator.pushNamed(context, '/vip');
+              // 跳转到 VIP 购买页面
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VipPurchaseScreen()),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
