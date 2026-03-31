@@ -135,7 +135,7 @@ class AppTheme {
         primary: primary,
         secondary: gradientEnd,
         surface: cardBackground,
-        surfaceContainerHighest: surfaceBackground,
+        surfaceContainer: surfaceBackground,
         onPrimary: textPrimary,
         onSecondary: textPrimary,
         onSurface: textPrimary,
