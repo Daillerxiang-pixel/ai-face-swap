@@ -37,8 +37,8 @@ jobs:
           echo "=== 调试信息 ==="
           echo "当前目录:"
           pwd
-          echo "返回上级目录"
-          cd ..
+          echo "进入子目录"
+          cd ai-face-swap
           pwd
           echo "文件列表:"
           ls -la
