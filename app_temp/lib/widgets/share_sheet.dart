@@ -20,7 +20,14 @@ class ShareSheet {
   /// 直接分享（无需弹面板）
   static Future<void> share({String? text, String? imageUrl}) async {
     final xfile = imageUrl != null ? XFile(imageUrl) : null;
-    await Share.share(text ?? 'Check out this amazing AI FaceSwap!', files: xfile != null ? [xfile] : null);
+    if (xfile != null) {
+      await Share.shareXFiles(
+        [xfile],
+        text: text ?? 'Check out this amazing AI FaceSwap!',
+      );
+    } else {
+      await Share.share(text ?? 'Check out this amazing AI FaceSwap!');
+    }
   }
 }
 
@@ -132,12 +139,10 @@ class _ShareSheetContent extends StatelessWidget {
     final shareText = text ?? 'Check out this amazing AI FaceSwap!';
     final xfile = imageUrl != null ? XFile(imageUrl!) : null;
 
-    if (platform == 'more') {
-      // 系统分享面板（支持所有已安装 App）
-      await Share.share(shareText, files: xfile != null ? [xfile] : null);
+    if (xfile != null) {
+      await Share.shareXFiles([xfile], text: shareText);
     } else {
-      // 单一平台分享（通过系统分享面板过滤或直接调起）
-      await Share.share(shareText, files: xfile != null ? [xfile] : null);
+      await Share.share(shareText);
     }
   }
 }
