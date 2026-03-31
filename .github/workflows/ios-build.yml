@@ -34,15 +34,11 @@ jobs:
         env:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
-          echo "=== 调试信息 ==="
-          echo "当前目录:"
+          echo "=== 当前目录 ==="
           pwd
-          echo "进入子目录"
-          cd ai-face-swap
-          pwd
-          echo "文件列表:"
+          echo "=== 文件列表 ==="
           ls -la
-          echo "证书文件是否存在:"
+          echo "=== 证书文件是否存在 ==="
           test -f faceswap.p12 && echo "faceswap.p12 存在" || echo "faceswap.p12 不存在"
           test -f provisioning.mobileprovision && echo "provisioning.mobileprovision 存在" || echo "不存在"
           echo "=== 导入证书 ==="
@@ -59,6 +55,9 @@ jobs:
       - name: Build iOS
         shell: bash
         run: |
+          echo "=== 构建目录 ==="
+          pwd
+          ls -la app_temp/
           cd app_temp && flutter build ipa --release
 
       # 6. 上传 IPA 作为构建产物
