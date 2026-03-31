@@ -1,10 +1,11 @@
 # ============================================================
 # Codemagic CI/CD Configuration — AI换脸 iOS 云端构建
+# 自动签名模式（App Store Connect API Key）
 # ============================================================
 # 使用方法：
-# 1. 在 Codemagic 控制台关联此 Git 仓库
-# 2. 配置 Apple Developer 凭证（Codemagic Web UI 中填入）
-# 3. 触发首次构建
+# 1. Codemagic 控制台关联此 Git 仓库
+# 2. Codemagic Web UI: 上传 .p8 文件并填入 Key ID / Issuer ID
+# 3. 点击 Start build 触发构建
 # ============================================================
 
 workflows:
@@ -15,6 +16,13 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      environment:
+        # App Store Connect API Key 凭证（在 Codemagic Web UI 配置）
+        # 以下为占位符，实际值在 Codemagic Web UI 的 Environment Variables 中填入
+        vars:
+          APP_STORE_CONNECT_KEY_ID: TLZ3BSRNX7
+          APP_STORE_CONNECT_ISSUER_ID: f1615060-0527-4598-91c5-5449d44c615b
+          APP_STORE_CONNECT_PRIVATE_KEY: TLZ3BSRNX7.p8   # 文件名，上传后在 Codemagic UI 引用
     scripts:
       # Step 1: 获取 Flutter 依赖
       - name: Get Flutter dependencies
@@ -22,11 +30,13 @@ workflows:
           cd flutter_app
           flutter packages pub get
 
-      # Step 2: iOS 代码签名配置
+      # Step 2: iOS 代码签名配置（自动创建 Certificate + Profile）
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.aihuantu.faceswap" --type IOS_APP_STORE
+          app-store-connect fetch-signing-files "com.aihuantu.faceswap" \
+            --type IOS_APP_STORE \
+            --create
           keychain add-certificates
           xcode-project use-profiles
 
@@ -40,10 +50,7 @@ workflows:
             --code-signing-style=automatic
 
     artifacts:
-      # IPA 文件（用于上传 App Store）
-      - build/ios/ipa/*.ipa
-      # 构建日志（调试用）
-      - flutter_app/build/logs/**/*.log
+      - flutter_app/build/ios/ipa/*.ipa
 
   ios-adhoc-workflow:
     name: iOS Build (Ad-Hoc / TestFlight)
@@ -52,6 +59,11 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      environment:
+        vars:
+          APP_STORE_CONNECT_KEY_ID: TLZ3BSRNX7
+          APP_STORE_CONNECT_ISSUER_ID: f1615060-0527-4598-91c5-5449d44c615b
+          APP_STORE_CONNECT_PRIVATE_KEY: TLZ3BSRNX7.p8
     scripts:
       - name: Get Flutter dependencies
         script: |
@@ -61,7 +73,9 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.aihuantu.faceswap" --type IOS_ADHOC
+          app-store-connect fetch-signing-files "com.aihuantu.faceswap" \
+            --type IOS_ADHOC \
+            --create
           keychain add-certificates
           xcode-project use-profiles
 
@@ -70,8 +84,8 @@ workflows:
           cd flutter_app
           flutter build ipa \
             --release \
-            --export-options-plist=export_options.plist \
+            --export-options-plist=export_options_adhoc.plist \
             --code-signing-style=automatic
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - flutter_app/build/ios/ipa/*.ipa
