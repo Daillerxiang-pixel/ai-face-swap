@@ -52,12 +52,20 @@ jobs:
       - name: Build iOS
         shell: bash
         run: |
-          cd app_temp && flutter build ipa --release
+          cd app_temp
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release archive CODE_SIGN_IDENTITY="Apple Distribution: Qiang Lv" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO PRODUCT_BUNDLE_IDENTIFIER=com.aihuantu.faceswap
 
-      # 6. 上传 IPA 作为构建产物
+      # 6. 导出 IPA
+      - name: Export IPA
+        shell: bash
+        run: |
+          cd app_temp
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist export_options.plist -exportPath build/ipa
+
+      # 7. 上传 IPA 作为构建产物
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: face-swap-ipa
-          path: app_temp/build/ios/ipa/*.ipa
+          path: app_temp/build/ipa/Runner.ipa
           retention-days: 14
