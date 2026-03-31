@@ -51,10 +51,7 @@ jobs:
       - name: Build iOS
         run: |
           cd app_temp
-          flutter build ipa \
-            --release \
-            --export-options-plist=export_options.plist \
-            --code-signing-style=automatic
+          flutter build ipa --release
 
       # 6. 上传 IPA 作为构建产物
       - name: Upload IPA
