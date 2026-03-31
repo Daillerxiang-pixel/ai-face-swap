@@ -126,4 +126,50 @@ class Template {
       'createdAt': createdAt?.toIso8601String(),
     };
   }
+
+  Template copyWith({
+    String? id,
+    String? name,
+    String? cover,
+    String? preview,
+    String? previewUrl,
+    String? videoUrl,
+    String? category,
+    String? scene,
+    String? type,
+    int? useCount,
+    bool? isFavorite,
+    String? description,
+    String? icon,
+    String? bg,
+    String? usage,
+    int? usageNum,
+    String? badge,
+    double? rating,
+    String? provider,
+    DateTime? createdAt,
+  }) {
+    return Template(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      cover: cover ?? this.cover,
+      preview: preview ?? this.preview,
+      previewUrl: previewUrl ?? this.previewUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
+      category: category ?? this.category,
+      scene: scene ?? this.scene,
+      type: type ?? this.type,
+      useCount: useCount ?? this.useCount,
+      isFavorite: isFavorite ?? this.isFavorite,
+      description: description ?? this.description,
+      icon: icon ?? this.icon,
+      bg: bg ?? this.bg,
+      usage: usage ?? this.usage,
+      usageNum: usageNum ?? this.usageNum,
+      badge: badge ?? this.badge,
+      rating: rating ?? this.rating,
+      provider: provider ?? this.provider,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

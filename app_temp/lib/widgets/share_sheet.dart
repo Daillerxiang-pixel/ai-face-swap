@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 
 /// 分享面板 — 底部弹出
 class ShareSheet {
-  static void show(BuildContext context) {
+  /// 分享内容（图片 URL + 文字）
+  static void show(BuildContext context, {String? text, String? imageUrl}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: context.appColors.cardBackground,
@@ -11,13 +13,22 @@ class ShareSheet {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder: (ctx) => const _ShareSheetContent(),
+      builder: (ctx) => _ShareSheetContent(text: text, imageUrl: imageUrl),
     );
+  }
+
+  /// 直接分享（无需弹面板）
+  static Future<void> share({String? text, String? imageUrl}) async {
+    final xfile = imageUrl != null ? XFile(imageUrl) : null;
+    await Share.share(text ?? 'Check out this amazing AI FaceSwap!', files: xfile != null ? [xfile] : null);
   }
 }
 
 class _ShareSheetContent extends StatelessWidget {
-  const _ShareSheetContent();
+  final String? text;
+  final String? imageUrl;
+
+  const _ShareSheetContent({this.text, this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -56,28 +67,33 @@ class _ShareSheetContent extends StatelessWidget {
                   label: 'Instagram',
                   gradient: const [Color(0xFF833AB4), Color(0xFFE1306C), Color(0xFFF77737)],
                   icon: Icons.camera_alt_outlined,
+                  onTap: () => _shareTo(context, 'instagram'),
                 ),
                 _ShareOption(
                   label: 'TikTok',
                   gradient: const [Color(0xFF010101), Color(0xFF333333)],
                   icon: Icons.music_note,
                   border: true,
+                  onTap: () => _shareTo(context, 'tiktok'),
                 ),
                 _ShareOption(
                   label: 'WhatsApp',
                   gradient: const [Color(0xFF25D366), Color(0xFF25D366)],
                   icon: Icons.chat_bubble,
+                  onTap: () => _shareTo(context, 'whatsapp'),
                 ),
                 _ShareOption(
                   label: 'Message',
                   gradient: const [Color(0xFF7C3AED), Color(0xFF7C3AED)],
                   icon: Icons.send,
+                  onTap: () => _shareTo(context, 'message'),
                 ),
                 _ShareOption(
                   label: 'More',
                   gradient: const [Color(0xFF2C2C2E), Color(0xFF2C2C2E)],
                   icon: Icons.more_horiz,
                   iconColor: context.appColors.textSecondary,
+                  onTap: () => _shareTo(context, 'more'),
                 ),
               ],
             ),
@@ -110,6 +126,20 @@ class _ShareSheetContent extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _shareTo(BuildContext context, String platform) async {
+    Navigator.of(context).pop(); // 关闭面板
+    final shareText = text ?? 'Check out this amazing AI FaceSwap!';
+    final xfile = imageUrl != null ? XFile(imageUrl!) : null;
+
+    if (platform == 'more') {
+      // 系统分享面板（支持所有已安装 App）
+      await Share.share(shareText, files: xfile != null ? [xfile] : null);
+    } else {
+      // 单一平台分享（通过系统分享面板过滤或直接调起）
+      await Share.share(shareText, files: xfile != null ? [xfile] : null);
+    }
+  }
 }
 
 class _ShareOption extends StatelessWidget {
@@ -118,6 +148,7 @@ class _ShareOption extends StatelessWidget {
   final IconData icon;
   final bool border;
   final Color? iconColor;
+  final VoidCallback onTap;
 
   const _ShareOption({
     required this.label,
@@ -125,17 +156,13 @@ class _ShareOption extends StatelessWidget {
     required this.icon,
     this.border = false,
     this.iconColor,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // TODO: implement share
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Share to $label coming soon')),
-        );
-      },
+      onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

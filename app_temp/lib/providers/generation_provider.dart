@@ -119,8 +119,10 @@ class GenerationProvider with ChangeNotifier {
 
         if (gen.isCompleted || gen.isFailed) {
           stopPolling();
-          // 刷新历史
-          loadHistory();
+          // 刷新历史（等待完成后再通知 UI）
+          await loadHistory();
+          notifyListeners();
+          return;
         }
 
         notifyListeners();

@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'auth_service.dart';
 import '../config/app_config.dart';
 
@@ -56,13 +53,6 @@ class ApiService {
       receiveTimeout: const Duration(seconds: 30),
     ));
 
-    // 信任所有 HTTPS 证书（Let's Encrypt）
-    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback = (cert, host, port) => true;
-      return client;
-    };
-
     // 请求拦截器 — 自动附加 token
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
@@ -72,21 +62,22 @@ class ApiService {
         }
         handler.next(options);
       },
-      onError: (error, handler) {
-        // 处理 403 等错误响应，提取错误信息
-        if (error.response?.statusCode == 403 || error.response?.statusCode == 400) {
-          final data = error.response?.data;
-          if (data is Map<String, dynamic>) {
-            // 将错误转换为正常的响应，让业务代码处理
-            return handler.resolve(Response(
-              requestOptions: error.requestOptions,
-              data: data,
-              statusCode: 200,
-              statusMessage: 'OK',
-            ));
+    ));
+
+    // 重试拦截器 — 写操作失败时自动重试 1 次
+    _dio.interceptors.add(InterceptorsWrapper(
+      onError: (error, handler) async {
+        final method = error.requestOptions.method;
+        // 仅对写操作（POST/PUT/DELETE）且非 4xx 业务错误时重试
+        if (_isWriteMethod(method) && error.response?.statusCode != null && error.response!.statusCode! >= 500) {
+          try {
+            final response = await _dio.fetch(error.requestOptions);
+            return handler.resolve(response);
+          } catch (e) {
+            return handler.next(error);
           }
         }
-        handler.next(error);
+        return handler.next(error);
       },
     ));
 
@@ -240,5 +231,9 @@ class ApiService {
     if (theme != null) body['theme'] = theme;
     final response = await _dio.put('/api/user/settings', data: body);
     return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  bool _isWriteMethod(String method) {
+    return method == 'POST' || method == 'PUT' || method == 'DELETE' || method == 'PATCH';
   }
 }

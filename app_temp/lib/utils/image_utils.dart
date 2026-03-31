@@ -8,9 +8,7 @@ class ImageUtils {
   static String imgUrl(String? path) {
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http')) return path;
-    if (path.startsWith('/uploads/')) {
-      return '${AppConfig.apiBaseUrl}$path';
-    }
+    // 统一走 OSS 基础地址
     return '${AppConfig.ossBaseUrl}/$path';
   }
 

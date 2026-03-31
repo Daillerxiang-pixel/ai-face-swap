@@ -100,4 +100,38 @@ class Generation {
       'completedAt': completedAt?.toIso8601String(),
     };
   }
+
+  Generation copyWith({
+    String? id,
+    String? templateId,
+    String? templateName,
+    String? templateCover,
+    String? templatePreview,
+    String? sourceFileId,
+    String? resultImage,
+    String? status,
+    String? type,
+    String? provider,
+    String? errorMessage,
+    int? progress,
+    DateTime? createdAt,
+    DateTime? completedAt,
+  }) {
+    return Generation(
+      id: id ?? this.id,
+      templateId: templateId ?? this.templateId,
+      templateName: templateName ?? this.templateName,
+      templateCover: templateCover ?? this.templateCover,
+      templatePreview: templatePreview ?? this.templatePreview,
+      sourceFileId: sourceFileId ?? this.sourceFileId,
+      resultImage: resultImage ?? this.resultImage,
+      status: status ?? this.status,
+      type: type ?? this.type,
+      provider: provider ?? this.provider,
+      errorMessage: errorMessage ?? this.errorMessage,
+      progress: progress ?? this.progress,
+      createdAt: createdAt ?? this.createdAt,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
 }

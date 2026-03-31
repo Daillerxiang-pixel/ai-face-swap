@@ -125,28 +125,7 @@ class TemplateProvider with ChangeNotifier {
 
         _templates = _templates.map((item) {
           if (item.id == templateId) {
-            return Template(
-              id: item.id,
-              name: item.name,
-              cover: item.cover,
-              preview: item.preview,
-              previewUrl: item.previewUrl,
-              videoUrl: item.videoUrl,
-              category: item.category,
-              scene: item.scene,
-              type: item.type,
-              useCount: item.useCount,
-              isFavorite: isFav,
-              description: item.description,
-              icon: item.icon,
-              bg: item.bg,
-              usage: item.usage,
-              usageNum: item.usageNum,
-              badge: item.badge,
-              rating: item.rating,
-              provider: item.provider,
-              createdAt: item.createdAt,
-            );
+            return item.copyWith(isFavorite: isFav);
           }
           return item;
         }).toList();

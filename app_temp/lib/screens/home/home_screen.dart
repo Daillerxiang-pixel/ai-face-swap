@@ -35,19 +35,21 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     HomeScreen.tabController = _tabController;
-    _tabController.addListener(_onTabChanged);
+    // 仅在动画结束时触发，避免 indexIsChanging 期间重复调用
+    _tabController.addListener(_onTabAnimationEnd);
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChanged);
+    _tabController.removeListener(_onTabAnimationEnd);
     HomeScreen.tabController = null;
     _tabController.dispose();
     super.dispose();
   }
 
-  void _onTabChanged() {
-    if (_tabController.indexIsChanging) {
+  void _onTabAnimationEnd() {
+    // 仅在动画/手势结束、Tab 完全切换后触发一次
+    if (!_tabController.indexIsChanging) {
       final index = _tabController.index;
       _tabNotifier.value = index;
       HomeScreen.visibilityNotifier.value = index;

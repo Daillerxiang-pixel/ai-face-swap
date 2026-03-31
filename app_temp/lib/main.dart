@@ -35,6 +35,8 @@ class FaceSwapApp extends StatefulWidget {
 }
 
 class _FaceSwapAppState extends State<FaceSwapApp> {
+  UserProvider? _userProvider;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +44,7 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = context.read<UserProvider>();
       final themeProvider = context.read<ThemeProvider>();
+      _userProvider = userProvider;
       if (userProvider.user != null) {
         themeProvider.initFromUser(userProvider.user?.theme);
       }
@@ -51,18 +54,15 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
   }
 
   void _onUserChanged() {
-    final userProvider = context.read<UserProvider>();
-    if (userProvider.user != null) {
+    final userProvider = _userProvider;
+    if (userProvider != null && userProvider.user != null) {
       context.read<ThemeProvider>().initFromUser(userProvider.user?.theme);
     }
   }
 
   @override
   void dispose() {
-    // Remove listener if possible
-    try {
-      context.read<UserProvider>().removeListener(_onUserChanged);
-    } catch (_) {}
+    _userProvider?.removeListener(_onUserChanged);
     super.dispose();
   }
 
