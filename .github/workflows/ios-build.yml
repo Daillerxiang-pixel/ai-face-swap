@@ -21,38 +21,31 @@ jobs:
       - name: Get Flutter dependencies
         run: |
           cd app_temp && flutter pub get
-          cd app_temp/ios && pod install
-          rm -rf ~/Library/Developer/Xcode/DerivedData
+
+      - name: Rebuild iOS project
+        run: |
+          cd app_temp
+          rm -rf ios
+          flutter create --platforms=ios ios
+          cd ios && pod install
 
       - name: Setup certificates
         run: |
-          # Install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-          
-          # Import certificate to keychain
           security import faceswap.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -k ~/Library/Keychains/login.keychain-db -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
-          
-          # List available identities
           security find-identity -v
         env:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       - name: Build iOS
         run: |
-          cd app_temp/ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -archivePath ../build/Runner.xcarchive archive CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM="" PROVISIONING_PROFILE=""
-        env:
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-
-      - name: Export IPA
-        run: |
           cd app_temp
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist export_options.plist -exportPath build/ipa
+          flutter build ipa --release
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: face-swap-ipa
-          path: app_temp/build/ipa/Runner.ipa
+          path: app_temp/build/ios/ipa/*.ipa
           retention-days: 14
