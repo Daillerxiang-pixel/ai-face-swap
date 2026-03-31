@@ -26,7 +26,7 @@ jobs:
       - name: Get Flutter dependencies
         shell: bash
         run: |
-          cd app_temp && flutter pub get
+          flutter pub get
 
       # 4. 配置证书和 Provisioning Profile
       - name: Setup signing certificates
@@ -57,8 +57,7 @@ jobs:
         run: |
           echo "=== 构建目录 ==="
           pwd
-          ls -la app_temp/
-          cd app_temp && flutter build ipa --release
+          flutter build ipa --release
 
       # 6. 上传 IPA 作为构建产物
       - name: Upload IPA
