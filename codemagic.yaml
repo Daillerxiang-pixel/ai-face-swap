@@ -32,8 +32,9 @@ workflows:
         script: |
           keychain initialize
           keychain add-certificates
-          xcode-project use-profiles
-          ls -la ~/Library/Keychains/
+          xcode-project use-profiles --include-providers
+          security list-keychains
+          security find-certificate -a
 
       # Step 3: 构建 iOS IPA
       - name: Build iOS
