@@ -3,7 +3,11 @@
 # 自动签名模式（App Store Connect API Key）
 # ============================================================
 # 使用方法：
-# 1. Codemagic 控制台关联此 Git 仓库
+# 1. Codemagic 控制台 → App Settings → Environment variables
+#    添加以下环境变量：
+#    - APP_STORE_CONNECT_KEY: .p8 文件内容（base64 编码）
+#    - APP_STORE_CONNECT_KEY_ID: TLZ3BSRNX7
+#    - APP_STORE_CONNECT_ISSUER: f1615060-0527-4598-91c5-5449d44c615b
 # 2. Codemagic Web UI: 上传 .p8 文件并填入 Key ID / Issuer ID
 # 3. 点击 Start build 触发构建
 # ============================================================
