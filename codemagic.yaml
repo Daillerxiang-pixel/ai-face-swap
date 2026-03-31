@@ -16,9 +16,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        APP_STORE_CONNECT_KEY_ID: TLZ3BSRNX7
-        APP_STORE_CONNECT_ISSUER_ID: f1615060-0527-4598-91c5-5449d44c615b
     scripts:
       # Step 1: 获取 Flutter 依赖
       - name: Get Flutter dependencies
@@ -55,9 +52,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        APP_STORE_CONNECT_KEY_ID: TLZ3BSRNX7
-        APP_STORE_CONNECT_ISSUER_ID: f1615060-0527-4598-91c5-5449d44c615b
     scripts:
       - name: Get Flutter dependencies
         script: |
