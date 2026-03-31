@@ -39,8 +39,7 @@ workflows:
           cd app_temp
           flutter build ipa \
             --release \
-            --export-options-plist=../export_options.plist \
-            --code-signing-style=automatic
+            --export-options-plist=../export_options.plist
 
     artifacts:
       - app_temp/build/ios/ipa/*.ipa
@@ -72,8 +71,7 @@ workflows:
           cd app_temp
           flutter build ipa \
             --release \
-            --export-options-plist=../export_options_adhoc.plist \
-            --code-signing-style=automatic
+            --export-options-plist=../export_options_adhoc.plist
 
     artifacts:
       - app_temp/build/ios/ipa/*.ipa
