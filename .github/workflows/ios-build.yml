@@ -25,8 +25,7 @@ jobs:
       - name: Build iOS
         run: |
           cd app_temp
-          flutter build ipa --release \
-            --code-signing-passphrase="${{ secrets.APPLE_CERTIFICATE_PASSWORD }}"
+          flutter build ipa --release
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
