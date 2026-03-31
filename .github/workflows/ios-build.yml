@@ -20,8 +20,9 @@ jobs:
 
       - name: Get Flutter dependencies
         run: |
-          cd app_temp && flutter pub get
-          cd app_temp/ios && pod install
+          cd app_temp
+          flutter pub get
+          cd ios && pod install
 
       - name: Setup certificates
         run: |
@@ -34,13 +35,13 @@ jobs:
 
       - name: Build iOS
         run: |
-          cd app_temp/ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -archivePath ../build/Runner.xcarchive archive CODE_SIGN_IDENTITY="Apple Distribution: Qiang Lv" CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
+          cd app_temp
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive archive CODE_SIGN_IDENTITY="Apple Distribution: Qiang Lv" CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
 
       - name: Export IPA
         run: |
           cd app_temp
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist export_options.plist -exportPath build/ipa
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/export_options.plist -exportPath build/ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
