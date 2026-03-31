@@ -21,6 +21,8 @@ jobs:
       - name: Get Flutter dependencies
         run: |
           cd app_temp && flutter pub get
+          rm -rf app_temp/ios/Runner.xcworkspace/xcuserdata
+          rm -rf ~/Library/Developer/Xcode/DerivedData
 
       - name: Setup certificates
         run: |
