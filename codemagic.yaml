@@ -1,0 +1,77 @@
+# ============================================================
+# Codemagic CI/CD Configuration — AI换脸 iOS 云端构建
+# ============================================================
+# 使用方法：
+# 1. 在 Codemagic 控制台关联此 Git 仓库
+# 2. 配置 Apple Developer 凭证（Codemagic Web UI 中填入）
+# 3. 触发首次构建
+# ============================================================
+
+workflows:
+  ios-workflow:
+    name: iOS Build (App Store)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      # Step 1: 获取 Flutter 依赖
+      - name: Get Flutter dependencies
+        script: |
+          cd flutter_app
+          flutter packages pub get
+
+      # Step 2: iOS 代码签名配置
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "com.aihuantu.faceswap" --type IOS_APP_STORE
+          keychain add-certificates
+          xcode-project use-profiles
+
+      # Step 3: 构建 iOS IPA
+      - name: Build iOS
+        script: |
+          cd flutter_app
+          flutter build ipa \
+            --release \
+            --export-options-plist=export_options.plist \
+            --code-signing-style=automatic
+
+    artifacts:
+      # IPA 文件（用于上传 App Store）
+      - build/ios/ipa/*.ipa
+      # 构建日志（调试用）
+      - flutter_app/build/logs/**/*.log
+
+  ios-adhoc-workflow:
+    name: iOS Build (Ad-Hoc / TestFlight)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          cd flutter_app
+          flutter packages pub get
+
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "com.aihuantu.faceswap" --type IOS_ADHOC
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build iOS
+        script: |
+          cd flutter_app
+          flutter build ipa \
+            --release \
+            --export-options-plist=export_options.plist \
+            --code-signing-style=automatic
+
+    artifacts:
+      - build/ios/ipa/*.ipa
