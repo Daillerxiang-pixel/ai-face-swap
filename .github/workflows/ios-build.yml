@@ -28,13 +28,19 @@ jobs:
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
           security import faceswap.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -k ~/Library/Keychains/login.keychain-db -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
           security find-identity -v
+          security list-keychains
+          security default-keychain -s ~/Library/Keychains/login.keychain-db
         env:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       - name: Build iOS
         run: |
           cd app_temp
-          flutter build ipa --release
+          flutter build ipa --release --verbose
+        env:
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGNING_ALLOWED: "NO"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
