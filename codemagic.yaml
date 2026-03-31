@@ -27,12 +27,10 @@ workflows:
           cd app_temp
           flutter packages pub get
 
-      # Step 2: iOS 代码签名配置（使用手动上传的证书）
+      # Step 2: iOS 代码签名（让 Codemagic 自动处理）
       - name: Set up code signing
         script: |
           keychain initialize
-          keychain add-certificates
-          xcode-project use-profiles
 
       # Step 3: 构建 iOS IPA
       - name: Build iOS
