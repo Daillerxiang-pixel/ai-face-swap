@@ -26,7 +26,7 @@ jobs:
       - name: Get Flutter dependencies
         shell: bash
         run: |
-          flutter pub get
+          cd app_temp && flutter pub get
 
       # 4. 配置证书和 Provisioning Profile
       - name: Setup signing certificates
@@ -34,10 +34,10 @@ jobs:
         env:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
-          echo "=== 当前目录 ==="
-          pwd
-          echo "=== 文件列表 ==="
-          ls -la
+          echo "=== 复制证书到app_temp ==="
+          cp faceswap.p12 app_temp/
+          cp provisioning.mobileprovision app_temp/
+          cd app_temp && pwd
           echo "=== 证书文件是否存在 ==="
           test -f faceswap.p12 && echo "faceswap.p12 存在" || echo "faceswap.p12 不存在"
           test -f provisioning.mobileprovision && echo "provisioning.mobileprovision 存在" || echo "不存在"
@@ -55,9 +55,7 @@ jobs:
       - name: Build iOS
         shell: bash
         run: |
-          echo "=== 构建目录 ==="
-          pwd
-          flutter build ipa --release
+          cd app_temp && flutter build ipa --release
 
       # 6. 上传 IPA 作为构建产物
       - name: Upload IPA
