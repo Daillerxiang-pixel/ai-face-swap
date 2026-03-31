@@ -39,7 +39,7 @@ workflows:
           cd app_temp
           flutter build ipa \
             --release \
-            --export-options-plist=../export_options.plist
+            --export-options-plist=export_options.plist
 
     artifacts:
       - app_temp/build/ios/ipa/*.ipa
@@ -71,7 +71,7 @@ workflows:
           cd app_temp
           flutter build ipa \
             --release \
-            --export-options-plist=../export_options_adhoc.plist
+            --export-options-plist=export_options_adhoc.plist
 
     artifacts:
       - app_temp/build/ios/ipa/*.ipa
