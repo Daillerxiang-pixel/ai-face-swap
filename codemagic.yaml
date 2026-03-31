@@ -27,13 +27,10 @@ workflows:
           cd app_temp
           flutter packages pub get
 
-      # Step 2: iOS 代码签名配置（自动创建 Certificate + Profile）
+      # Step 2: iOS 代码签名配置（使用手动上传的证书）
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.aihuantu.faceswap" \
-            --type IOS_APP_STORE \
-            --create
           keychain add-certificates
           xcode-project use-profiles
 
@@ -64,9 +61,6 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "com.aihuantu.faceswap" \
-            --type IOS_ADHOC \
-            --create
           keychain add-certificates
           xcode-project use-profiles
 
