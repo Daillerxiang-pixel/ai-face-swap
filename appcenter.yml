@@ -1,0 +1,32 @@
+# ============================================================
+# App Center 构建配置 — AI换脸 iOS
+# ============================================================
+# 注意：App Center 已于 2025 年 3 月 31 日停服
+# 如需构建 iOS，建议改用：
+#   - Codemagic (codemagic.io) ← 当前已在用
+#   - GitHub Actions (免费)
+#   - GitLab CI
+# ============================================================
+
+version: 1.0
+applications:
+  # ---------- iOS 构建 ----------
+  ios:
+    appFilepath: app_temp/build/ios/ipa/*.ipa
+    environment:
+      nodejsVersion: 18
+      flutterVersion: stable
+    buildScripts:
+      - name: Install dependencies
+        script: |
+          cd app_temp
+          flutter pub get
+      - name: Build iOS
+        script: |
+          cd app_temp
+          flutter build ipa \
+            --release \
+            --export-options-plist=export_options.plist \
+            --code-signing-style=automatic
+    artifacts:
+      - app_temp/build/ios/ipa/*.ipa
