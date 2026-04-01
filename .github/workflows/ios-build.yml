@@ -72,9 +72,12 @@ jobs:
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
 
-      # 5. 构建 iOS Archive（不签名）
+      # 5. 清理缓存 + 构建 iOS Archive（不签名）
       - name: Build iOS Archive
         run: |
+          # 清理 Xcode DerivedData 避免缓存旧 icon
+          rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*
+
           cd app_temp
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
