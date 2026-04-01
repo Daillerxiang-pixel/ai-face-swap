@@ -123,16 +123,10 @@ jobs:
             -exportPath build/ipa \
             -allowProvisioningUpdates
 
-      # 7. 验证 IPA
-      - name: Verify IPA
-        run: |
-          find app_temp/build -name "*.ipa" -type f
-          ls -lh app_temp/build/ipa/Runner.ipa
-
-      # 8. 上传 IPA
+      # 7. 验证并上传 IPA
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: face-swap-ipa
-          path: app_temp/build/ipa/Runner.ipa
+          path: app_temp/build/ipa/face_swap.ipa
           retention-days: 14
