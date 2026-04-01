@@ -49,12 +49,13 @@ jobs:
           # 列出签名身份供调试
           security find-identity -v build.keychain
 
-          # 解码并安装 Provisioning Profile（去除头尾标记）
+          # 解码并安装 Provisioning Profile（Xcode 要求以 UUID 命名）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | base64 --decode -o provisioning.mobileprovision
-          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
-          # 验证 Profile 安装
+          # 提取 UUID 并重命名，Xcode 才能识别
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< "$(security cms -D -i provisioning.mobileprovision)")
+          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          echo "Installed profile: ${PROFILE_UUID}.mobileprovision"
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
 
       # 5. 构建 iOS（禁用签名验证，避免冲突）
