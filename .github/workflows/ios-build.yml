@@ -97,14 +97,14 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>ad-hoc</string>
+              <string>release-testing</string>
               <key>teamID</key>
               <string>FDA4AA9W96</string>
               <key>signingStyle</key>
               <string>manual</string>
               <key>provisioningProfiles</key>
               <dict>
-                  <key>com.aihuantu.faceSwap</key>
+                  <key>com.aihuantu.faceswap</key>
                   <string>${{ env.PROFILE_NAME }}</string>
               </dict>
               <key>signingCertificate</key>
