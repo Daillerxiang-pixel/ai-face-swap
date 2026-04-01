@@ -69,18 +69,16 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      # 6. 导出 IPA
+      # 6. 导出 IPA（切换默认钥匙串）
       - name: Export IPA
-        env:
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
+          security default-keychain -s build.keychain
+          security unlock-keychain -p build build.keychain
           cd app_temp
           xcodebuild -exportArchive \
             -archivePath build/Runner.xcarchive \
             -exportOptionsPlist ios/export_options.plist \
-            -exportPath build/ipa \
-            -keychain build.keychain \
-            -keychain-password build
+            -exportPath build/ipa
 
       # 7. 验证 IPA
       - name: Verify IPA
