@@ -9,37 +9,30 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1. 拉取代码
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. 安装 Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      # 3. 获取依赖
       - name: Get Flutter dependencies
         run: |
           cd app_temp
           flutter pub get
           cd ios && pod install
 
-      # 4. 安装证书和 Provisioning Profile
       - name: Setup signing certificate and profile
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
-          # 解码证书（去除 certutil 头尾 + Windows \r）
           echo "$APPLE_CERTIFICATE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o certificate.p12
-          echo "=== Certificate file ==="
           file certificate.p12
 
-          # 创建临时钥匙串
           security create-keychain -p build build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p build build.keychain
@@ -47,37 +40,26 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k build -s build.keychain
           security default-keychain -s build.keychain
 
-          echo "=== Keychain Identities ==="
           security find-identity -v build.keychain
 
-          # 解码 Profile（去除 certutil 头尾 + Windows \r）
           echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o provisioning.mobileprovision
-          echo "=== Profile file ==="
           file provisioning.mobileprovision
 
-          # 解码 CMS 信封到文件
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
-          echo "=== Profile Name ==="
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
-          echo "$PROFILE_NAME"
-          echo "=== Profile UUID ==="
+          echo "Profile Name: $PROFILE_NAME"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
-          echo "$PROFILE_UUID"
+          echo "Profile UUID: $PROFILE_UUID"
 
-          # 安装 Profile（以 UUID 命名，Xcode 要求）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
 
-          # 导出环境变量供后续步骤使用
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
 
-      # 5. 清理缓存 + 构建 iOS Archive（不签名）
       - name: Build iOS Archive
         run: |
-          # 清理 Xcode DerivedData 避免缓存旧 icon
           rm -rf ~/Library/Developer/Xcode/DerivedData/Runner-*
-
           cd app_temp
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -87,39 +69,26 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      # 6. 动态生成 export_options.plist 并导出 IPA
       - name: Export IPA
         run: |
           security default-keychain -s build.keychain
           security unlock-keychain -p build build.keychain
 
-          # 动态生成 export_options.plist（使用 tee 避免缩进问题）
-          tee app_temp/ios/export_options.plist > /dev/null << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>release-testing</string>
-    <key>teamID</key>
-    <string>FDA4AA9W96</string>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.aihuantu.faceswap</key>
-        <string>PROFILE_NAME_PLACEHOLDER</string>
-    </dict>
-    <key>signingCertificate</key>
-    <string>Apple Distribution</string>
-</dict>
-</plist>
-PLIST
+          python3 -c "
+          import plistlib, os
+          plist = {
+              'method': 'release-testing',
+              'teamID': 'FDA4AA9W96',
+              'signingStyle': 'manual',
+              'provisioningProfiles': {
+                  'com.aihuantu.faceswap': os.environ['PROFILE_NAME']
+              },
+              'signingCertificate': 'Apple Distribution'
+          }
+          with open('app_temp/ios/export_options.plist', 'wb') as f:
+              plistlib.dump(plist, f)
+          "
 
-          # 替换实际的 profile 名称
-          sed -i '' "s|PROFILE_NAME_PLACEHOLDER|${PROFILE_NAME}|g" app_temp/ios/export_options.plist
-
-          echo "=== Generated export_options.plist ==="
           cat app_temp/ios/export_options.plist
 
           cd app_temp
@@ -129,7 +98,6 @@ PLIST
             -exportPath build/ipa \
             -allowProvisioningUpdates
 
-      # 7. 验证并上传 IPA
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
