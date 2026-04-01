@@ -54,16 +54,17 @@ jobs:
           echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o provisioning.mobileprovision
           echo "=== Profile file ==="
           file provisioning.mobileprovision
-          echo "=== Profile Content ==="
-          security cms -D -i provisioning.mobileprovision 2>&1 | /usr/libexec/PlistBuddy -c "Print :Name" 2>&1 || echo "FAILED TO DECODE PROFILE"
+          
+          # 解码 CMS 信封到文件
+          security cms -D -i provisioning.mobileprovision -o provisioning.plist
+          echo "=== Profile Name ==="
+          /usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist
+          echo "=== Profile UUID ==="
+          /usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist
 
           # 安装 Profile（以 UUID 命名，Xcode 要求）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          PROFILE_UUID=$(security cms -D -i provisioning.mobileprovision 2>/dev/null | /usr/libexec/PlistBuddy -c "Print :UUID" 2>/dev/null)
-          if [ -z "$PROFILE_UUID" ]; then
-            echo "WARNING: UUID extraction failed, using fallback"
-            PROFILE_UUID="b299de5d-9b63-4a22-9a62-6361fe78188f"
-          fi
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
           echo "=== Installed Profiles ==="
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
