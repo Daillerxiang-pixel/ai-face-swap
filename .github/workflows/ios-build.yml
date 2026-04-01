@@ -46,7 +46,7 @@ jobs:
           security import certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -k build.keychain -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
           security set-key-partition-list -S apple-tool:,apple: -k build -s build.keychain
 
-          # 列出可用签名身份（调试用）
+          # 列出签名身份供调试
           security find-identity -v build.keychain
 
           # 解码并安装 Provisioning Profile
@@ -54,10 +54,10 @@ jobs:
           echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode -o provisioning.mobileprovision
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          # 验证 Profile 已安装
+          # 验证 Profile 安装
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      # 5. 构建 iOS（禁用自动签名，避免冲突）
+      # 5. 构建 iOS（禁用签名验证，避免冲突）
       - name: Build iOS
         run: |
           cd app_temp
@@ -69,8 +69,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      # 6. 导出 IPA（使用已安装的证书和 Profile）
+      # 6. 导出 IPA
       - name: Export IPA
+        env:
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
           cd app_temp
           xcodebuild -exportArchive \
@@ -80,13 +82,13 @@ jobs:
             -keychain build.keychain \
             -keychain-password build
 
-      # 7. 验证 IPA 存在
+      # 7. 验证 IPA
       - name: Verify IPA
         run: |
-          ls -la app_temp/build/ipa/
           find app_temp/build -name "*.ipa" -type f
+          ls -lh app_temp/build/ipa/Runner.ipa
 
-      # 8. 上传 IPA 作为构建产物
+      # 8. 上传 IPA
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
