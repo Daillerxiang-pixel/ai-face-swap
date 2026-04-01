@@ -171,6 +171,12 @@ function initDb() {
 
     console.log('  [Migration 3] Added admins, plans, orders tables + seed data');
   }
+// Migration 4: Add apple_user_id to users for Apple Sign In
+  const hasAppleUserId = db.prepare("PRAGMA table_info(users)").all().some(c => c.name === "apple_user_id");
+  if (!hasAppleUserId) {
+    db.exec("ALTER TABLE users ADD COLUMN apple_user_id TEXT;");
+    console.log("  [Migration 4] Added apple_user_id to users");
+  }
 
   // Seed templates
   const count = db.prepare('SELECT COUNT(*) as c FROM templates').get().c;
