@@ -8,5 +8,10 @@
     <string>manual</string>
     <key>signingCertificate</key>
     <string>Apple Distribution</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.aihuantu.faceSwap</key>
+        <string>iOS Team Provisioning Profile: *</string>
+    </dict>
 </dict>
 </plist>
