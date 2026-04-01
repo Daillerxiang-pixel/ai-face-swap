@@ -36,12 +36,12 @@ jobs:
       - name: Build iOS
         run: |
           cd app_temp
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive archive
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive archive CODE_SIGN_IDENTITY="Apple Distribution: Qiang Lv" CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM="FDA4AA9W96"
 
       - name: Export IPA
         run: |
           cd app_temp
-          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/export_options.plist -exportPath build/ipa
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist ios/export_options.plist -exportPath build/ipa CODE_SIGN_IDENTITY="Apple Distribution: Qiang Lv" DEVELOPMENT_TEAM="FDA4AA9W96"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
