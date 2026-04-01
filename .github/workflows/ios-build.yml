@@ -54,23 +54,26 @@ jobs:
           echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o provisioning.mobileprovision
           echo "=== Profile file ==="
           file provisioning.mobileprovision
-          
+
           # 解码 CMS 信封到文件
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
           echo "=== Profile Name ==="
-          /usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
+          echo "$PROFILE_NAME"
           echo "=== Profile UUID ==="
-          /usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
+          echo "$PROFILE_UUID"
 
           # 安装 Profile（以 UUID 命名，Xcode 要求）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
-          echo "=== Installed Profiles ==="
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      # 5. 构建 iOS（禁用签名验证，避免冲突）
-      - name: Build iOS
+          # 导出环境变量供后续步骤使用
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
+
+      # 5. 构建 iOS Archive（不签名）
+      - name: Build iOS Archive
         run: |
           cd app_temp
           xcodebuild -workspace ios/Runner.xcworkspace \
@@ -81,16 +84,44 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      # 6. 导出 IPA（切换默认钥匙串）
+      # 6. 动态生成 export_options.plist 并导出 IPA
       - name: Export IPA
         run: |
           security default-keychain -s build.keychain
           security unlock-keychain -p build build.keychain
+
+          # 动态生成 export_options.plist，使用实际的 profile 名称
+          cat > app_temp/ios/export_options.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string>
+              <key>teamID</key>
+              <string>FDA4AA9W96</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.aihuantu.faceSwap</key>
+                  <string>${{ env.PROFILE_NAME }}</string>
+              </dict>
+              <key>signingCertificate</key>
+              <string>Apple Distribution</string>
+          </dict>
+          </plist>
+          PLIST
+
+          echo "=== Generated export_options.plist ==="
+          cat app_temp/ios/export_options.plist
+
           cd app_temp
           xcodebuild -exportArchive \
             -archivePath build/Runner.xcarchive \
             -exportOptionsPlist ios/export_options.plist \
-            -exportPath build/ipa
+            -exportPath build/ipa \
+            -allowProvisioningUpdates
 
       # 7. 验证 IPA
       - name: Verify IPA
