@@ -93,28 +93,31 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p build build.keychain
 
-          # 动态生成 export_options.plist，使用实际的 profile 名称
-          cat > app_temp/ios/export_options.plist << PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>release-testing</string>
-              <key>teamID</key>
-              <string>FDA4AA9W96</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>com.aihuantu.faceswap</key>
-                  <string>${{ env.PROFILE_NAME }}</string>
-              </dict>
-              <key>signingCertificate</key>
-              <string>Apple Distribution</string>
-          </dict>
-          </plist>
-          PLIST
+          # 动态生成 export_options.plist（使用 tee 避免缩进问题）
+          tee app_temp/ios/export_options.plist > /dev/null << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>release-testing</string>
+    <key>teamID</key>
+    <string>FDA4AA9W96</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.aihuantu.faceswap</key>
+        <string>PROFILE_NAME_PLACEHOLDER</string>
+    </dict>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+</dict>
+</plist>
+PLIST
+
+          # 替换实际的 profile 名称
+          sed -i '' "s|PROFILE_NAME_PLACEHOLDER|${PROFILE_NAME}|g" app_temp/ios/export_options.plist
 
           echo "=== Generated export_options.plist ==="
           cat app_temp/ios/export_options.plist
@@ -131,5 +134,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: face-swap-ipa
-          path: app_temp/build/ipa/face_swap.ipa
+          path: app_temp/build/ipa/*.ipa
           retention-days: 14
