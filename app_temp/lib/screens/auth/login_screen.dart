@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../services/apple_sign_in_service.dart';
-import '../../services/auth_service.dart';
 
 /// iOS 风格登录页 — Google / Apple / Email
 class LoginScreen extends StatefulWidget {

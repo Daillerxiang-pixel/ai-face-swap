@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'auth_service.dart';
