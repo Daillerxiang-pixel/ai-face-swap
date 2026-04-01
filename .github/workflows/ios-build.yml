@@ -34,28 +34,38 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
-          # 解码证书为 .p12（去除 certutil 生成的头尾标记）
-          echo "$APPLE_CERTIFICATE" | grep -v "^-----" | base64 --decode -o certificate.p12
+          # 解码证书（去除 certutil 头尾 + Windows \r）
+          echo "$APPLE_CERTIFICATE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o certificate.p12
+          echo "=== Certificate file ==="
+          file certificate.p12
 
           # 创建临时钥匙串
           security create-keychain -p build build.keychain
           security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p build build.keychain
-
-          # 导入证书到钥匙串
           security import certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -k build.keychain -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
           security set-key-partition-list -S apple-tool:,apple: -k build -s build.keychain
+          security default-keychain -s build.keychain
 
-          # 列出签名身份供调试
+          echo "=== Keychain Identities ==="
           security find-identity -v build.keychain
 
-          # 解码并安装 Provisioning Profile（Xcode 要求以 UUID 命名）
+          # 解码 Profile（去除 certutil 头尾 + Windows \r）
+          echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o provisioning.mobileprovision
+          echo "=== Profile file ==="
+          file provisioning.mobileprovision
+          echo "=== Profile Content ==="
+          security cms -D -i provisioning.mobileprovision 2>&1 | /usr/libexec/PlistBuddy -c "Print :Name" 2>&1 || echo "FAILED TO DECODE PROFILE"
+
+          # 安装 Profile（以 UUID 命名，Xcode 要求）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | base64 --decode -o provisioning.mobileprovision
-          # 提取 UUID 并重命名，Xcode 才能识别
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< "$(security cms -D -i provisioning.mobileprovision)")
+          PROFILE_UUID=$(security cms -D -i provisioning.mobileprovision 2>/dev/null | /usr/libexec/PlistBuddy -c "Print :UUID" 2>/dev/null)
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "WARNING: UUID extraction failed, using fallback"
+            PROFILE_UUID="b299de5d-9b63-4a22-9a62-6361fe78188f"
+          fi
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
-          echo "Installed profile: ${PROFILE_UUID}.mobileprovision"
+          echo "=== Installed Profiles ==="
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
 
       # 5. 构建 iOS（禁用签名验证，避免冲突）
