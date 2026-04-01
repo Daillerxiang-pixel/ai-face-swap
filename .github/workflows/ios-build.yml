@@ -34,8 +34,8 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
-          # 解码证书为 .p12
-          echo "$APPLE_CERTIFICATE" | base64 --decode -o certificate.p12
+          # 解码证书为 .p12（去除 certutil 生成的头尾标记）
+          echo "$APPLE_CERTIFICATE" | grep -v "^-----" | base64 --decode -o certificate.p12
 
           # 创建临时钥匙串
           security create-keychain -p build build.keychain
@@ -49,9 +49,9 @@ jobs:
           # 列出签名身份供调试
           security find-identity -v build.keychain
 
-          # 解码并安装 Provisioning Profile
+          # 解码并安装 Provisioning Profile（去除头尾标记）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode -o provisioning.mobileprovision
+          echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | base64 --decode -o provisioning.mobileprovision
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
           # 验证 Profile 安装
