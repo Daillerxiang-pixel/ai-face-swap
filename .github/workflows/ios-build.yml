@@ -36,7 +36,7 @@ jobs:
       - name: Build iOS
         run: |
           cd app_temp
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive archive CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM="FDA4AA9W96"
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive archive CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO DEVELOPMENT_TEAM="" PROVISIONING_PROFILE=""
 
       - name: Export IPA
         run: |
