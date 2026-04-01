@@ -5,10 +5,10 @@
     <key>method</key>
     <string>ad-hoc</string>
     <key>signingStyle</key>
-    <string>automatic</string>
+    <string>manual</string>
     <key>signingCertificate</key>
     <string>Apple Distribution</string>
     <key>teamId</key>
-    <string>YOUR_TEAM_ID</string>
+    <string>FDA4AA9W96</string>
 </dict>
 </plist>
