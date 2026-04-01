@@ -22,7 +22,9 @@ jobs:
         run: |
           cd app_temp
           flutter pub get
-          cd ios && pod install
+          cd ios
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
 
       - name: Setup signing certificate and profile
         env:
