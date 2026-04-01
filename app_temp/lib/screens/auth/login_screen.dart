@@ -1,17 +1,56 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
+import '../../services/apple_sign_in_service.dart';
+import '../../services/auth_service.dart';
 
 /// iOS 风格登录页 — Google / Apple / Email
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  /// 模拟登录：设置标记后返回 true
-  static Future<void> _mockLoginAndReturn(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_logged_in', true);
-    if (context.mounted) {
-      Navigator.of(context).pop(true);
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final success = await AppleSignInService().signIn();
+      if (success && mounted) {
+        Navigator.of(context).pop(true);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Apple Sign In failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Apple Sign In error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// 模拟 Google 登录（后续接入时替换）
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      // TODO: 接入 Google Sign In
+      // 占位：模拟登录
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_logged_in', true);
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -33,11 +72,20 @@ class LoginScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
-                      BoxShadow(color: const Color(0xFF7C3AED).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                      BoxShadow(
+                        color: const Color(0xFF7C3AED).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset('assets/icons/app_icon.png', width: 80, height: 80, fit: BoxFit.cover),
+                  child: Image.asset(
+                    'assets/icons/app_icon.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -57,35 +105,38 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Continue with Google
-                _buildSocialButton(
-                  context,
-                  icon: _buildGoogleIcon(),
-                  label: 'Continue with Google',
-                  onPressed: () => _mockLoginAndReturn(context),
-                ),
-                const SizedBox(height: 12),
-                // Continue with Apple
-                _buildSocialButton(
-                  context,
-                  icon: const Icon(Icons.apple, color: Colors.black, size: 22),
-                  label: 'Continue with Apple',
-                  onPressed: () => _mockLoginAndReturn(context),
-                ),
-                const SizedBox(height: 12),
-                // Sign in with Email
-                _buildSocialButton(
-                  context,
-                  icon: const Icon(Icons.mail_outline, color: Colors.black, size: 20),
-                  label: 'Sign in with Email',
-                  onPressed: () async {
-                    final result = await Navigator.pushNamed(context, '/email-login');
-                    if (result == true && context.mounted) {
-                      // Email 登录成功，关闭登录页并传递结果
-                      Navigator.of(context).pop(true);
-                    }
-                  },
-                ),
+                if (_isLoading)
+                  const CircularProgressIndicator()
+                else ...[
+                  // Continue with Google
+                  _buildSocialButton(
+                    context,
+                    icon: _buildGoogleIcon(),
+                    label: 'Continue with Google',
+                    onPressed: _handleGoogleSignIn,
+                  ),
+                  const SizedBox(height: 12),
+                  // Continue with Apple
+                  _buildSocialButton(
+                    context,
+                    icon: const Icon(Icons.apple, color: Colors.black, size: 22),
+                    label: 'Continue with Apple',
+                    onPressed: _handleAppleSignIn,
+                  ),
+                  const SizedBox(height: 12),
+                  // Sign in with Email
+                  _buildSocialButton(
+                    context,
+                    icon: const Icon(Icons.mail_outline, color: Colors.black, size: 20),
+                    label: 'Sign in with Email',
+                    onPressed: () async {
+                      final result = await Navigator.pushNamed(context, '/email-login');
+                      if (result == true && context.mounted) {
+                        Navigator.of(context).pop(true);
+                      }
+                    },
+                  ),
+                ],
                 const SizedBox(height: 40),
                 Text(
                   'By continuing you agree to our Terms & Privacy Policy',
