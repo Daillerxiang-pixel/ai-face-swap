@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../services/apple_sign_in_service.dart';
 
-/// iOS 风格登录页 — Google / Apple / Email
+/// iOS style login page - Google / Apple / Email
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -36,12 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// 模拟 Google 登录（后续接入时替换）
+  /// Mock Google Sign In (replace with real implementation later)
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      // TODO: 接入 Google Sign In
-      // 占位：模拟登录
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_logged_in', true);
       if (mounted) {
@@ -63,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // App Logo
                 Container(
                   width: 80,
                   height: 80,
@@ -106,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_isLoading)
                   const CircularProgressIndicator()
                 else ...[
-                  // Continue with Google
                   _buildSocialButton(
                     context,
                     icon: _buildGoogleIcon(),
@@ -114,7 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _handleGoogleSignIn,
                   ),
                   const SizedBox(height: 12),
-                  // Continue with Apple
                   _buildSocialButton(
                     context,
                     icon: const Icon(Icons.apple, color: Colors.black, size: 22),
@@ -122,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _handleAppleSignIn,
                   ),
                   const SizedBox(height: 12),
-                  // Sign in with Email
                   _buildSocialButton(
                     context,
                     icon: const Icon(Icons.mail_outline, color: Colors.black, size: 20),
@@ -152,15 +146,14 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// 简单的彩色 G 图标
   static Widget _buildGoogleIcon() {
     return ShaderMask(
       shaderCallback: (bounds) => const LinearGradient(
         colors: [
-          Color(0xFF4285F4), // Blue
-          Color(0xFFEA4335), // Red
-          Color(0xFFFBBC05), // Yellow
-          Color(0xFF34A853), // Green
+          Color(0xFF4285F4),
+          Color(0xFFEA4335),
+          Color(0xFFFBBC05),
+          Color(0xFF34A853),
         ],
         stops: [0.0, 0.33, 0.66, 1.0],
       ).createShader(bounds),
