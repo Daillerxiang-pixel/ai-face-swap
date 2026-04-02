@@ -65,7 +65,7 @@ jobs:
           python3 -c "
           import plistlib, os
           plist = {
-              'method': 'release-testing',
+              'method': 'app-store',
               'teamID': 'FDA4AA9W96',
               'signingStyle': 'manual',
               'compileBitcode': False,
@@ -88,6 +88,11 @@ jobs:
             --build-name=1.5.8 \
             --build-number=46 \
             --export-options-plist=ios/export_options.plist
+        env:
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          CODE_SIGN_STYLE: Manual
+          DEVELOPMENT_TEAM: FDA4AA9W96
+          PROVISIONING_PROFILE_SPECIFIER: ${{ env.PROFILE_NAME }}
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
