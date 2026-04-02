@@ -25,11 +25,16 @@ const APPLE_SANDBOX_URL = 'https://sandbox.itunes.apple.com/verifyReceipt';
 // face_swap_weekly → 周卡 $19.99
 // face_swap_monthly → 月卡 $69.99
 // face_swap_yearly → 年卡 $399.99
+// face_swap_lifetime → 终身卡 $0.99（一次性购买，永不过期）
 const PRODUCT_MAP = {
-  'face_swap_weekly': { tier: 'weekly', limit: 50, price: 19.99 },
-  'face_swap_monthly': { tier: 'monthly', limit: 200, price: 69.99 },
-  'face_swap_yearly': { tier: 'yearly', limit: 999, price: 399.99 },
+  'face_swap_weekly': { tier: 'weekly', limit: 50, price: 19.99, isLifetime: false },
+  'face_swap_monthly': { tier: 'monthly', limit: 200, price: 69.99, isLifetime: false },
+  'face_swap_yearly': { tier: 'yearly', limit: 999, price: 399.99, isLifetime: false },
+  'face_swap_lifetime': { tier: 'lifetime', limit: 999, price: 0.99, isLifetime: true },
 };
+
+// 终身卡过期时间（设为远期日期表示永不过期）
+const LIFETIME_EXPIRES_AT = '9999-12-31T23:59:59Z';
 
 /**
  * 调用 Apple 收据验证 API
@@ -70,7 +75,24 @@ function parseSubscriptionInfo(appleResponse) {
   const latestReceiptInfo = appleResponse.latest_receipt_info;
 
   if (!latestReceiptInfo || latestReceiptInfo.length === 0) {
-    return { valid: false, error: 'No subscription found in receipt' };
+    // 对于非订阅类型（如终身卡），检查 in_app 数组
+    if (receipt.in_app && receipt.in_app.length > 0) {
+      const purchase = receipt.in_app[receipt.in_app.length - 1];
+      return {
+        valid: true,
+        productId: purchase.product_id,
+        transactionId: purchase.transaction_id,
+        originalTransactionId: purchase.original_transaction_id || purchase.transaction_id,
+        expiresAt: null, // 非订阅产品无过期时间
+        purchaseDate: purchase.purchase_date_ms 
+          ? new Date(parseInt(purchase.purchase_date_ms)).toISOString()
+          : null,
+        isTrial: false,
+        subscriptionStatus: 'active', // 非订阅产品视为永久有效
+      };
+    }
+    
+    return { valid: false, error: 'No purchase found in receipt' };
   }
 
   // 取最新的订阅交易
@@ -190,7 +212,12 @@ router.post('/verify', async (req, res) => {
       });
     }
 
-    // 5. 更新用户订阅状态
+    // 5. 确定过期时间（终身卡用固定远期日期）
+    const expiresAt = productConfig.isLifetime 
+      ? LIFETIME_EXPIRES_AT 
+      : subInfo.expiresAt;
+
+    // 6. 更新用户订阅状态
     db.prepare(`
       UPDATE users SET 
         subscription_tier = ?,
@@ -200,15 +227,15 @@ router.post('/verify', async (req, res) => {
       WHERE id = ?
     `).run(
       productConfig.tier,
-      subInfo.expiresAt,
+      expiresAt,
       productConfig.limit,
       receiptData,
       userId
     );
 
-    console.log(`[IAP] Subscription updated: tier=${productConfig.tier}, expires=${subInfo.expiresAt}`);
+    console.log(`[IAP] Subscription updated: tier=${productConfig.tier}, expires=${expiresAt}, isLifetime=${productConfig.isLifetime}`);
 
-    // 6. 返回订阅状态给客户端
+    // 7. 返回订阅状态给客户端
     const user = db.prepare('SELECT id, subscription_tier, subscription_expires_at, monthly_limit FROM users WHERE id = ?').get(userId);
 
     res.json({
@@ -222,6 +249,7 @@ router.post('/verify', async (req, res) => {
         subscriptionStatus: subInfo.subscriptionStatus,
         isTrial: subInfo.isTrial,
         price: productConfig.price,
+        isLifetime: productConfig.isLifetime,
       },
     });
 
@@ -255,8 +283,11 @@ router.get('/status', (req, res) => {
   const now = new Date();
   const isExpired = expiresAt && new Date(expiresAt) < now;
 
-  // 如果已过期且不是 free，自动降级
-  if (isExpired && user.subscription_tier !== 'free') {
+  // 终身卡用户永不过期
+  const isLifetime = user.subscription_tier === 'lifetime';
+
+  // 如果已过期且不是 free/lifetime，自动降级
+  if (isExpired && user.subscription_tier !== 'free' && !isLifetime) {
     console.log(`[IAP] Subscription expired for user ${userId}, downgrading to free`);
     db.prepare(`
       UPDATE users SET subscription_tier = 'free', monthly_limit = 10
@@ -275,7 +306,8 @@ router.get('/status', (req, res) => {
       monthlyLimit: user.monthly_limit,
       monthlyUsage: user.monthly_usage,
       remaining: Math.max(0, user.monthly_limit - user.monthly_usage),
-      isActive: !isExpired && user.subscription_tier !== 'free',
+      isActive: (isLifetime || !isExpired) && user.subscription_tier !== 'free',
+      isLifetime: isLifetime,
     },
   });
 });
@@ -323,6 +355,11 @@ router.post('/restore', async (req, res) => {
       });
     }
 
+    // 确定过期时间
+    const expiresAt = productConfig.isLifetime 
+      ? LIFETIME_EXPIRES_AT 
+      : subInfo.expiresAt;
+
     // 更新状态
     db.prepare(`
       UPDATE users SET 
@@ -332,7 +369,7 @@ router.post('/restore', async (req, res) => {
       WHERE id = ?
     `).run(
       productConfig.tier,
-      subInfo.expiresAt,
+      expiresAt,
       productConfig.limit,
       userId
     );
@@ -341,10 +378,11 @@ router.post('/restore', async (req, res) => {
       success: true,
       data: {
         tier: productConfig.tier,
-        expiresAt: subInfo.expiresAt,
+        expiresAt: expiresAt,
         productId: subInfo.productId,
         subscriptionStatus: subInfo.subscriptionStatus,
         price: productConfig.price,
+        isLifetime: productConfig.isLifetime,
       },
     });
 
