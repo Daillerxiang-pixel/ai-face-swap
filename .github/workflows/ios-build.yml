@@ -44,8 +44,8 @@ jobs:
 
           security find-identity -v build.keychain
 
-          echo "IOS_PROVISIONING_PROFILE length: ${#IOS_PROVISIONING_PROFILE}"
-          printf '%s' "$IOS_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
+          echo "APPLE_PROVISIONING_PROFILE length: ${#APPLE_PROVISIONING_PROFILE}"
+          printf '%s' "$APPLE_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
           file provisioning.mobileprovision
           ls -la provisioning.mobileprovision
 
