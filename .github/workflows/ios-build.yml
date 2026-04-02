@@ -69,7 +69,8 @@ jobs:
             -destination "generic/platform=iOS" \
             -archivePath build/Runner.xcarchive \
             archive \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES
 
       - name: Export IPA
         run: |
@@ -82,6 +83,8 @@ jobs:
               'method': 'release-testing',
               'teamID': 'FDA4AA9W96',
               'signingStyle': 'manual',
+              'compileBitcode': False,
+              'stripSwiftSymbols': True,
               'provisioningProfiles': {
                   'com.aihuantu.faceswap': os.environ['PROFILE_NAME']
               },
