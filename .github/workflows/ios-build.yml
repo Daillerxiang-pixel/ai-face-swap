@@ -44,8 +44,10 @@ jobs:
 
           security find-identity -v build.keychain
 
-          echo "$IOS_PROVISIONING_PROFILE" | base64 -d > provisioning.mobileprovision
+          echo "IOS_PROVISIONING_PROFILE length: ${#IOS_PROVISIONING_PROFILE}"
+          printf '%s' "$IOS_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
           file provisioning.mobileprovision
+          ls -la provisioning.mobileprovision
 
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
