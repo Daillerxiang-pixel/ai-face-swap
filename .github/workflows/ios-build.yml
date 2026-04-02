@@ -92,6 +92,7 @@ jobs:
 
           cd app_temp
           flutter build ipa --release \
+            --build-number=${{ github.run_number }} \
             --export-options-plist=ios/export_options.plist
 
       - name: Upload IPA
