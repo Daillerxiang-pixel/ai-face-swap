@@ -26,6 +26,12 @@ dependencies:
   share_plus: ^7.2.2
   sign_in_with_apple: ^5.0.0
   in_app_purchase: ^3.1.0
+  net_layer:
+    path: ../packages/net_layer
+  auth_suite:
+    path: ../packages/auth_suite
+  iap_suite:
+    path: ../packages/iap_suite
 
 dev_dependencies:
   flutter_test:
