@@ -12,7 +12,7 @@ class SubscriptionProducts {
   static const String weekly = 'face_swap_weekly';
   static const String monthly = 'face_swap_monthly';
   static const String yearly = 'face_swap_yearly';
-  static const String lifetime = 'face_swap_lifetime';
+  static const String lifetime = '1001';
 
   static const List<String> all = [weekly, monthly, yearly, lifetime];
 }
