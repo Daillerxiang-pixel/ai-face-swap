@@ -25,12 +25,12 @@ const APPLE_SANDBOX_URL = 'https://sandbox.itunes.apple.com/verifyReceipt';
 // face_swap_weekly → 周卡 $19.99
 // face_swap_monthly → 月卡 $69.99
 // face_swap_yearly → 年卡 $399.99
-// face_swap_lifetime → 终身卡 $0.99（一次性购买，永不过期）
+// 1001 → 终身卡 $0.99（一次性购买，永不过期）
 const PRODUCT_MAP = {
   'face_swap_weekly': { tier: 'weekly', limit: 50, price: 19.99, isLifetime: false },
   'face_swap_monthly': { tier: 'monthly', limit: 200, price: 69.99, isLifetime: false },
   'face_swap_yearly': { tier: 'yearly', limit: 999, price: 399.99, isLifetime: false },
-  'face_swap_lifetime': { tier: 'lifetime', limit: 999, price: 0.99, isLifetime: true },
+  '1001': { tier: 'lifetime', limit: 999, price: 0.99, isLifetime: true },
 };
 
 // 终身卡过期时间（设为远期日期表示永不过期）
