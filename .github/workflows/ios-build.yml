@@ -89,12 +89,11 @@ jobs:
             --release \
             --build-name=1.5.8 \
             --build-number=46 \
-            --export-options-plist=ios/export_options.plist
-        env:
-          CODE_SIGN_IDENTITY: "Apple Distribution"
-          CODE_SIGN_STYLE: Manual
-          DEVELOPMENT_TEAM: FDA4AA9W96
-          PROVISIONING_PROFILE_SPECIFIER: ${{ env.PROFILE_NAME }}
+            --export-options-plist=ios/export_options.plist \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=FDA4AA9W96 \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
