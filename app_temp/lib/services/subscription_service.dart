@@ -12,8 +12,9 @@ class SubscriptionProducts {
   static const String weekly = 'face_swap_weekly';
   static const String monthly = 'face_swap_monthly';
   static const String yearly = 'face_swap_yearly';
+  static const String lifetime = 'face_swap_lifetime';
 
-  static const List<String> all = [weekly, monthly, yearly];
+  static const List<String> all = [weekly, monthly, yearly, lifetime];
 }
 
 /// 订阅状态
@@ -59,6 +60,8 @@ class SubscriptionPlanInfo {
         return 'Monthly';
       case SubscriptionProducts.yearly:
         return 'Yearly';
+      case SubscriptionProducts.lifetime:
+        return 'Lifetime';
       default:
         return title;
     }
@@ -71,6 +74,8 @@ class SubscriptionPlanInfo {
         return 'Most Popular';
       case SubscriptionProducts.yearly:
         return 'Best Value';
+      case SubscriptionProducts.lifetime:
+        return 'One-time';
       default:
         return null;
     }
@@ -112,6 +117,7 @@ class SubscriptionService with ChangeNotifier {
   SubscriptionPlanInfo? get weekly => _products[SubscriptionProducts.weekly];
   SubscriptionPlanInfo? get monthly => _products[SubscriptionProducts.monthly];
   SubscriptionPlanInfo? get yearly => _products[SubscriptionProducts.yearly];
+  SubscriptionPlanInfo? get lifetime => _products[SubscriptionProducts.lifetime];
 
   /// 初始化：加载产品 + 监听购买更新
   Future<void> initialize() async {

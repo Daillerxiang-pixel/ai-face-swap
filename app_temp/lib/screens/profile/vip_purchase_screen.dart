@@ -19,12 +19,14 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     SubscriptionProducts.weekly,
     SubscriptionProducts.monthly,
     SubscriptionProducts.yearly,
+    SubscriptionProducts.lifetime,
   ];
 
   static const _fallbackPlans = [
     _FallbackPlan(name: 'Weekly', price: '\$19.99', badge: ''),
     _FallbackPlan(name: 'Monthly', price: '\$69.99', badge: 'Most Popular'),
     _FallbackPlan(name: 'Yearly', price: '\$399.99', badge: 'Best Value'),
+    _FallbackPlan(name: 'Lifetime', price: '\$0.99', badge: 'One-time'),
   ];
 
   @override
@@ -222,26 +224,26 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
                   ),
                 )
               else
-                Row(
-                  children: List.generate(3, (i) {
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: List.generate(4, (i) {
                     final productId = _planIds[i];
                     final plan = iap.products[productId];
                     final fallback = _fallbackPlans[i];
                     final isSelected = _selectedPlan == i;
+                    final isLifetime = productId == SubscriptionProducts.lifetime;
 
                     final name = plan?.displayName ?? fallback.name;
                     final price = plan?.price ?? fallback.price;
                     final badge = plan?.badge ?? fallback.badge;
 
-                    return Expanded(
+                    return SizedBox(
+                      width: (MediaQuery.of(context).size.width - 50) / 2,
                       child: GestureDetector(
                         onTap: () => setState(() => _selectedPlan = i),
                         child: Container(
-                          margin: EdgeInsets.only(
-                            left: i == 0 ? 0 : 5,
-                            right: i == 2 ? 0 : 5,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
@@ -250,9 +252,11 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
                                   : context.appColors.surfaceBackground,
                               width: 1.5,
                             ),
-                            color: isSelected
-                                ? AppTheme.primary.withOpacity(0.15)
-                                : context.appColors.cardBackground,
+                            color: isLifetime
+                                ? const Color(0xFFF59E0B).withOpacity(0.1)
+                                : isSelected
+                                    ? AppTheme.primary.withOpacity(0.15)
+                                    : context.appColors.cardBackground,
                           ),
                           child: Column(
                             children: [
@@ -277,9 +281,11 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
                                 Text(
                                   badge,
                                   style: TextStyle(
-                                    color: isSelected
-                                        ? AppTheme.primary
-                                        : const Color(0xFF34C759),
+                                    color: isLifetime
+                                        ? const Color(0xFFF59E0B)
+                                        : isSelected
+                                            ? AppTheme.primary
+                                            : const Color(0xFF34C759),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),
