@@ -4,6 +4,7 @@
  * API:
  *   POST /api/subscription/verify   — 验证 Apple 收据并更新订阅状态
  *   GET  /api/subscription/status   — 查询当前订阅状态
+ *   POST /api/subscription/restore  — 恢复订阅
  */
 
 const { Router } = require('express');
@@ -21,10 +22,13 @@ const APPLE_VERIFY_URL = 'https://buy.itunes.apple.com/verifyReceipt';
 const APPLE_SANDBOX_URL = 'https://sandbox.itunes.apple.com/verifyReceipt';
 
 // 产品 ID 映射（订阅套餐）
+// face_swap_weekly → 周卡 $19.99
+// face_swap_monthly → 月卡 $69.99
+// face_swap_yearly → 年卡 $399.99
 const PRODUCT_MAP = {
-  'com.aihuantu.faceswap.monthly': { tier: 'monthly', limit: 200 },
-  'com.aihuantu.faceswap.yearly': { tier: 'yearly', limit: 500 },
-  'com.aihuantu.faceswap.pro': { tier: 'pro', limit: 999 },
+  'face_swap_weekly': { tier: 'weekly', limit: 50, price: 19.99 },
+  'face_swap_monthly': { tier: 'monthly', limit: 200, price: 69.99 },
+  'face_swap_yearly': { tier: 'yearly', limit: 999, price: 399.99 },
 };
 
 /**
@@ -217,6 +221,7 @@ router.post('/verify', async (req, res) => {
         transactionId: subInfo.transactionId,
         subscriptionStatus: subInfo.subscriptionStatus,
         isTrial: subInfo.isTrial,
+        price: productConfig.price,
       },
     });
 
@@ -292,11 +297,7 @@ router.post('/restore', async (req, res) => {
     });
   }
 
-  // 重新验证收据
-  req.body.receiptData = user.receipt_data;
-  
-  // 复用 verify 路由的逻辑
-  const { receiptData } = req.body;
+  const receiptData = user.receipt_data;
   
   try {
     let appleResponse = await verifyReceiptWithApple(receiptData, false);
@@ -343,6 +344,7 @@ router.post('/restore', async (req, res) => {
         expiresAt: subInfo.expiresAt,
         productId: subInfo.productId,
         subscriptionStatus: subInfo.subscriptionStatus,
+        price: productConfig.price,
       },
     });
 
