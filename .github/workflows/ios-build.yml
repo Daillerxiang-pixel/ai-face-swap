@@ -25,6 +25,7 @@ jobs:
           cd ios
           rm -rf Pods Podfile.lock
           pod install --repo-update
+          bash scripts/ensure_privacy_manifests.sh
 
       - name: Setup signing certificate and profile
         env:
