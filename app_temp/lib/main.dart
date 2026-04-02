@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'config/theme.dart';
 import 'services/auth_service.dart';
+import 'services/subscription_service.dart';
 import 'providers/template_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/generation_provider.dart';
@@ -36,6 +37,7 @@ class FaceSwapApp extends StatefulWidget {
 
 class _FaceSwapAppState extends State<FaceSwapApp> {
   UserProvider? _userProvider;
+  SubscriptionService? _subscriptionService;
 
   @override
   void initState() {
@@ -44,12 +46,16 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = context.read<UserProvider>();
       final themeProvider = context.read<ThemeProvider>();
+      final subscriptionService = context.read<SubscriptionService>();
       _userProvider = userProvider;
+      _subscriptionService = subscriptionService;
       if (userProvider.user != null) {
         themeProvider.initFromUser(userProvider.user?.theme);
       }
       // Also listen for future user loads (e.g., after login)
       userProvider.addListener(_onUserChanged);
+      // Initialize IAP service
+      subscriptionService.initialize();
     });
   }
 
@@ -63,6 +69,7 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
   @override
   void dispose() {
     _userProvider?.removeListener(_onUserChanged);
+    _subscriptionService?.dispose();
     super.dispose();
   }
 
@@ -74,6 +81,7 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GenerationProvider()),
+        ChangeNotifierProvider(create: (_) => SubscriptionService()),
       ],
       child: const _ThemedApp(),
     );

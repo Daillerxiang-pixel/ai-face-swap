@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'auth_service.dart';
 import '../config/app_config.dart';
@@ -230,6 +232,27 @@ class ApiService {
     if (autoSave != null) body['auto_save'] = autoSave;
     if (theme != null) body['theme'] = theme;
     final response = await _dio.put('/api/user/settings', data: body);
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 验证 Apple 订阅 receipt
+  Future<ApiResponse> verifySubscription({
+    required String productId,
+    required String receiptData,
+    required String transactionId,
+  }) async {
+    final response = await _dio.post('/api/subscription/verify', data: {
+      'productId': productId,
+      'receiptData': receiptData,
+      'transactionId': transactionId,
+      'platform': Platform.isIOS ? 'ios' : 'android',
+    });
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 获取当前订阅状态
+  Future<ApiResponse> getSubscriptionStatus() async {
+    final response = await _dio.get('/api/subscription/status');
     return ApiResponse.fromJson(response.data, (data) => data);
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../services/subscription_service.dart';
 
 /// VIP 购买页面
 class VipPurchaseScreen extends StatefulWidget {
@@ -11,16 +13,48 @@ class VipPurchaseScreen extends StatefulWidget {
 
 class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   int _selectedPlan = 1; // 0: weekly, 1: monthly, 2: yearly
+  SubscriptionStatus _lastStatus = SubscriptionStatus.unknown;
 
-  static const _plans = [
-    _Plan(name: 'Weekly', price: '\$2.99', save: ''),
-    _Plan(name: 'Monthly', price: '\$9.99', save: 'Most Popular'),
-    _Plan(name: 'Yearly', price: '\$59.99', save: 'Save 50%'),
+  static const _planIds = [
+    SubscriptionProducts.weekly,
+    SubscriptionProducts.monthly,
+    SubscriptionProducts.yearly,
+  ];
+
+  static const _fallbackPlans = [
+    _FallbackPlan(name: 'Weekly', price: '\$19.99', badge: ''),
+    _FallbackPlan(name: 'Monthly', price: '\$69.99', badge: 'Most Popular'),
+    _FallbackPlan(name: 'Yearly', price: '\$399.99', badge: 'Best Value'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Consumer<SubscriptionService>(
+      builder: (context, iap, _) {
+        // 监听状态变化弹出通知
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (iap.status != _lastStatus) {
+            if (iap.status == SubscriptionStatus.active) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🎉 Subscription activated!'),
+                  backgroundColor: Color(0xFF34C759),
+                ),
+              );
+            }
+            _lastStatus = iap.status;
+          }
+          if (iap.errorMessage != null && !iap.isPurchasing) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Purchase failed: ${iap.errorMessage}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
+
+        return Scaffold(
       backgroundColor: context.appColors.background,
       appBar: AppBar(
         leading: GestureDetector(
@@ -40,18 +74,16 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Hero
             _buildHero(),
-            // Features
             _buildFeatures(),
-            // Plans
             _buildPlans(),
-            // Subscribe button
             _buildSubscribe(),
             const SizedBox(height: 16),
           ],
         ),
       ),
+      );
+      },
     );
   }
 
@@ -163,140 +195,224 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   }
 
   Widget _buildPlans() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Choose Plan',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(3, (i) {
-              final plan = _plans[i];
-              final isSelected = _selectedPlan == i;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedPlan = i),
-                  child: Container(
-                    margin: EdgeInsets.only(
-                      left: i == 0 ? 0 : 5,
-                      right: i == 2 ? 0 : 5,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppTheme.primary
-                            : context.appColors.surfaceBackground,
-                        width: 1.5,
-                      ),
-                      color: isSelected
-                          ? AppTheme.primary.withOpacity(0.15)
-                          : context.appColors.cardBackground,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          plan.name,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 13,
+    return Builder(
+      builder: (context) {
+        final iap = context.read<SubscriptionService>();
+        final isLoading = iap.isLoading && iap.products.isEmpty;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Choose Plan',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  ),
+                )
+              else
+                Row(
+                  children: List.generate(3, (i) {
+                    final productId = _planIds[i];
+                    final plan = iap.products[productId];
+                    final fallback = _fallbackPlans[i];
+                    final isSelected = _selectedPlan == i;
+
+                    final name = plan?.displayName ?? fallback.name;
+                    final price = plan?.price ?? fallback.price;
+                    final badge = plan?.badge ?? fallback.badge;
+
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedPlan = i),
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            left: i == 0 ? 0 : 5,
+                            right: i == 2 ? 0 : 5,
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          plan.price,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (plan.save.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            plan.save,
-                            style: TextStyle(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
                               color: isSelected
                                   ? AppTheme.primary
-                                  : const Color(0xFF34C759),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                                  : context.appColors.surfaceBackground,
+                              width: 1.5,
                             ),
+                            color: isSelected
+                                ? AppTheme.primary.withOpacity(0.15)
+                                : context.appColors.cardBackground,
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
+                          child: Column(
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                price,
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              if (badge.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  badge,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? AppTheme.primary
+                                        : const Color(0xFF34C759),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-              );
-            }),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildSubscribe() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Subscribe feature coming soon')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF59E0B),
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+    return Builder(
+      builder: (context) {
+        final iap = context.watch<SubscriptionService>();
+        final isPurchasing = iap.isPurchasing;
+        final isSubscribed = iap.status == SubscriptionStatus.active;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: isPurchasing || isSubscribed
+                      ? null
+                      : () => _handleSubscribe(iap),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF59E0B),
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor: const Color(0xFFF59E0B).withOpacity(0.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: isPurchasing
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : isSubscribed
+                          ? const Text(
+                              '✓ Subscribed',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            )
+                          : const Text(
+                              'Subscribe Now',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                 ),
-                elevation: 0,
               ),
-              child: const Text(
-                'Subscribe Now',
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => _handleRestore(iap),
+                child: Text(
+                  'Restore Purchases',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Auto-renews. Cancel anytime in settings.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+                  color: AppTheme.textTertiary,
+                  fontSize: 11,
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 10),
-          const Text(
-            'Auto-renews. Cancel anytime in settings.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textTertiary,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Future<void> _handleSubscribe(SubscriptionService iap) async {
+    final productId = _planIds[_selectedPlan];
+    await iap.purchase(productId);
+
+    // 购买完成后检查结果（购买是异步的，结果通过 purchaseStream 回调）
+    // 这里不需要立即检查，因为 purchaseStream 会更新状态
+  }
+
+  Future<void> _handleRestore(SubscriptionService iap) async {
+    await iap.restorePurchases();
+    // restorePurchases 结果通过 purchaseStream 回调
+    // 如果之前有购买，purchaseStream 会触发 restored 状态
+    if (!iap.isPurchasing && iap.status != SubscriptionStatus.active) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No previous purchases found'),
+          ),
+        );
+      }
+    }
   }
 }
 
-class _Plan {
+class _FallbackPlan {
   final String name;
   final String price;
-  final String save;
-  const _Plan({required this.name, required this.price, required this.save});
+  final String badge;
+  const _FallbackPlan({required this.name, required this.price, required this.badge});
 }
 
 class _Feature {
