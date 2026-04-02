@@ -82,18 +82,35 @@ jobs:
           "
           cat ios/export_options.plist
 
-      - name: Build iOS Archive
+      - name: Archive with xcodebuild
+        run: |
+          cd app_temp/ios
+          security default-keychain -s build.keychain
+          security unlock-keychain -p build build.keychain
+
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath ../build/Runner.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=FDA4AA9W96 \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
+
+      - name: Export IPA
         run: |
           cd app_temp
-          flutter build ipa \
-            --release \
-            --build-name=1.5.8 \
-            --build-number=46 \
-            --export-options-plist=ios/export_options.plist
+          mkdir -p build/ipa
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportOptionsPlist ios/export_options.plist \
+            -exportPath build/ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: face-swap-ipa
-          path: app_temp/build/ios/ipa/*.ipa
+          path: app_temp/build/ipa/*.ipa
           retention-days: 14
