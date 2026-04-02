@@ -177,6 +177,12 @@ function initDb() {
     db.exec("ALTER TABLE users ADD COLUMN apple_user_id TEXT;");
     console.log("  [Migration 4] Added apple_user_id to users");
   }
+// Migration 5: Add receipt_data to users for Apple IAP
+  const hasReceiptData = db.prepare("PRAGMA table_info(users)").all().some(c => c.name === "receipt_data");
+  if (!hasReceiptData) {
+    db.exec("ALTER TABLE users ADD COLUMN receipt_data TEXT;");
+    console.log("  [Migration 5] Added receipt_data to users");
+  }
 
   // Seed templates
   const count = db.prepare('SELECT COUNT(*) as c FROM templates').get().c;
