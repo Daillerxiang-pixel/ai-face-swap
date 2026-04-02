@@ -30,7 +30,7 @@ jobs:
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
         run: |
           echo "$APPLE_CERTIFICATE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o certificate.p12
           file certificate.p12
@@ -44,7 +44,7 @@ jobs:
 
           security find-identity -v build.keychain
 
-          echo "$APPLE_PROVISIONING_PROFILE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o provisioning.mobileprovision
+          echo "$IOS_PROVISIONING_PROFILE" | base64 -d > provisioning.mobileprovision
           file provisioning.mobileprovision
 
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
