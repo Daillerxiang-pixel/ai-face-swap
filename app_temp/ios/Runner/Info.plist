@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>FaceSwap-AI</string>
+	<string>Face Swap</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>FaceSwap-AI</string>
+	<string>face_swap</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,9 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>需要访问相机以拍摄照片进行换脸</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要访问相册以选择照片进行换脸</string>
+	<string>我们需要访问您的相册以选择照片进行AI换脸</string>
+	<key>NSCameraUsageDescription</key>
+	<string>我们需要使用相机拍摄照片进行AI换脸</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>我们需要保存生成的照片到您的相册</string>
 </dict>
 </plist>
