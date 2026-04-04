@@ -143,11 +143,19 @@
 
 ---
 
+## 服务器部署
+
+- **正式服务器、域名、PM2、Nginx、测试环境占位**：见 **[docs/SERVER-DEPLOY.md](docs/SERVER-DEPLOY.md)**（长期维护）  
+- 通用备忘索引：[docs/DEPLOY.md](docs/DEPLOY.md)
+
+---
+
 ## 目录结构
 
 ```
 ai-face-swap/
 ├── docs/           # 文档
+│   ├── SERVER-DEPLOY.md  # 正式/测试服务器部署（权威）
 │   ├── PRD.md      # 产品需求文档
 │   ├── API.md      # API接口文档
 │   └── DESIGN.md   # 设计文档
