@@ -30,12 +30,12 @@ router.post('/', async (req, res) => {
   const db = getDb();
   const genId = uuidv4();
 
-  try {
-    // 1. Check user auto_save setting first (needed for error handling)
-    const user = db.prepare('SELECT auto_save, monthly_usage, monthly_limit FROM users WHERE id = ?').get(req.userId);
-    const autoSave = user ? (user.auto_save !== 0) : true;
+  // 须在 try 外声明：catch 中更新失败记录时也要能读到 autoSave
+  const user = db.prepare('SELECT auto_save, monthly_usage, monthly_limit FROM users WHERE id = ?').get(req.userId);
+  const autoSave = user ? (user.auto_save !== 0) : true;
 
-    // 检查次数限制
+  try {
+    // 1. 次数限制
     const monthlyUsage = user?.monthly_usage || 0;
     const monthlyLimit = user?.monthly_limit || 50;
     if (monthlyUsage >= monthlyLimit) {
