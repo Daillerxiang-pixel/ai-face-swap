@@ -1,6 +1,7 @@
 # AI换图 — 部署手册（索引）
 
-> **权威服务器说明（正式机 / 测试机占位）请阅读：[SERVER-DEPLOY.md](./SERVER-DEPLOY.md)**  
+> **权威服务器说明（正式机 / 测试机）请阅读：[SERVER-DEPLOY.md](./SERVER-DEPLOY.md)**  
+> **发布顺序**：须先在测试服验证通过，再部署正式服 — 见 `SERVER-DEPLOY.md` 文首「发布流程原则」。  
 > 下文保留通用操作备忘；**IP、域名以 `SERVER-DEPLOY.md` 为准**。
 
 ## 目录结构（服务器上）
