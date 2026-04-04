@@ -279,12 +279,8 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
               child: AuthService().isLoggedIn
                   ? Consumer<GenerationProvider>(
                       builder: (context, provider, _) {
-                        // 首次进入自动加载
-                        if (!provider.isLoading && provider.history.isEmpty && provider.error == null) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            provider.loadHistory();
-                          });
-                        }
+                        // 勿在 history 为空时反复 postFrame loadHistory，否则会无限请求 → 页面闪动。
+                        // 首次加载已在 initState / 生命周期中触发。
 
                         if (provider.isLoading && provider.history.isEmpty) {
                           return const Center(child: CircularProgressIndicator(color: AppTheme.primary));

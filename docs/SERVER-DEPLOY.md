@@ -163,6 +163,15 @@ flutter build apk --release --dart-define=API_BASE=https://test1.kanashortplay.c
 
 本地固定产出目录约定（Windows）：**`F:\work\And\test`** — APK 直接放在该目录根下 **`face-swap-test1-release.apk`**；可用同目录 **`build-test-apk.bat`** 重新构建（脚本内 `FACE_SWAP_FLUTTER_ROOT` 指到本机 `app_temp`）。勿与生产包混用同一 `dart-define`。
 
+### 3.6 模板数量与 `uploads/previews` 静态图
+
+- 数据库首次种子共有 **8** 条模板：**5** 条「图片」+ **3** 条「视频」。客户端只选「图片」时列表里 **5 条是预期现象**，不是「只剩本地假数据」。
+- 模板预览字段为 `/uploads/previews/template_*.jpg` 等相对路径，由 **Nginx 反代到同一台机器上的静态目录**；若远程部署包 **未带上** `uploads/previews/`（打包脚本常排除 `uploads`），则预览图会 404，需单独同步一次，例如从本机仓库目录：
+  ```bash
+  scp -r uploads/previews root@39.102.100.123:/var/www/ai-face-swap-test/uploads/
+  ```
+  同步后客户端应使用 **API 域名** 拼接路径（见 Flutter `ImageUtils.imgUrl`），勿用 OSS 根域名拼本地路径。
+
 ---
 
 ## 4. 更新部署（正式机通用步骤）

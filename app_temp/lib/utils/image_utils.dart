@@ -5,10 +5,15 @@ class ImageUtils {
   ImageUtils._();
 
   /// 将相对路径转为完整图片URL
+  ///
+  /// 后端未接 OSS 时多为 `/uploads/...`，须走 **API 同域**（与 [AppConfig.apiBaseUrl] 一致），
+  /// 不能拼到 [AppConfig.ossBaseUrl]，否则模板预览、本地上传结果图会 404。
   static String imgUrl(String? path) {
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http')) return path;
-    // 统一走 OSS 基础地址
+    if (path.startsWith('/')) {
+      return '${AppConfig.apiBaseUrl}$path';
+    }
     return '${AppConfig.ossBaseUrl}/$path';
   }
 

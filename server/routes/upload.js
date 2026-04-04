@@ -48,22 +48,33 @@ router.post('/image', (req, res, next) => {
     let fileUrl;
     let filePath;
 
-    if (USE_OSS) {
-      // 上传到 OSS
-      const ossUrl = await uploadToOSS(req.file.buffer, ossKey, req.file.mimetype);
-      fileUrl = ossUrl;
-      filePath = ossKey;
-      console.log(`[Upload] 文件已上传到 OSS: ${ossUrl}`);
-    } else {
-      // 回退到本地存储
+    const saveLocal = () => {
       const fs = require('fs');
       const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
       if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
       const localFilename = `${fileId}${ext}`;
-      filePath = path.join(uploadsDir, localFilename);
-      fs.writeFileSync(filePath, req.file.buffer);
-      fileUrl = `/uploads/${localFilename}`;
+      const abs = path.join(uploadsDir, localFilename);
+      fs.writeFileSync(abs, req.file.buffer);
+      return { filePath: abs, fileUrl: `/uploads/${localFilename}` };
+    };
+
+    if (USE_OSS) {
+      try {
+        const ossUrl = await uploadToOSS(req.file.buffer, ossKey, req.file.mimetype);
+        fileUrl = ossUrl;
+        filePath = ossKey;
+        console.log(`[Upload] 文件已上传到 OSS: ${ossUrl}`);
+      } catch (ossErr) {
+        console.error('[Upload] OSS 上传失败，改存本地:', ossErr.message || ossErr);
+        const local = saveLocal();
+        fileUrl = local.fileUrl;
+        filePath = local.filePath;
+        console.log(`[Upload] 文件已保存到本地: ${fileUrl}`);
+      }
+    } else {
+      const local = saveLocal();
+      fileUrl = local.fileUrl;
+      filePath = local.filePath;
       console.log(`[Upload] 文件已保存到本地: ${fileUrl}`);
     }
 
