@@ -54,16 +54,41 @@ class ApiService {
       connectTimeout: AppConfig.apiConnectTimeout,
       receiveTimeout: AppConfig.apiReceiveTimeout,
       sendTimeout: AppConfig.apiSendTimeout,
+      // 默认仅 2xx 为「成功」，401/403 会抛 DioException，UI 只能显示 Network error。
+      // 与后端约定：4xx 返回 JSON { success, error }，须解析后提示「重新登录」等。
+      validateStatus: (status) => status != null && status < 500,
     ));
 
-    // 请求拦截器 — 自动附加 token
+    // 请求拦截器 — 自动附加 token（登录/注册不得带旧 Token，否则部分环境下会 401 导致无法登录）
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        final token = AuthService().token;
-        if (token != null && token.isNotEmpty) {
-          options.headers['Authorization'] = 'Bearer $token';
+        final p = options.uri.path;
+        final isAnonymousAuth = p.contains('/api/auth/login') ||
+            p.contains('/api/auth/register');
+        if (isAnonymousAuth) {
+          options.headers.remove('Authorization');
+        } else {
+          final token = AuthService().token;
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
         }
         handler.next(options);
+      },
+    ));
+
+    // 401 — 清理本地 Token（排除「密码错误」的登录 401）
+    _dio.interceptors.add(InterceptorsWrapper(
+      onError: (error, handler) {
+        if (error is DioException && error.response?.statusCode == 401) {
+          final p = error.requestOptions.uri.path;
+          final isLoginFailure = p.contains('/api/auth/login') ||
+              p.contains('/api/auth/register');
+          if (!isLoginFailure) {
+            AuthService().clearToken();
+          }
+        }
+        return handler.next(error);
       },
     ));
 
@@ -137,12 +162,36 @@ class ApiService {
   }
 
   /// 上传图片
+  /// multipart 时须显式带上 Authorization，否则部分环境下拦截器不会合并到最终请求。
   Future<ApiResponse> uploadImage(String filePath) async {
-    final formData = FormData.fromMap({
-      'photo': await MultipartFile.fromFile(filePath),
-    });
-    final response = await _dio.post('/api/upload/image', data: formData);
-    return ApiResponse.fromJson(response.data, (data) => data);
+    final sep = filePath.replaceAll('\\', '/').lastIndexOf('/');
+    final filename =
+        sep < 0 ? filePath : filePath.substring(sep + 1);
+    try {
+      final formData = FormData.fromMap({
+        'photo': await MultipartFile.fromFile(
+          filePath,
+          filename: filename.isEmpty ? 'photo.jpg' : filename,
+        ),
+      });
+      final token = AuthService().token;
+      final response = await _dio.post(
+        '/api/upload/image',
+        data: formData,
+        options: Options(
+          headers: {
+            if (token != null && token.isNotEmpty)
+              'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      return ApiResponse.fromJson(
+        response.data as Map<String, dynamic>,
+        (data) => data,
+      );
+    } on DioException catch (e) {
+      return _responseFromDioException(e);
+    }
   }
 
   /// 创建生成任务
@@ -232,8 +281,15 @@ class ApiService {
     if (avatar != null) body['avatar'] = avatar;
     if (autoSave != null) body['auto_save'] = autoSave;
     if (theme != null) body['theme'] = theme;
-    final response = await _dio.put('/api/user/settings', data: body);
-    return ApiResponse.fromJson(response.data, (data) => data);
+    try {
+      final response = await _dio.put('/api/user/settings', data: body);
+      return ApiResponse.fromJson(
+        response.data as Map<String, dynamic>,
+        (data) => data,
+      );
+    } on DioException catch (e) {
+      return _responseFromDioException(e);
+    }
   }
 
   /// 验证 Apple 订阅 receipt
@@ -259,5 +315,23 @@ class ApiService {
 
   bool _isWriteMethod(String method) {
     return method == 'POST' || method == 'PUT' || method == 'DELETE' || method == 'PATCH';
+  }
+
+  /// Dio 在 4xx/5xx 时会抛异常，解析为 [ApiResponse] 供上层展示服务端文案（避免误判为「网络失败」）。
+  ApiResponse<dynamic> _responseFromDioException(DioException e) {
+    final raw = e.response?.data;
+    if (raw is Map<String, dynamic>) {
+      return ApiResponse.fromJson(raw, (data) => data);
+    }
+    if (raw is Map) {
+      return ApiResponse.fromJson(
+        Map<String, dynamic>.from(raw),
+        (data) => data,
+      );
+    }
+    return ApiResponse<dynamic>(
+      success: false,
+      message: e.message ?? 'Network error',
+    );
   }
 }

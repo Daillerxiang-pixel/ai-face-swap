@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -713,9 +714,22 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         }
       }
     } catch (e) {
+      String msg = 'Network error, please retry';
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map) {
+          final err = data['error'] ?? data['message'];
+          if (err != null) msg = err.toString();
+        } else if (e.message != null && e.message!.isNotEmpty) {
+          msg = e.message!;
+        }
+        if (e.response?.statusCode == 401) {
+          msg = '${msg.isNotEmpty ? '$msg. ' : ''}Please sign in again.';
+        }
+      }
       setState(() {
         _status = 'failed';
-        _errorMsg = 'Network error, please retry';
+        _errorMsg = msg;
       });
     }
   }
