@@ -75,6 +75,13 @@ pm2 save
 | 打包上传部署 | `scripts/deploy/remote_deploy.py` |
 | Nginx + Certbot | `scripts/deploy/remote_nginx_ssl.py` |
 
+### 2.5 仓库内与正式 IP 对齐的文件
+
+以下文件中的 **正式机公网 IP** 应与上表 **`159.223.152.94`** 一致（或通过 `DEPLOY_HOST` 覆盖脚本默认值）：
+
+- `scripts/deploy/remote_deploy.py`、`finish_remote_pm2.py`、`remote_nginx_ssl.py`、`check_auth_log_remote.py`（默认 `DEPLOY_HOST=159.223.152.94`）
+- `docs/DEPLOY_CHECKLIST.md`、`scripts/deploy/install.sh` 注释、`config/nginx.conf`、`config/security-group.md` 头部说明
+
 ---
 
 ## 3. 测试服务器（占位）

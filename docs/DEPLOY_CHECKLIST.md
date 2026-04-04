@@ -1,6 +1,7 @@
 # AI 换图 — 部署检查清单
 
-> 每次部署前请逐项检查，确保生产环境稳定
+> 每次部署前请逐项检查，确保生产环境稳定  
+> **正式服务器 IP、域名以 [SERVER-DEPLOY.md](./SERVER-DEPLOY.md) 为准**（当前正式机：`159.223.152.94`，域名：`test.kanashortplay.com`）。
 
 ---
 
@@ -35,7 +36,7 @@
 
 ```bash
 # 1. SSH 连接服务器
-ssh root@39.102.100.123
+ssh root@159.223.152.94
 
 # 2. 进入应用目录
 cd /var/www/ai-face-swap
@@ -62,10 +63,10 @@ curl http://127.0.0.1:8080/api/templates
 
 ```bash
 # 本地执行（上传脚本后）
-ssh root@39.102.100.123 "bash -s" < scripts/deploy/deploy.sh
+ssh root@159.223.152.94 "bash -s" < scripts/deploy/deploy.sh
 
 # 或在服务器上执行
-ssh root@39.102.100.123
+ssh root@159.223.152.94
 cd /var/www/ai-face-swap
 bash scripts/deploy/deploy.sh
 ```
@@ -81,10 +82,10 @@ tar czf ai-face-swap.tar.gz \
     .
 
 # 2. 上传到服务器
-scp ai-face-swap.tar.gz root@39.102.100.123:/tmp/
+scp ai-face-swap.tar.gz root@159.223.152.94:/tmp/
 
 # 3. 服务器解压
-ssh root@39.102.100.123
+ssh root@159.223.152.94
 cd /var/www/ai-face-swap
 tar xzf /tmp/ai-face-swap.tar.gz
 
@@ -121,7 +122,7 @@ curl http://127.0.0.1:8080/api/templates
 curl http://127.0.0.1:8080/health
 
 # 测试外网访问（浏览器）
-# https://39.102.100.123/api/templates
+# https://test.kanashortplay.com/api/templates
 ```
 
 ### 日志检查
@@ -227,14 +228,14 @@ pm2 scale ai-face-swap 1  # 确保只有一个实例
 ### 启用 Gzip 压缩
 已在 Nginx 配置中启用，验证：
 ```bash
-curl -H "Accept-Encoding: gzip" -I https://39.102.100.123
+curl -H "Accept-Encoding: gzip" -I https://test.kanashortplay.com
 # 应该看到：Content-Encoding: gzip
 ```
 
 ### 启用缓存
 静态资源已配置 7 天缓存，验证：
 ```bash
-curl -I https://39.102.100.123/static/app.js
+curl -I https://test.kanashortplay.com/static/app.js
 # 应该看到：Cache-Control: public, immutable
 ```
 
