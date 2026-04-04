@@ -30,50 +30,61 @@ router.get('/profile', (req, res) => {
 
 // PUT /api/user/settings — update user settings
 router.put('/settings', (req, res) => {
-  const db = getDb();
-  const { nickname, avatar, auto_save, theme } = req.body;
+  try {
+    const db = getDb();
+    const { nickname, avatar, auto_save, theme } = req.body;
 
-  // Build dynamic update
-  const fields = [];
-  const values = [];
+    // Build dynamic update
+    const fields = [];
+    const values = [];
 
-  if (nickname !== undefined) {
-    fields.push('nickname = ?');
-    values.push(nickname);
-  }
-  if (avatar !== undefined) {
-    fields.push('avatar = ?');
-    values.push(avatar);
-  }
-  if (auto_save !== undefined) {
-    fields.push('auto_save = ?');
-    values.push(auto_save ? 1 : 0);
-  }
-  if (theme !== undefined) {
-    // Only allow 'dark' or 'light'
-    const validThemes = ['dark', 'light'];
-    const t = validThemes.includes(theme) ? theme : 'dark';
-    fields.push('theme = ?');
-    values.push(t);
-  }
-
-  if (fields.length === 0) {
-    return res.status(400).json({ success: false, error: 'No fields to update' });
-  }
-
-  values.push(req.userId);
-  db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...values);
-
-  // Return updated profile
-  const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated, auto_save, theme FROM users WHERE id = ?').get(req.userId);
-  res.json({
-    success: true,
-    data: {
-      ...user,
-      remaining: user.subscription_tier === 'monthly' ? 999 : Math.max(0, user.monthly_limit - user.monthly_usage),
-      isVip: user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date()
+    if (nickname !== undefined) {
+      fields.push('nickname = ?');
+      values.push(nickname);
     }
-  });
+    if (avatar !== undefined) {
+      fields.push('avatar = ?');
+      values.push(avatar);
+    }
+    if (auto_save !== undefined) {
+      fields.push('auto_save = ?');
+      values.push(auto_save ? 1 : 0);
+    }
+    if (theme !== undefined) {
+      // Only allow 'dark' or 'light'
+      const validThemes = ['dark', 'light'];
+      const t = validThemes.includes(theme) ? theme : 'dark';
+      fields.push('theme = ?');
+      values.push(t);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    values.push(req.userId);
+    const r = db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+    if (r.changes === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Return updated profile
+    const user = db.prepare('SELECT id, nickname, avatar, subscription_tier, subscription_expires_at, monthly_usage, monthly_limit, total_generated, auto_save, theme FROM users WHERE id = ?').get(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.json({
+      success: true,
+      data: {
+        ...user,
+        remaining: user.subscription_tier === 'monthly' ? 999 : Math.max(0, user.monthly_limit - user.monthly_usage),
+        isVip: user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date()
+      }
+    });
+  } catch (err) {
+    console.error('[User] PUT /settings', err);
+    res.status(500).json({ success: false, error: 'Failed to update settings' });
+  }
 });
 
 // GET /api/user/favorites

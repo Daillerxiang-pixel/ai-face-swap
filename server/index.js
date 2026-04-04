@@ -1,7 +1,31 @@
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+// 与运维脚本一致：密钥可能在项目根 .env（/var/www/ai-face-swap/.env），也可能在 server/.env；后者优先覆盖
+const fs = require('fs');
+const path = require('path');
+const envServer = path.join(__dirname, '.env');
+const envRoot = path.join(__dirname, '..', '.env');
+if (fs.existsSync(envRoot)) {
+  require('dotenv').config({ path: envRoot });
+}
+if (fs.existsSync(envServer)) {
+  require('dotenv').config({ path: envServer, override: true });
+}
+if (!fs.existsSync(envRoot) && !fs.existsSync(envServer)) {
+  require('dotenv').config();
+}
+const { getOSSConfigReport, logOSSStartupStatus } = require('./utils/oss');
+
+(function enforceRequireOss() {
+  const on = process.env.REQUIRE_OSS === '1' || process.env.REQUIRE_OSS === 'true';
+  if (!on) return;
+  const r = getOSSConfigReport();
+  if (!r.ok) {
+    console.error('[FATAL] REQUIRE_OSS=1 但 OSS 未就绪:', r.message);
+    process.exit(1);
+  }
+})();
+
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { initDb } = require('./data/database');
 const templateRoutes = require('./routes/templates');
 const generateRoutes = require('./routes/generate');
@@ -45,6 +69,7 @@ app.use('/api/subscription', subscriptionRoutes);
 
 // Init DB and start
 initDb();
+logOSSStartupStatus();
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
   console.log(`📱 Prototype at http://localhost:${PORT}/index-v3.html`);

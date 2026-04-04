@@ -3,12 +3,16 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { getDb } = require('../data/database');
-const { uploadToOSS, getOSSUrl } = require('../utils/oss');
+const { uploadToOSS, isOSSAvailable } = require('../utils/oss');
+const { optionalAuthMiddleware } = require('../middleware/auth');
 
 const router = Router();
 
-// 是否启用 OSS
-const USE_OSS = !!process.env.OSS_ACCESS_KEY_ID;
+/** 每次请求重新判断（避免只改了 .env 却忘了重启）；设 SKIP_OSS_UPLOAD=1 可强制只走本地 */
+function shouldTryOSSUpload() {
+  if (process.env.SKIP_OSS_UPLOAD === '1' || process.env.SKIP_OSS_UPLOAD === 'true') return false;
+  return isOSSAvailable();
+}
 
 // 内存存储（用于 OSS 上传）+ 磀测文件类型
 const upload = multer({
@@ -22,8 +26,8 @@ const upload = multer({
   }
 });
 
-// POST /api/upload/image — upload user photo
-router.post('/image', (req, res, next) => {
+// POST /api/upload/image — 优先解析 JWT（multipart 须走 Header）；无 token 时仍可匿名上传
+router.post('/image', optionalAuthMiddleware, (req, res, next) => {
   upload.single('photo')(req, res, (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -58,23 +62,28 @@ router.post('/image', (req, res, next) => {
       return { filePath: abs, fileUrl: `/uploads/${localFilename}` };
     };
 
-    if (USE_OSS) {
+    let storageKind = 'local';
+
+    if (shouldTryOSSUpload()) {
       try {
         const ossUrl = await uploadToOSS(req.file.buffer, ossKey, req.file.mimetype);
         fileUrl = ossUrl;
         filePath = ossKey;
+        storageKind = 'oss';
         console.log(`[Upload] 文件已上传到 OSS: ${ossUrl}`);
       } catch (ossErr) {
         console.error('[Upload] OSS 上传失败，改存本地:', ossErr.message || ossErr);
         const local = saveLocal();
         fileUrl = local.fileUrl;
         filePath = local.filePath;
+        storageKind = 'local';
         console.log(`[Upload] 文件已保存到本地: ${fileUrl}`);
       }
     } else {
       const local = saveLocal();
       fileUrl = local.fileUrl;
       filePath = local.filePath;
+      storageKind = 'local';
       console.log(`[Upload] 文件已保存到本地: ${fileUrl}`);
     }
 
@@ -90,12 +99,12 @@ router.post('/image', (req, res, next) => {
         originalName: req.file.originalname,
         url: fileUrl,
         size: req.file.size,
-        storage: USE_OSS ? 'oss' : 'local'
+        storage: storageKind
       }
     });
   } catch (err) {
     console.error('[Upload] 上传失败:', err);
-    res.status(500).json({ success: false, error: '上传失败：' + (err.message || '服务器错误') });
+    res.status(500).json({ success: false, error: '上传失败，请稍后重试' });
   }
 });
 
