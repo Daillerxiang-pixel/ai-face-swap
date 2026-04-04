@@ -184,6 +184,21 @@ function initDb() {
     console.log("  [Migration 5] Added receipt_data to users");
   }
 
+  // Migration 6: Email/password auth (routes/auth.js)
+  const hasEmailCol = db.prepare("PRAGMA table_info(users)").all().some((c) => c.name === "email");
+  if (!hasEmailCol) {
+    db.exec("ALTER TABLE users ADD COLUMN email TEXT;");
+    db.exec("ALTER TABLE users ADD COLUMN password_hash TEXT;");
+    try {
+      db.exec(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL"
+      );
+    } catch (e) {
+      /* ignore */
+    }
+    console.log("  [Migration 6] Added email, password_hash to users");
+  }
+
   // Seed templates
   const count = db.prepare('SELECT COUNT(*) as c FROM templates').get().c;
   if (count === 0) {

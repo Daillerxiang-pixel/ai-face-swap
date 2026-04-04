@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../config/app_config.dart';
+import 'http_retry_interceptor.dart';
 
 /// API 统一响应模型
 class ApiResponse<T> {
@@ -42,19 +43,23 @@ class ApiService {
   ApiService() {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: AppConfig.apiConnectTimeout,
+      receiveTimeout: AppConfig.apiReceiveTimeout,
+      sendTimeout: AppConfig.apiSendTimeout,
       headers: {
         'Content-Type': 'application/json',
         'X-User-Id': AppConfig.mockUserId,
       },
     ));
 
-    // 请求拦截器
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
     ));
+    // 弱网 / VPN：超时后自动重试（后添加的拦截器优先处理 onError）
+    _dio.interceptors.add(
+      HttpRetryInterceptor(_dio, maxRetries: AppConfig.apiRetryCount),
+    );
   }
 
   /// 获取模板列表

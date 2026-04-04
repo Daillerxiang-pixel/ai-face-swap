@@ -17,7 +17,7 @@ apply from: "$flutterSdkPath/packages/flutter_tools/gradle/flutter.gradle"
 android {
     namespace = "com.aihuantu.face_swap"
     compileSdk = 35
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "26.1.10909125"
     buildToolsVersion = "35.0.0"
 
     compileOptions {

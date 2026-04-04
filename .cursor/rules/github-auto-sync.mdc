@@ -1,0 +1,30 @@
+---
+description: 代码与版本更新后自动提交并推送到 GitHub（长期约定）
+alwaysApply: true
+---
+
+# GitHub 自动同步（长期约定）
+
+在本仓库中，只要完成**代码修改**、**版本号/构建号更新**（例如 `app_temp/pubspec.yaml`、`server/package.json`、Android `versionCode` 等）、**锁文件或依赖变更**，在结束本次任务前**应默认执行 GitHub 同步**，除非用户明确说「不要提交 / 不要 push」。
+
+## 同步步骤（仓库根目录）
+
+1. `git status` 确认变更范围  
+2. `git add`，只加入与本次任务相关的文件；若本次变更均属同一意图，可用 `git add -A`  
+3. `git commit -m "..."`：说明**改了什么、为什么**（中英文均可，完整句子）  
+4. **推送到 GitHub**：本仓库已配置远程名 `github`（`https://github.com/Daillerxiang-pixel/ai-face-swap.git`）时，使用 `git push github $(git branch --show-current)`；若你本地仅将 GitHub 配为 `origin`，则用 `git push origin <分支>`。勿与仅用于内网的 `origin`（若不同）混淆——**以用户确认的 GitHub 远程名为准**。
+
+## 禁止提交的内容
+
+- 密钥、密码、Token、证书（如 `.env`、`*.p12`、`*.mobileprovision` 等）  
+- 提交前核对 `.gitignore`，勿把敏感文件加入暂存区  
+
+## push 失败时
+
+- **认证失败**：提示配置 SSH 公钥到 GitHub，或使用 `gh auth login`  
+- **冲突或非快进**：先 `git pull --rebase origin <分支>` 再 push，或说明由用户处理合并  
+- 不要假设已同步成功；需根据终端输出确认  
+
+## 与用户意图冲突时
+
+若用户仅要求「本地改一下」或明确不提交，则**不执行** commit/push，并在回复中说明原因。

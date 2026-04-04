@@ -14,9 +14,21 @@ class AppConfig {
   /// 每页加载数量
   static const int pageSize = 20;
 
-  /// 生成结果轮询间隔（毫秒）
-  static const int pollInterval = 3000;
+  /// HTTP 连接超时（跨境 / VPN 时握手与路由较慢，不宜过短）
+  static const Duration apiConnectTimeout = Duration(seconds: 45);
+
+  /// 读超时（列表、生成状态等）
+  static const Duration apiReceiveTimeout = Duration(seconds: 90);
+
+  /// 写超时（上传图片等较大请求）
+  static const Duration apiSendTimeout = Duration(seconds: 120);
+
+  /// 弱网时对连接/读超时自动重试次数（不含首次请求）
+  static const int apiRetryCount = 2;
+
+  /// 生成结果轮询间隔（毫秒；弱网时可略拉长，减轻并发压力）
+  static const int pollInterval = 4000;
 
   /// 生成结果最大等待时间（秒）
-  static const int maxWaitSeconds = 120;
+  static const int maxWaitSeconds = 300;
 }

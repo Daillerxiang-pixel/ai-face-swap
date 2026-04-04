@@ -1,10 +1,11 @@
+const path = require('path');
+
 module.exports = {
   apps: [{
     name: 'ai-face-swap',
     script: 'server/index.js',
-    
-    // Windows 本地开发环境
-    cwd: process.env.LOCAL_APP_PATH || 'C:\\Users\\xiangjj\\.openclaw\\workspace\\projects\\ai-face-swap',
+    // 项目根目录（Linux 与 Windows 通用；也可用环境变量覆盖）
+    cwd: process.env.LOCAL_APP_PATH || path.resolve(__dirname),
 
     // 单实例即可（SQLite 不支持多进程并发写）
     instances: 1,
@@ -15,9 +16,13 @@ module.exports = {
     watch: false,
     max_memory_restart: '512M',
 
-    // 环境变量
+    // 环境变量（本地: pm2 start ecosystem.config.js；生产: pm2 start ecosystem.config.js --env production）
     env: {
       NODE_ENV: 'development',
+      PORT: 8080
+    },
+    env_production: {
+      NODE_ENV: 'production',
       PORT: 8080
     },
 

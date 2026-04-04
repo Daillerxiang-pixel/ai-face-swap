@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../config/app_config.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
@@ -26,7 +27,10 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await _api.getUserProfile().timeout(const Duration(seconds: 5));
+      // 勿使用 5s 等过短 Future.timeout：跨境 API 常 >5s，会与「Google 很快」无关而误杀
+      final res = await _api
+          .getUserProfile()
+          .timeout(AppConfig.apiReceiveTimeout + const Duration(seconds: 15));
       if (res.success && res.data != null) {
         _user = User.fromJson(res.data as Map<String, dynamic>);
       }

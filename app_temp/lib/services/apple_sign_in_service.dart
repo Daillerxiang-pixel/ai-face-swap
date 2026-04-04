@@ -12,8 +12,9 @@ class AppleSignInService {
 
   final Dio _dio = Dio(BaseOptions(
     baseUrl: AppConfig.apiBaseUrl,
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 30),
+    connectTimeout: AppConfig.apiConnectTimeout,
+    receiveTimeout: AppConfig.apiReceiveTimeout,
+    sendTimeout: AppConfig.apiSendTimeout,
   ));
 
   /// Perform Apple Sign In flow
