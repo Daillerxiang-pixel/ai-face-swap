@@ -13,7 +13,7 @@ alwaysApply: true
    - 示例（APK）：`test-1.5.10-48.apk`（由 `1.5.10+48` 将 `+` 换成 `-`，避免部分终端/脚本对 `+` 的解析问题）。  
    - 示例（IPA）：`test-1.5.10-48.ipa`。
 4. **正式包**：可直接使用 `face-swap-1.5.10-48-release.apk` 或 `1.5.10-48-release.apk` 等包含版本号的命名，团队约定一种即可；**必须含版本号**。
-5. 自动化脚本（如本机 **`F:\work\And\test\build-test-apk.bat`**，配合 **`extract-pubspec-version.ps1`**）应从 `pubspec.yaml` **读取版本**生成输出文件名，避免手抄版本号。仓库内同逻辑脚本：`scripts/build/extract-pubspec-version.ps1`。
+5. 自动化脚本（如本机 **`F:\work\And\test\build-test-apk.bat`**，配合 **`extract-pubspec-version.ps1`**）应从 `pubspec.yaml` **读取版本**生成输出文件名，避免手抄版本号。仓库内脚本：**`scripts/extract-pubspec-version.ps1`**。
 
 ## GitHub Actions
 
