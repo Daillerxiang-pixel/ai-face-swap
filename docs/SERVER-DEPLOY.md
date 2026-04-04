@@ -153,7 +153,7 @@ Flutter 工程内 `AppConfig.apiBaseUrl` 支持编译期注入 **`API_BASE`**。
 flutter build apk --release --dart-define=API_BASE=https://test1.kanashortplay.com
 ```
 
-本地固定产出目录约定（Windows）：**`F:\work\And\test`** — 使用其中 **`build-test-apk.bat`**（需将脚本内 `FACE_SWAP_FLUTTER_ROOT` 指到本机 `app_temp`），生成 **`apk\face-swap-test1-release.apk`**。勿与生产包混用同一 `dart-define`。
+本地固定产出目录约定（Windows）：**`F:\work\And\test`** — APK 直接放在该目录根下 **`face-swap-test1-release.apk`**；可用同目录 **`build-test-apk.bat`** 重新构建（脚本内 `FACE_SWAP_FLUTTER_ROOT` 指到本机 `app_temp`）。勿与生产包混用同一 `dart-define`。
 
 ---
 
