@@ -199,6 +199,47 @@ function initDb() {
     console.log("  [Migration 6] Added email, password_hash to users");
   }
 
+  // Migration 7: theme / auto_save（旧库若已有 admins 表，Migration 3 不会执行，需补列）
+  {
+    const cols = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+    if (!cols.includes('auto_save')) {
+      try {
+        db.exec('ALTER TABLE users ADD COLUMN auto_save INTEGER DEFAULT 1');
+        console.log('  [Migration 7] Added auto_save to users');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    if (!cols.includes('theme')) {
+      try {
+        db.exec("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'dark'");
+        console.log('  [Migration 7] Added theme to users');
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }
+
+  // Migration 8: 默认 Akool 模板（初始种子仅有 tencent + replicate，部署新库或旧库无 akool 行时补全）
+  const akoolCount = db.prepare("SELECT COUNT(*) as c FROM templates WHERE provider = 'akool'").get().c;
+  if (akoolCount === 0) {
+    const stmt = db.prepare(`
+      INSERT INTO templates (name, icon, bg_gradient, scene, type, usage_count, rating, badge, description, tencent_model_id, provider, provider_model_id, video_url, preview_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `);
+    const akoolTemplates = [
+      ['Akool·高清换脸·电影', '🎬', 'linear-gradient(135deg,#667eea,#764ba2)', '电影', '图片', 8000, 4.9, 'hot', 'Akool Face Swap Pro（需配置 AKOOL_API_KEY 与 OSS）', '', 'akool', '', '', '/uploads/previews/template_1.jpg'],
+      ['Akool·春风', '🌸', 'linear-gradient(135deg,#f093fb,#f5576c)', '春风', '图片', 6500, 4.8, 'new', 'Akool Pro 图片换脸', '', 'akool', '', '', '/uploads/previews/template_2.jpg'],
+      ['Akool·动漫', '🎬', 'linear-gradient(135deg,#4facfe,#00f2fe)', '动漫', '图片', 5200, 4.7, '', 'Akool Pro 图片换脸', '', 'akool', '', '', '/uploads/previews/template_3.jpg'],
+      ['Akool·视频换脸·电影', '🎥', 'linear-gradient(135deg,#0c3483,#a2b6df)', '电影', '视频', 3000, 4.7, 'hot', 'Akool 视频换脸', '', 'akool', '', 'https://replicate.delivery/pbxt/JtTUsVkGnNQDZCQbOTWYgMexYMQXNQjSsUDrbQTbIuIxtsJHA/example.mp4', '/uploads/previews/template_v1.jpg'],
+      ['Akool·视频换脸·舞台', '🎭', 'linear-gradient(135deg,#6a11cb,#2575fc)', '舞台', '视频', 2600, 4.6, 'new', 'Akool 视频换脸', '', 'akool', '', 'https://replicate.delivery/pbxt/JtTUsVkGnNQDZCQbOTWYgMexYMQXNQjSsUDrbQTbIuIxtsJHA/example.mp4', '/uploads/previews/template_v2.jpg'],
+    ];
+    const insertAkool = db.transaction((items) => {
+      for (const t of items) stmt.run(...t);
+    });
+    insertAkool(akoolTemplates);
+    console.log('  [Migration 8] Seeded default Akool templates (provider=akool)');
+  }
+
   // Seed templates
   const count = db.prepare('SELECT COUNT(*) as c FROM templates').get().c;
   if (count === 0) {

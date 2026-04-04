@@ -11,7 +11,24 @@ const ACTIVITY_ID = process.env.TENCENT_ACTIVITY_ID || 'at_2035634829506617344';
 const DEFAULT_MODEL_ID = process.env.TENCENT_MODEL_ID || 'mt_2035635381514772480';
 
 let faceClient = null;
+
+function assertTencentConfigured() {
+  const sid = (process.env.TENCENT_SECRET_ID || '').trim();
+  const sk = (process.env.TENCENT_SECRET_KEY || '').trim();
+  if (!sid || !sk) {
+    throw new Error('腾讯云未配置：请在 .env 中设置 TENCENT_SECRET_ID 与 TENCENT_SECRET_KEY');
+  }
+  if (sid.includes('你的') || sk.includes('你的')) {
+    throw new Error('腾讯云密钥仍为占位符：请将 .env 中的 TENCENT_SECRET_ID / TENCENT_SECRET_KEY 替换为控制台真实值');
+  }
+  const act = process.env.TENCENT_ACTIVITY_ID || ACTIVITY_ID;
+  if (act && (act.includes('xxxxxxxx') || act === 'at_xxxxxxxxxx')) {
+    throw new Error('腾讯云活动 ID 无效：请设置 TENCENT_ACTIVITY_ID 为控制台人脸融合活动 ID（非占位符）');
+  }
+}
+
 function getClient() {
+  assertTencentConfigured();
   if (faceClient) return faceClient;
   faceClient = new tencentcloud.facefusion.v20181201.Client({
     credential: {

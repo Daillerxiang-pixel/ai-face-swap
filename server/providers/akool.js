@@ -14,6 +14,16 @@ const path = require('path');
 const AKOOL_API_KEY = process.env.AKOOL_API_KEY || '';
 const AKOOL_BASE_URL = 'openapi.akool.com';
 
+function assertAkoolConfigured() {
+  const k = AKOOL_API_KEY.trim();
+  if (!k) {
+    throw new Error('Akool 未配置：请在 .env 中设置 AKOOL_API_KEY（Akool 控制台 API Key）');
+  }
+  if (k.includes('你的') || k.toLowerCase().includes('placeholder')) {
+    throw new Error('Akool API Key 仍为占位符：请替换为 Akool 开放平台真实 x-api-key');
+  }
+}
+
 // API 端点
 const ENDPOINTS = {
   // Face Swap Pro (V4) — 最高画质，单人脸，不需要人脸检测
@@ -281,6 +291,7 @@ async function generateVideo(ctx) {
  * 主生成入口 — 根据模板类型选择 Pro/V3/Video
  */
 async function generate(ctx) {
+  assertAkoolConfigured();
   const { template } = ctx;
   const type = template.type || '图片';
 
