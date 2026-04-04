@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "ai-face-swap",
+      "path": "."
+    },
+    {
+      "name": "ibooks",
+      "path": "../ibooks"
+    }
+  ],
+  "settings": {}
+}
