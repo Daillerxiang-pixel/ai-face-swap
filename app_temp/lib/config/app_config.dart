@@ -3,7 +3,14 @@ class AppConfig {
   AppConfig._();
 
   /// API 基础地址
-  static const String apiBaseUrl = 'https://test.kanashortplay.com';
+  ///
+  /// 构建时可通过 `--dart-define=API_BASE=https://test1.kanashortplay.com` 指向测试服；
+  /// 未传入时默认为正式接口域名。
+  static String get apiBaseUrl {
+    const fromEnv = String.fromEnvironment('API_BASE', defaultValue: '');
+    if (fromEnv.isNotEmpty) return fromEnv;
+    return 'https://test.kanashortplay.com';
+  }
 
   /// OSS 图片基础地址
   static const String ossBaseUrl = 'https://aihuantu.oss-cn-beijing.aliyuncs.com';

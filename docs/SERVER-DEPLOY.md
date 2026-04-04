@@ -145,6 +145,16 @@ curl -s -o /dev/null -w "%{http_code}\n" https://test1.kanashortplay.com/api/tem
 
 **注意**：测试环境 `.env`、JWT、第三方 Key 与正式隔离；禁止将正式 `face_swap.db` 用于测试机覆盖，除非明确在做数据迁移演练。
 
+### 3.5 Android 客户端（指向测试服 API）
+
+Flutter 工程内 `AppConfig.apiBaseUrl` 支持编译期注入 **`API_BASE`**。在含 `android/` 的工程根目录（如 `app_temp`）执行：
+
+```text
+flutter build apk --release --dart-define=API_BASE=https://test1.kanashortplay.com
+```
+
+本地固定产出目录约定（Windows）：**`F:\work\And\test`** — 使用其中 **`build-test-apk.bat`**（需将脚本内 `FACE_SWAP_FLUTTER_ROOT` 指到本机 `app_temp`），生成 **`apk\face-swap-test1-release.apk`**。勿与生产包混用同一 `dart-define`。
+
 ---
 
 ## 4. 更新部署（正式机通用步骤）
