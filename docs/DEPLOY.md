@@ -36,6 +36,15 @@
 - `config/nginx-test1.conf` / `nginx-bootstrap-test1-http.conf` — 测试域名 Nginx
 - `config/nginx-bootstrap-http.conf` — 仅 HTTP，用于签发证书前
 
+## GitHub Actions 与客户端构建
+
+| 平台 | 构建方式 |
+|------|----------|
+| **iOS（IPA）** | 仓库 **`.github/workflows/ios-build.yml`**：仅在 `main` 上变更 **`app_temp/**`** 或该 workflow 本身时自动跑；也可在 Actions 里 **手动运行**（`workflow_dispatch`）。需要 Apple 证书等 Secrets。 |
+| **Android（APK）** | **不在 GitHub 上构建**。一律在本机执行 `flutter build apk`（测试服见 `SERVER-DEPLOY.md` §3.5、本地输出目录约定）。 |
+
+此前若每次 `git push` 都触发构建，多因 **任意文件推送都会跑 iOS 工作流**；现已改为仅 **`app_temp` 或 workflow 有改动** 时才自动触发，文档/后端-only 的推送不再误触 IPA 构建。
+
 ## OSS / 域名扩展
 
 - 对象存储、CDN、正式业务域名等，在 `SERVER-DEPLOY.md` 随环境补充说明即可。

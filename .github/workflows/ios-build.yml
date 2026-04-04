@@ -1,8 +1,13 @@
 name: iOS Build
 
+# 仅构建 iOS IPA（需 macOS + 证书）。Android APK 不在此仓库 CI 中构建，一律本地 flutter build apk。
 on:
   push:
     branches: [main]
+    paths:
+      - 'app_temp/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
 
 jobs:
   build:
