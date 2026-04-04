@@ -9,7 +9,7 @@
 | 环境 | 状态 | 说明 |
 |------|------|------|
 | **正式服务器（生产）** | **已部署** | 当前对外提供服务，见下文「§2」 |
-| **测试服务器** | **规划中** | 稍后单独部署；部署完成后在本节补充 **IP / 域名 / 分支或标签策略**，并与正式环境区分（勿共用生产库与密钥） |
+| **测试服务器** | **已部署** | `39.102.100.123`，域名 `test1.kanashortplay.com`，见下文「§3」；与 **ibooks** 同机，端口与目录隔离 |
 
 ---
 
@@ -71,9 +71,12 @@ pm2 save
 | 用途 | 仓库内参考 |
 |------|------------|
 | 首次安装（Ubuntu） | `scripts/deploy/remote_install.sh`（域名等可用环境变量覆盖） |
+| 测试机首次安装（与 ibooks 同机、不删 default 站点） | `scripts/deploy/remote_install_test.sh` |
 | 仅重启后端与同步 `ecosystem` | `scripts/deploy/finish_remote_pm2.py`（需 SSH，见脚本说明） |
-| 打包上传部署 | `scripts/deploy/remote_deploy.py` |
-| Nginx + Certbot | `scripts/deploy/remote_nginx_ssl.py` |
+| 打包上传部署（正式机） | `scripts/deploy/remote_deploy.py` |
+| 打包上传部署（测试机 `39.102.100.123`） | `scripts/deploy/remote_deploy_test.py` |
+| Nginx + Certbot（正式机） | `scripts/deploy/remote_nginx_ssl.py` |
+| Nginx + Certbot（测试域名 test1） | `scripts/deploy/remote_nginx_ssl_test.py` |
 
 ### 2.5 仓库内与正式 IP 对齐的文件
 
@@ -84,19 +87,63 @@ pm2 save
 
 ---
 
-## 3. 测试服务器（占位）
+## 3. 测试服务器（已部署）
 
-> **状态**：尚未部署；以下条目在测试机就绪后由运维补全。
+> **与 ibooks 同机**：本机同时运行 **ibooks**（PM2 `ibooks-server`，端口 **8081**，目录 `/var/www/ibooks`）。部署/更新 ai-face-swap 测试实例时 **请勿修改** ibooks 的 Nginx 站点、PM2 进程与 `8081` 监听。详见 **ibooks** 仓库内 `docs/DEPLOY.md` **§9（与 ai-face-swap 测试环境同机）**。
 
-| 项 | 计划值（待填） |
-|----|----------------|
-| 公网 IP | _待定_ |
-| 域名 | _待定_（建议与正式区分，如 `test-xxx.example.com`） |
-| 应用目录 | 建议仍用 `/var/www/ai-face-swap` 或单独路径，与正式区分 |
-| Git 分支/标签策略 | _待定_（例如仅 `develop` 或 `release/*` 部署测试机） |
-| 数据库 | **禁止使用正式库文件**；应独立 `face_swap.db` 或独立实例 |
+| 项 | 值 |
+|----|-----|
+| **公网 IP** | `39.102.100.123` |
+| **对外域名** | `test1.kanashortplay.com`（HTTPS，DNS **A 记录** 指向本 IP） |
+| **应用根目录** | `/var/www/ai-face-swap-test`（与正式目录分离） |
+| **进程管理** | PM2，应用名 **`ai-face-swap-test`** |
+| **Node 监听端口** | **8082**（本机；**禁止**使用 8081，保留给 ibooks） |
+| **数据库** | SQLite：`/var/www/ai-face-swap-test/server/data/face_swap.db`（**独立**，勿拷贝正式库） |
+| **上传目录** | `/var/www/ai-face-swap-test/uploads` |
+| **环境变量** | `/var/www/ai-face-swap-test/server/.env`（**独立** JWT 与密钥） |
+| **HTTPS 证书** | Let's Encrypt：`/etc/letsencrypt/live/test1.kanashortplay.com/`（签发成功后） |
+| **Nginx 站点** | `/etc/nginx/sites-available/ai-face-swap-test1.conf` → `sites-enabled/`（**仅新增**该文件，不覆盖其他站点） |
+| **仓库内参考** | `ecosystem.test.config.js`、`config/nginx-bootstrap-test1-http.conf`（签发前）、`config/nginx-test1.conf`（HTTPS） |
 
-**注意**：测试环境 `.env`、JWT、第三方 Key 应与正式隔离，避免误连生产 OSS/支付。
+### 3.1 与正式环境的区别（摘要）
+
+| 项 | 正式（§2） | 测试（§3） |
+|----|------------|------------|
+| IP | `159.223.152.94` | `39.102.100.123` |
+| 域名 | `test.kanashortplay.com` | `test1.kanashortplay.com` |
+| 目录 | `/var/www/ai-face-swap` | `/var/www/ai-face-swap-test` |
+| PM2 名 | `ai-face-swap` | `ai-face-swap-test` |
+| 端口 | 8080 | 8082 |
+
+### 3.2 首次部署（本地脚本上传）
+
+1. DNS：将 `test1.kanashortplay.com` **A 记录** 指向 `39.102.100.123`。
+2. 在仓库根目录（PowerShell）设置 `DEPLOY_SSH_PASSWORD`，执行：  
+   `python scripts/deploy/remote_deploy_test.py`  
+   （可选：`DEPLOY_HOST` 覆盖默认测试机 IP。）
+3. 若证书未自动签发，DNS 生效后可在服务器上执行 `certbot`，或本地再运行：  
+   `python scripts/deploy/remote_nginx_ssl_test.py`
+
+### 3.3 更新测试实例代码
+
+```bash
+cd /var/www/ai-face-swap-test
+git pull origin main   # 分支以实际为准
+cd server && npm install --production && cd ..
+pm2 restart ai-face-swap-test
+pm2 save
+```
+
+或在本机再次执行 `remote_deploy_test.py` 覆盖上传（会重新执行安装脚本；注意备份 `server/.env` 与数据库）。
+
+### 3.4 验证
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8082/api/templates
+curl -s -o /dev/null -w "%{http_code}\n" https://test1.kanashortplay.com/api/templates
+```
+
+**注意**：测试环境 `.env`、JWT、第三方 Key 与正式隔离；禁止将正式 `face_swap.db` 用于测试机覆盖，除非明确在做数据迁移演练。
 
 ---
 
@@ -129,7 +176,7 @@ curl -s http://127.0.0.1:8080/api/templates
 
 ## 6. 历史说明（避免误用旧文档）
 
-早期文档曾出现 **39.102.100.123** 等示例 IP，**不代表当前正式机**。以本文 **§2 正式服务器** 为准；若 `docs/DEPLOY.md` 仍为旧版长篇，请以 **`SERVER-DEPLOY.md` 为权威**。
+**39.102.100.123** 现为 **§3 测试服务器** 正式 IP（与 ibooks 同机），**不是** §2 生产机。生产机公网 IP 以 **§2** 的 **`159.223.152.94`** 为准。若其他旧文档仍写「示例 IP」，请以 **`SERVER-DEPLOY.md`** 为准。
 
 ---
 

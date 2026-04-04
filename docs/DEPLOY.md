@@ -29,7 +29,10 @@
 
 - `scripts/deploy/install.sh` — 环境安装
 - `scripts/deploy/deploy.sh` — 更新部署（需与当前目录结构一致）
+- `scripts/deploy/remote_deploy_test.py` + `remote_install_test.sh` — **测试机**（`test1.kanashortplay.com`，见 [SERVER-DEPLOY.md](./SERVER-DEPLOY.md) §3）
+- `ecosystem.test.config.js` — 测试 PM2（`ai-face-swap-test`，端口 **8082**）
 - `config/nginx-prod.conf` — 生产 Nginx（域名 `test.kanashortplay.com`）
+- `config/nginx-test1.conf` / `nginx-bootstrap-test1-http.conf` — 测试域名 Nginx
 - `config/nginx-bootstrap-http.conf` — 仅 HTTP，用于签发证书前
 
 ## OSS / 域名扩展
