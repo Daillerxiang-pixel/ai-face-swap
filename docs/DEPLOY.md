@@ -43,6 +43,8 @@
 | **iOS（IPA）** | 仓库 **`.github/workflows/ios-build.yml`**：仅在 `main` 上变更 **`app_temp/**`** 或该 workflow 本身时自动跑；也可在 Actions 里 **手动运行**（`workflow_dispatch`）。需要 Apple 证书等 Secrets。 |
 | **Android（APK）** | **不在 GitHub 上构建**。一律在本机执行 `flutter build apk`（测试服见 `SERVER-DEPLOY.md` §3.5、本地输出目录约定）。 |
 
+**安装包命名**：所有 APK/IPA 等发布物文件名须含**递增版本号**；测试包使用 `test-` 前缀，详见 **`.cursor/rules/versioned-build-artifacts.mdc`**。
+
 此前若每次 `git push` 都触发构建，多因 **任意文件推送都会跑 iOS 工作流**；现已改为仅 **`app_temp` 或 workflow 有改动** 时才自动触发，文档/后端-only 的推送不再误触 IPA 构建。
 
 ## OSS / 域名扩展

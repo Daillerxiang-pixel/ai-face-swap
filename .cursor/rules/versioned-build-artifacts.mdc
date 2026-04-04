@@ -1,0 +1,20 @@
+---
+description: 发布物与安装包文件命名须带递增版本号；测试包加 test- 前缀
+alwaysApply: true
+---
+
+# 版本化构建产物命名
+
+## 原则
+
+1. **凡对外分发、归档、上传 CDN/网盘的安装包与主要版本文件**（如 `.apk`、`.ipa`、`.aab`、发布用 `.zip`），**文件名必须包含版本号**，禁止长期使用无版本号的固定名（如单独的 `release.apk`）。
+2. **版本号**以工程内权威来源为准并保持**自增长**：Flutter 使用 `pubspec.yaml` 的 `version:`（`x.y.z+build`）；Node 等使用 `package.json` 的 `version`。发新版前在对应文件中**递增**再构建。
+3. **测试环境 / 测试服专用包**：在版本号前加 **`test-`** 前缀，便于与正式包区分。  
+   - 示例（APK）：`test-1.5.10-48.apk`（由 `1.5.10+48` 将 `+` 换成 `-`，避免部分终端/脚本对 `+` 的解析问题）。  
+   - 示例（IPA）：`test-1.5.10-48.ipa`。
+4. **正式包**：可直接使用 `face-swap-1.5.10-48-release.apk` 或 `1.5.10-48-release.apk` 等包含版本号的命名，团队约定一种即可；**必须含版本号**。
+5. 自动化脚本（如 `F:\work\And\test\build-test-apk.bat`）应从 `pubspec.yaml` **读取版本**生成输出文件名，避免手抄版本号。
+
+## GitHub Actions
+
+- iOS IPA 等 CI 产物 artifact 名称应包含 `github.run_number` 或 `pubspec` 版本，避免与其它工作流混淆（具体以 workflow 内 `upload-artifact` `name` 为准）。
