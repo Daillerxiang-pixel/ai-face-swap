@@ -10,6 +10,8 @@
 
 客户端与脚本：本地测试 APK 见 §3.5；正式包须使用**未**带测试域 `API_BASE` 的构建。
 
+**与测试服同一套代码发正式**：仓库内 `scripts/deploy/prod_light_deploy.py` 使用与 `remote_deploy_test.py` **相同的 tar 排除规则**，在**当前 Git 提交**上打包后上传正式机；勿在设置 `DEPLOY_HOST` 为测试机 IP 时运行该脚本（易误传测试机）。正式机目标由 `AI_FACE_SWAP_PROD_HOST`（默认 `159.223.152.94`）指定。
+
 ---
 
 ## 1. 环境角色一览
