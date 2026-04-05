@@ -179,6 +179,7 @@ flutter build apk --release --dart-define=API_BASE=https://test1.kanashortplay.c
 - **`.env` 中 `OSS_REGION`** 须为 **`oss-cn-beijing`** 这类带 `oss-` 前缀的 Endpoint 段；若误写为 `cn-beijing`，公网域名会错成 `bucket.cn-beijing.aliyuncs.com`，图片全挂。代码已做 `cn-*` → `oss-cn-*` 纠正，仍建议在控制台核对。
 - **OSS 防盗链（Referer）**：若白名单仅限网页域名，**原生 APP** 请求可能无 Referer 或被拒，表现为图全裂。请在 OSS 控制台将 Referer 设为允许空 Referer或包含应用场景。
 - API 返回的预览/历史图 URL 由 `server/utils/oss.js` 的 `toPublicMediaUrl` 统一生成，与收藏夹、模板列表一致。
+- **正式服常见根因**：打包部署**不包含** `uploads/previews/`，且正式机 **OSS SDK 未启用**（`.env` 缺 Key 等）时，接口曾只返回 `/uploads/...`，由 Nginx 找本地文件 → **404**。测试服因 OSS 已启用，返回完整 OSS URL 故正常。请在 `server/.env` 配置 **`OSS_PUBLIC_BASE_URL=https://<bucket>.oss-<region>.aliyuncs.com`**（与 Bucket 公网一致），或补全 `OSS_*` 使 SDK 启用；二者择一即可让 API 返回可访问的 OSS 地址。
 
 ---
 
