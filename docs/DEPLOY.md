@@ -47,6 +47,17 @@
 
 此前若每次 `git push` 都触发构建，多因 **任意文件推送都会跑 iOS 工作流**；现已改为仅 **`app_temp` 或 workflow 有改动** 时才自动触发，文档/后端-only 的推送不再误触 IPA 构建。
 
+## 客户端：测试包与正式包（推荐）
+
+| 包类型 | API 指向 | Flutter 构建示例 |
+|--------|------------|-------------------|
+| 测试 | `https://test1.kanashortplay.com` | `flutter build apk`（默认即测试域） |
+| 正式 | `https://test.kanashortplay.com` | `flutter build apk --release --dart-define=API_BASE=https://test.kanashortplay.com` |
+
+- **服务端**：测试机与正式机共用**同一套仓库代码**；发布流程见 `SERVER-DEPLOY.md`（先测后正式）。
+- **环境切换只在客户端**：用 `API_BASE` 区分，勿在服务端为「测试/正式」维护两套分支。
+- 正式服上的 `OSS_PUBLIC_BASE_URL` 等仅影响**该机** `.env` 如何拼资源 URL；测试服若已完整配置 OSS SDK，行为与改前一致，不会因正式服加变量而「坏掉」。
+
 ## OSS / 域名扩展
 
 - 对象存储、CDN、正式业务域名等，在 `SERVER-DEPLOY.md` 随环境补充说明即可。

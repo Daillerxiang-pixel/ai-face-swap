@@ -2,17 +2,21 @@
 class AppConfig {
   AppConfig._();
 
-  /// API 基础地址
+  /// API 基础地址（**仅由客户端构建时决定环境**，与服务端是否测试/正式无关）。
   ///
-  /// 构建时可通过 `--dart-define=API_BASE=https://test1.kanashortplay.com` 指向测试服；
-  /// 未传入时默认为正式接口域名。
+  /// **推荐做法（两套 APK，服务端同一套代码）：**
+  /// - **测试包**：不设 `API_BASE` 或设为测试 API → 默认 `https://test1.kanashortplay.com`
+  /// - **正式包**：构建时必带  
+  ///   `--dart-define=API_BASE=https://test.kanashortplay.com`
+  ///
+  /// 服务端部署测试机 / 正式机时仍用**同一 Git 仓库**；差异只在各机 `server/.env` 与 Nginx，不在 Flutter 里写死「环境名」。
   static String get apiBaseUrl {
     const fromEnv = String.fromEnvironment('API_BASE', defaultValue: '');
     if (fromEnv.isNotEmpty) return fromEnv;
-    return 'https://test.kanashortplay.com';
+    return 'https://test1.kanashortplay.com';
   }
 
-  /// OSS 图片基础地址
+  /// 与 [apiBaseUrl] 无关：OSS 公网 Bucket 基址，用于相对路径拼 URL（与后端、控制台 Bucket 一致即可）
   static const String ossBaseUrl = 'https://aihuantu.oss-cn-beijing.aliyuncs.com';
 
   /// 每页加载数量

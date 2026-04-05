@@ -180,6 +180,7 @@ flutter build apk --release --dart-define=API_BASE=https://test1.kanashortplay.c
 - **OSS 防盗链（Referer）**：若白名单仅限网页域名，**原生 APP** 请求可能无 Referer 或被拒，表现为图全裂。请在 OSS 控制台将 Referer 设为允许空 Referer或包含应用场景。
 - API 返回的预览/历史图 URL 由 `server/utils/oss.js` 的 `toPublicMediaUrl` 统一生成，与收藏夹、模板列表一致。
 - **正式服常见根因**：打包部署**不包含** `uploads/previews/`，且正式机 **OSS SDK 未启用**（`.env` 缺 Key 等）时，接口曾只返回 `/uploads/...`，由 Nginx 找本地文件 → **404**。测试服因 OSS 已启用，返回完整 OSS URL 故正常。请在 `server/.env` 配置 **`OSS_PUBLIC_BASE_URL=https://<bucket>.oss-<region>.aliyuncs.com`**（与 Bucket 公网一致），或补全 `OSS_*` 使 SDK 启用；二者择一即可让 API 返回可访问的 OSS 地址。
+- **与测试服同一套代码**：`OSS_PUBLIC_BASE_URL` 仅在「OSS SDK 未启用」时参与拼 URL；测试服通常已启用 SDK，**仍走 `getOSSBaseURL()`**，与改前一致。客户端用 **`API_BASE`（两套 APK）** 区分连测试 API 还是正式 API，见根目录 `docs/DEPLOY.md`「客户端：测试包与正式包」。
 
 ---
 
