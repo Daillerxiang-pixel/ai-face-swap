@@ -185,20 +185,27 @@ function getOSSBaseURL() {
 }
 
 /**
- * DB 中的路径或 URL → 前端可直接加载的地址（OSS 开启时拼公网域名；否则保持 /uploads 相对路径供 APP 走 API 域）
+ * DB 中的路径或 URL → 前端可直接加载的地址。
+ * - OSS SDK 已启用：与上传逻辑同一公网 Host。
+ * - 仅展示、SDK 未启用（正式机常见 .env 缺 Key）：可用 OSS_PUBLIC_BASE_URL 指向 Bucket 已有对象，避免只返回 /uploads 而本机无文件 404。
+ * - 否则：相对路径，由 Nginx+本地 uploads 提供。
  */
 function toPublicMediaUrl(dbPath) {
   if (dbPath == null || dbPath === '') return null;
   const s = String(dbPath).trim();
   if (s.startsWith('http://') || s.startsWith('https://')) return s;
+
+  const pathPart = s.startsWith('/') ? s : `/${s}`;
+
   if (ossIsFullyConfigured()) {
     const base = getOSSBaseURL();
-    if (base) {
-      const p = s.startsWith('/') ? s : `/${s}`;
-      return base + p;
-    }
+    if (base) return base + pathPart;
   }
-  return s.startsWith('/') ? s : `/${s}`;
+
+  const pub = process.env.OSS_PUBLIC_BASE_URL && String(process.env.OSS_PUBLIC_BASE_URL).trim().replace(/\/$/, '');
+  if (pub) return pub + pathPart;
+
+  return pathPart;
 }
 
 /**
