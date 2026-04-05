@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../utils/image_utils.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../profile/vip_purchase_screen.dart';
@@ -96,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Consumer<UserProvider>(builder: (ctx, userProvider, _) {
                         final user = userProvider.user;
                         final hasAvatar = user?.avatar != null && user!.avatar!.isNotEmpty;
+                        final avatarUrl = hasAvatar ? ImageUtils.imgUrl(user.avatar) : '';
                         return Container(
                           width: 72,
                           height: 72,
@@ -108,8 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           clipBehavior: Clip.antiAlias,
-                          child: hasAvatar
-                              ? Image.network(user.avatar!, width: 72, height: 72, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white, size: 36))
+                          child: hasAvatar && avatarUrl.isNotEmpty
+                              ? Image.network(avatarUrl, width: 72, height: 72, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white, size: 36))
                               : const Icon(Icons.person, color: Colors.white, size: 36),
                         );
                       }),
