@@ -5,6 +5,7 @@
 const { Router } = require('express');
 const { getDb } = require('../data/database');
 const { authMiddleware } = require('../middleware/auth');
+const { toPublicMediaUrl } = require('../utils/oss');
 
 const router = Router();
 
@@ -91,13 +92,6 @@ router.put('/settings', (req, res) => {
 router.get('/favorites', (req, res) => {
   const db = getDb();
 
-  // Helper to convert relative URL to public URL
-  const toPublicUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `https://aihuantu.oss-cn-beijing.aliyuncs.com${url}`;
-  };
-
   const favs = db.prepare(`
     SELECT t.id, t.name, t.icon, t.bg_gradient as bg, t.scene, t.type, t.usage_count, t.badge, t.rating,
            t.preview_url, t.video_url, t.provider
@@ -119,8 +113,8 @@ router.get('/favorites', (req, res) => {
       usage: t.usage_count >= 10000 ? (t.usage_count / 1000).toFixed(1) + 'K' : String(t.usage_count),
       badge: t.badge,
       rating: t.rating,
-      previewUrl: toPublicUrl(t.preview_url),
-      videoUrl: toPublicUrl(t.video_url),
+      previewUrl: toPublicMediaUrl(t.preview_url) ?? '',
+      videoUrl: toPublicMediaUrl(t.video_url) ?? '',
       provider: t.provider,
     }))
   });
@@ -132,7 +126,7 @@ router.get('/history', (req, res) => {
   const { page = 1, limit = 20 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
-  const history = db.prepare(`
+  const rows = db.prepare(`
     SELECT g.id, g.template_id, g.status, g.progress, g.type, g.created_at, g.completed_at,
            g.result_image as resultUrl, g.error_message as errorMsg,
            t.name as template_name, t.icon as template_icon, t.bg_gradient as template_bg,
@@ -143,6 +137,12 @@ router.get('/history', (req, res) => {
     ORDER BY g.created_at DESC
     LIMIT ? OFFSET ?
   `).all(req.userId, parseInt(limit), offset);
+
+  const history = rows.map((h) => ({
+    ...h,
+    resultUrl: toPublicMediaUrl(h.resultUrl),
+    templatePreview: toPublicMediaUrl(h.templatePreview),
+  }));
 
   res.json({ success: true, data: history, page: parseInt(page) });
 });

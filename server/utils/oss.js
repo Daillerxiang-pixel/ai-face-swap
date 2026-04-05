@@ -36,6 +36,21 @@ function normalizeBucketName(raw) {
   return s.toLowerCase();
 }
 
+/**
+ * 控制台有时只写 cn-beijing；公网 Host 须为 bucket.oss-cn-beijing.aliyuncs.com
+ */
+function normalizeOSSRegion(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  let s = raw.replace(/\r|\n/g, '').trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  if (/^cn-[a-z0-9-]+$/i.test(s)) {
+    return `oss-${s.toLowerCase()}`;
+  }
+  return s.toLowerCase();
+}
+
 /** 阿里云 Bucket 命名：3–63 位，小写字母、数字、连字符，不能以连字符开头/结尾 */
 function isValidBucketName(name) {
   if (!name || typeof name !== 'string') return false;
@@ -50,7 +65,7 @@ function getOSSConfigReport() {
   const hasKeys = !!(process.env.OSS_ACCESS_KEY_ID && process.env.OSS_ACCESS_KEY_SECRET);
   const bucketRaw = process.env.OSS_BUCKET || '';
   const bucket = normalizeBucketName(bucketRaw);
-  const region = process.env.OSS_REGION && String(process.env.OSS_REGION).trim();
+  const region = normalizeOSSRegion(process.env.OSS_REGION && String(process.env.OSS_REGION).trim());
 
   if (!hasKeys) {
     return {
@@ -129,7 +144,7 @@ function getClient() {
   const bucket = normalizeBucketName(process.env.OSS_BUCKET || '');
   _normalizedBucket = bucket;
 
-  const region = String(process.env.OSS_REGION || '').trim();
+  const region = normalizeOSSRegion(String(process.env.OSS_REGION || '').trim());
   /** 区域级 endpoint，如 oss-cn-beijing.aliyuncs.com（不要填带 bucket 子域名的访问域名） */
   const rawEp = process.env.OSS_ENDPOINT && String(process.env.OSS_ENDPOINT).trim();
   let endpointHost = null;
@@ -164,9 +179,26 @@ function getClient() {
 // 公网访问 URL（用于生成前端图片链接）
 function getOSSBaseURL() {
   const bucket = _normalizedBucket || normalizeBucketName(process.env.OSS_BUCKET || '');
-  const region = process.env.OSS_REGION && String(process.env.OSS_REGION).trim();
+  const region = normalizeOSSRegion(process.env.OSS_REGION && String(process.env.OSS_REGION).trim());
   if (!bucket || !region || !isValidBucketName(bucket)) return '';
   return `https://${bucket}.${region}.aliyuncs.com`;
+}
+
+/**
+ * DB 中的路径或 URL → 前端可直接加载的地址（OSS 开启时拼公网域名；否则保持 /uploads 相对路径供 APP 走 API 域）
+ */
+function toPublicMediaUrl(dbPath) {
+  if (dbPath == null || dbPath === '') return null;
+  const s = String(dbPath).trim();
+  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  if (ossIsFullyConfigured()) {
+    const base = getOSSBaseURL();
+    if (base) {
+      const p = s.startsWith('/') ? s : `/${s}`;
+      return base + p;
+    }
+  }
+  return s.startsWith('/') ? s : `/${s}`;
 }
 
 /**
@@ -235,7 +267,9 @@ module.exports = {
   uploadBuffer,
   isOSSAvailable,
   getOSSBaseURL,
+  toPublicMediaUrl,
   normalizeBucketName,
+  normalizeOSSRegion,
   isValidBucketName,
   getOSSConfigReport,
   logOSSStartupStatus,

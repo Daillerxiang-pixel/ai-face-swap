@@ -1,27 +1,13 @@
 const { Router } = require('express');
 const { getDb } = require('../data/database');
-const { isOSSAvailable, getOSSBaseURL } = require('../utils/oss');
+const { toPublicMediaUrl } = require('../utils/oss');
 
 const router = Router();
-
-const USE_OSS = isOSSAvailable();
 
 function formatUsage(n) {
   if (n >= 10000) return (n / 1000).toFixed(1) + 'K';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
   return String(n);
-}
-
-/**
- * 将本地路径转换为 OSS URL（如果 OSS 可用）
- * /uploads/previews/template_1.jpg → https://aihuantu.oss-cn-beijing.aliyuncs.com/uploads/previews/template_1.jpg
- */
-function toPublicUrl(path) {
-  if (!path) return null;
-  // 已经是完整 URL 的直接返回（如 replicate 视频）
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  if (USE_OSS) return getOSSBaseURL() + path;
-  return path; // 回退到本地相对路径
 }
 
 function mapTemplate(t) {
@@ -38,8 +24,8 @@ function mapTemplate(t) {
     desc: t.description,
     rating: t.rating,
     provider: t.provider || 'tencent',
-    previewUrl: toPublicUrl(t.preview_url),
-    videoUrl: toPublicUrl(t.video_url),
+    previewUrl: toPublicMediaUrl(t.preview_url),
+    videoUrl: toPublicMediaUrl(t.video_url),
   };
 }
 
