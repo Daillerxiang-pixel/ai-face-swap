@@ -30,7 +30,10 @@
 
 - `scripts/deploy/install.sh` — 环境安装
 - `scripts/deploy/deploy.sh` — 更新部署（需与当前目录结构一致）
-- `scripts/deploy/remote_deploy_test.py` + `remote_install_test.sh` — **测试机**（`test1.kanashortplay.com`，见 [SERVER-DEPLOY.md](./SERVER-DEPLOY.md) §3）
+- `scripts/deploy/remote_deploy_test.py` + `remote_install_test.sh` — **测试机**首次安装（`test1.kanashortplay.com`，见 [SERVER-DEPLOY.md](./SERVER-DEPLOY.md) §3）
+- `scripts/deploy/test_light_deploy.py` — **测试机仅更新代码**（与正式服同一 tar 规则，SSH 密钥连接 `39.102.100.123`）
+- `scripts/deploy/prod_light_deploy.py` — **正式机**轻量更新代码
+- `scripts/deploy/sync_local_env_to_prod.py` — 将本机 **`server/.env`** 覆盖同步到正式机（腾讯云/OSS 等与开发机一致时执行）
 - `ecosystem.test.config.js` — 测试 PM2（`ai-face-swap-test`，端口 **8082**）
 - `config/nginx-prod.conf` — 生产 Nginx（域名 `test.kanashortplay.com`）
 - `config/nginx-test1.conf` / `nginx-bootstrap-test1-http.conf` — 测试域名 Nginx
