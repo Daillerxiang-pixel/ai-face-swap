@@ -10,6 +10,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { normalizeTemplateType } = require('../utils/templateFields');
 
 const AKOOL_API_KEY = process.env.AKOOL_API_KEY || '';
 const AKOOL_BASE_URL = 'openapi.akool.com';
@@ -322,19 +323,36 @@ async function generateVideo(ctx) {
   };
 }
 
+/** 模板是否应按「视频换脸」处理（与 Excel/admin 的 image/video 英文写法对齐） */
+function looksLikeVideoAssetUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const u = url.split('?')[0].toLowerCase();
+  return u.endsWith('.mp4') || u.endsWith('.webm') || u.endsWith('.mov') || u.endsWith('.m3u8');
+}
+
+function shouldUseAkoolVideoSwap(template) {
+  const norm = normalizeTemplateType(template?.type || '图片');
+  if (norm === '视频') return true;
+  // 类型字段被误标成「图片」但已填 video_url 时，若仍走图片 Pro 会把 mp4 当目标图 → Akool 1003
+  const vu = template?.video_url && String(template.video_url).trim();
+  return Boolean(vu && looksLikeVideoAssetUrl(vu));
+}
+
 /**
  * 主生成入口 — 根据模板类型选择 Pro/V3/Video
  */
 async function generate(ctx) {
   assertAkoolConfigured();
   const { template } = ctx;
-  const type = template.type || '图片';
 
-  if (type === '视频') {
+  if (shouldUseAkoolVideoSwap(template)) {
+    console.log(
+      `[Akool] generate → video swap (type=${JSON.stringify(template.type)}, has_video_url=${Boolean(template?.video_url)})`
+    );
     return generateVideo(ctx);
   }
 
-  // 图片换脸：默认使用 Pro (V4)
+  console.log(`[Akool] generate → image Pro (type=${JSON.stringify(template.type)})`);
   return generateImagePro(ctx);
 }
 
