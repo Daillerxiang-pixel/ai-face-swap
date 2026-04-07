@@ -5,10 +5,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../config/app_config.dart';
+import '../../services/auth_service.dart';
+import '../../utils/auth_gate.dart';
 import '../../models/template.dart';
 import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/shimmer_widget.dart';
+import '../../widgets/surface_video_preview.dart';
 import '../../widgets/toast.dart';
 import '../profile/vip_purchase_screen.dart';
 import 'result_screen.dart';
@@ -49,7 +52,22 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   static const _maxPolls = AppConfig.maxWaitSeconds ~/ 3; // 40 polls × 3s
 
   Template get _template => widget.template;
-  bool get _isVideo => _template.isVideo;
+  bool get _isVideo => _template.isVideoWorkflow;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (!AuthService().isLoggedIn) {
+        final ok = await ensureLoggedInForCreate(context);
+        if (!mounted) return;
+        if (!ok || !AuthService().isLoggedIn) {
+          Navigator.of(context).pop();
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +128,9 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   /// 模板预览
   Widget _buildTemplatePreview() {
     final previewUrl = ImageUtils.imgUrl(_template.displayUrl);
+    final videoRaw = _template.videoPlaybackSource;
+    final videoFull =
+        videoRaw != null && videoRaw.isNotEmpty ? ImageUtils.imgUrl(videoRaw) : '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,47 +144,53 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: 160,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (previewUrl.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: previewUrl,
-                    fit: BoxFit.contain,
-                    errorWidget: (_, __, ___) => Container(
-                      color: context.appColors.surfaceBackground,
-                      child: const Icon(Icons.image_not_supported_outlined,
-                          color: AppTheme.textTertiary, size: 48),
-                    ),
-                  )
-                else
-                  Container(
-                    color: context.appColors.surfaceBackground,
-                    child: const Icon(Icons.auto_awesome,
-                        color: AppTheme.textTertiary, size: 48),
+        SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: videoFull.isNotEmpty
+              ? SurfaceVideoPreview(
+                  url: videoFull,
+                  height: 200,
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (previewUrl.isNotEmpty)
+                        CachedNetworkImage(
+                          imageUrl: previewUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => Container(
+                            color: context.appColors.surfaceBackground,
+                            child: const Icon(Icons.image_not_supported_outlined,
+                                color: AppTheme.textTertiary, size: 48),
+                          ),
+                        )
+                      else
+                        Container(
+                          color: context.appColors.surfaceBackground,
+                          child: const Icon(Icons.auto_awesome,
+                              color: AppTheme.textTertiary, size: 48),
+                        ),
+                      if (_isVideo)
+                        Positioned(
+                          bottom: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.play_arrow,
+                                color: Colors.white, size: 24),
+                          ),
+                        ),
+                    ],
                   ),
-                // 视频标识
-                if (_isVideo)
-                  Positioned(
-                    bottom: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.play_arrow, color: Colors.white, size: 24),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+                ),
         ),
       ],
     );
@@ -644,7 +671,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   }
 
   /// 提交生成任务
-  Future<void> _startGenerate() async {
+  Future<void> _startGenerate({bool isRetry = false}) async {
     if (_fileId == null) {
       AppToast.warning('Please upload a photo first');
       return;
@@ -707,9 +734,19 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
         if (res.errorCode == 'QUOTA_EXCEEDED') {
           _showQuotaExceededDialog();
         } else {
+          final msg = res.message ?? '';
+          if (!isRetry &&
+              isAuthErrorMessage(msg) &&
+              mounted) {
+            final ok = await ensureLoggedInForCreate(context);
+            if (ok && mounted && AuthService().isLoggedIn) {
+              await _startGenerate(isRetry: true);
+              return;
+            }
+          }
           setState(() {
             _status = 'failed';
-            _errorMsg = res.message ?? 'Failed to submit task';
+            _errorMsg = msg.isNotEmpty ? msg : 'Failed to submit task';
           });
         }
       }
@@ -724,7 +761,14 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
           msg = e.message!;
         }
         if (e.response?.statusCode == 401) {
-          msg = '${msg.isNotEmpty ? '$msg. ' : ''}Please sign in again.';
+          if (!isRetry && mounted) {
+            final ok = await ensureLoggedInForCreate(context);
+            if (ok && mounted && AuthService().isLoggedIn) {
+              await _startGenerate(isRetry: true);
+              return;
+            }
+          }
+          msg = '请先登录后再试';
         }
       }
       setState(() {

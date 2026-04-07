@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import '../../config/theme.dart';
 import '../../models/template.dart';
+import '../../utils/auth_gate.dart';
 import '../../utils/image_utils.dart';
 import '../../providers/template_provider.dart';
 import '../../widgets/share_sheet.dart';
@@ -32,13 +33,13 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
   void initState() {
     super.initState();
     _template = widget.template;
-    if (_template.isVideo && _template.videoUrl != null && _template.videoUrl!.isNotEmpty) {
-      _initVideoPlayer();
+    if (_template.hasVideoPlayback) {
+      final raw = _template.videoPlaybackSource!;
+      _initVideoPlayer(ImageUtils.imgUrl(raw));
     }
   }
 
-  Future<void> _initVideoPlayer() async {
-    final videoUrl = ImageUtils.imgUrl(_template.videoUrl!);
+  Future<void> _initVideoPlayer(String videoUrl) async {
     if (videoUrl.isEmpty) return;
 
     final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
@@ -47,13 +48,14 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
     try {
       await controller.initialize();
       if (!mounted) return;
+      controller.setLooping(true);
+      controller.addListener(_videoListener);
+      await controller.play();
+      if (!mounted) return;
       setState(() {
         _isVideoInitialized = true;
+        _showPlayOverlay = false;
       });
-      // 循环播放
-      controller.setLooping(true);
-      // 播放结束或出错时回到封面状态
-      controller.addListener(_videoListener);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -78,15 +80,13 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
     final ctrl = _videoController;
     if (ctrl == null || !_isVideoInitialized) return;
 
-    setState(() {
-      if (ctrl.value.isPlaying) {
-        ctrl.pause();
-        _showPlayOverlay = true;
-      } else {
-        ctrl.play();
-        _showPlayOverlay = false;
-      }
-    });
+    if (ctrl.value.isPlaying) {
+      ctrl.pause();
+      setState(() => _showPlayOverlay = true);
+    } else {
+      ctrl.play();
+      setState(() => _showPlayOverlay = false);
+    }
   }
 
   void _resetToCover() {
@@ -263,7 +263,9 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
                   child: MaterialButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final ok = await ensureLoggedInForCreate(context);
+                      if (!ok || !context.mounted) return;
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => UploadPhotoScreen(template: _template),
@@ -271,7 +273,7 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                       );
                     },
                     child: Text(
-                      _template.isVideo ? 'Video Template' : 'Use Template',
+                      _template.isVideoWorkflow ? 'Video Template' : 'Use Template',
                       style: TextStyle(
                         color: context.appColors.textPrimary,
                         fontSize: 16,
@@ -290,40 +292,43 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
 
   /// 构建预览区域（图片 / 视频）
   Widget _buildPreviewArea(String coverUrl) {
-    // 非视频模板：直接显示图片
-    if (!_template.isVideo) {
+    if (!_template.hasVideoPlayback) {
       return _buildImagePreview(coverUrl);
     }
 
-    // 视频模板：显示封面 + 可播放视频
     return GestureDetector(
       onTap: _togglePlayPause,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 视频播放器（已初始化且正在播放时显示）
-          if (_isVideoInitialized && !_showPlayOverlay)
-            Center(
-              child: AspectRatio(
-                aspectRatio: _videoController!.value.aspectRatio,
+          if (_isVideoInitialized && _videoController != null)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _videoController!.value.size.width,
+                height: _videoController!.value.size.height,
                 child: VideoPlayer(_videoController!),
               ),
-            ),
-
-          // 封面图（未播放时显示）
-          if (!_isVideoInitialized || _showPlayOverlay)
+            )
+          else
             _buildImagePreview(coverUrl),
 
-          // 视频加载中指示器
-          if (_template.isVideo && !_isVideoInitialized && !_isVideoError)
+          if (!_isVideoInitialized && !_isVideoError)
             const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
+              child: CircularProgressIndicator(color: Colors.white),
             ),
 
-          // 播放/暂停按钮覆盖层
-          if (_template.isVideo && (_showPlayOverlay || _isVideoError))
+          if (_isVideoError)
+            Center(
+              child: Icon(Icons.videocam_off_outlined,
+                  color: Colors.white.withOpacity(0.7), size: 48),
+            ),
+
+          if (_isVideoInitialized &&
+              _showPlayOverlay &&
+              !_isVideoError &&
+              _videoController != null)
             Center(
               child: Container(
                 width: 64,
@@ -334,8 +339,8 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                   border: Border.all(color: Colors.white30, width: 1.5),
                 ),
                 child: Icon(
-                  _isVideoError
-                      ? Icons.play_circle_outline
+                  _videoController!.value.isPlaying
+                      ? Icons.pause
                       : Icons.play_arrow,
                   color: Colors.white,
                   size: 36,
@@ -343,7 +348,6 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
               ),
             ),
 
-          // 视频标识标签
           Positioned(
             bottom: 16,
             right: 16,
@@ -357,7 +361,9 @@ class _TemplateDetailScreenState extends State<TemplateDetailScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isVideoInitialized && !_showPlayOverlay
+                    (_isVideoInitialized &&
+                            _videoController != null &&
+                            _videoController!.value.isPlaying)
                         ? Icons.pause_circle_filled
                         : Icons.videocam,
                     color: Colors.white,

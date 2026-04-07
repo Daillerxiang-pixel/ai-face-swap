@@ -6,8 +6,9 @@ import '../../providers/template_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/template_card.dart';
 import '../../widgets/shimmer_widget.dart';
+import '../detail/template_detail_screen.dart';
 import '../../widgets/empty_state_widget.dart';
-import 'upload_photo_screen.dart';
+import '../../utils/scene_labels.dart';
 
 /// Template browser — All/Photo/Video toggle + scene category tabs + grid
 class SelectTemplateScreen extends StatefulWidget {
@@ -38,7 +39,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
 
   Future<void> _loadScenes() async {
     try {
-      final res = await _api.getScenes();
+      final res = await _api.getScenes(type: _currentType);
       final scenes = (res.data as List?)
               ?.map((e) => e.toString())
               .where((s) => s.isNotEmpty)
@@ -46,7 +47,11 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
           [];
       if (mounted) {
         setState(() {
-          _scenes = ['All', ...scenes];
+          final next = ['All', ...scenes];
+          _scenes = next;
+          if (_currentScene != 'All' && !next.contains(_currentScene)) {
+            _currentScene = 'All';
+          }
           _isLoadingScenes = false;
         });
       }
@@ -205,7 +210,9 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
       child: GestureDetector(
         onTap: () {
           setState(() => _currentType = index == 0 ? null : (index == 1 ? 'image' : 'video'));
-          _loadTemplates();
+          _loadScenes().then((_) {
+            if (mounted) _loadTemplates();
+          });
         },
         child: Container(
           decoration: BoxDecoration(
@@ -262,7 +269,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        scene,
+                        SceneLabels.display(scene),
                         style: TextStyle(
                           color: isSelected ? Colors.white : context.appColors.textSecondary,
                           fontSize: 13,
@@ -305,7 +312,9 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
 
   void _onTemplateSelected(Template template) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => UploadPhotoScreen(template: template)),
+      MaterialPageRoute(
+        builder: (_) => TemplateDetailScreen(template: template),
+      ),
     );
   }
 }

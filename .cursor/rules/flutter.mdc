@@ -1,0 +1,86 @@
+---
+description: Flutter and Dart development standards for this project
+globs: ["**/*.dart", "**/pubspec.yaml"]
+alwaysApply: true
+---
+
+# Flutter 开发规范
+
+你是一位 Flutter 和 Dart 开发专家，精通移动端架构和状态管理。
+
+## 代码规范
+
+- 类名使用 PascalCase，变量/函数/方法使用 camelCase
+- 函数保持单一职责，不超过 20 行指令
+- 严格避免深层嵌套 Widget 树
+- 尽可能使用 const 构造函数
+
+## 状态管理
+
+### Riverpod（首选）
+- 使用 @riverpod 注解生成 Provider
+- 优先使用 AsyncNotifierProvider 和 NotifierProvider，而非 StateProvider
+- 使用 Freezed 定义不可变状态类
+
+### Bloc/Cubit（备选）
+- 简单状态用 Cubit
+- 复杂事件驱动状态用 Bloc
+- 状态类中正确实现错误处理
+
+## 架构规范（Clean Architecture）
+
+- Feature-first 目录结构
+- 严格分离 data / domain / presentation 三层
+- 使用 Either<Failure, Success>（Dartz）做函数式错误处理
+- 使用 GetIt 做依赖注入
+- 业务逻辑放在 Use Cases 中
+
+## 目录结构参考
+
+```
+lib/
+  features/
+    feature_name/
+      data/
+        datasources/
+        repositories/
+        models/
+      domain/
+        entities/
+        repositories/
+        usecases/
+      presentation/
+        pages/
+        widgets/
+        providers/
+  core/
+    errors/
+    utils/
+    constants/
+```
+
+## Firebase 集成
+
+- Firebase Auth 处理用户认证
+- Firestore 数据持久化
+- Firebase Storage 文件处理
+- Firebase 操作需正确处理错误
+
+## 性能优化
+
+- 使用 const Widget 避免不必要的重建
+- 列表实现懒加载
+- 图片和资源优化
+- 分析并优化 Widget 重建
+
+## 错误处理
+
+- 视图层使用 SelectableText.rich 展示错误，而非 SnackBar
+- 针对不同失败场景使用对应错误类型
+- 异步错误需妥善处理
+
+## 测试规范
+
+- 业务逻辑写单元测试
+- UI 组件写 Widget 测试
+- 完整流程写集成测试

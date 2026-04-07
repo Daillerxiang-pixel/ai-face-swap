@@ -1,3 +1,5 @@
+import '../utils/media_url_utils.dart';
+
 /// 模板数据模型
 class Template {
 
@@ -25,8 +27,28 @@ class Template {
     return str.isEmpty ? 'image' : str; // 默认按图片处理
   }
 
-  /// 是否为视频模板
+  /// 是否为视频模板（以后端 type 为准）
   bool get isVideo => type == 'video';
+
+  /// 可播放的视频素材路径（优先 videoUrl；否则预览/封面若为 mp4 等）
+  String? get videoPlaybackSource {
+    final v = videoUrl?.trim();
+    if (v != null && v.isNotEmpty) return v;
+    for (final p in [previewUrl, preview, cover]) {
+      final t = p?.trim();
+      if (t != null &&
+          t.isNotEmpty &&
+          MediaUrlUtils.looksLikeVideoPath(t)) {
+        return t;
+      }
+    }
+    return null;
+  }
+
+  bool get hasVideoPlayback => videoPlaybackSource != null;
+
+  /// 走视频换脸流程（type 为视频或存在视频素材，避免 type 标错导致 UI/提示错误）
+  bool get isVideoWorkflow => isVideo || hasVideoPlayback;
 
   final String id;
   final String name;

@@ -27,6 +27,9 @@ class User {
   final bool autoSave;
   final String theme;
 
+  /// 后端直接返回的 isVip（与 subscription_* 并存时优先参考）
+  final bool isVipServerHint;
+
   User({
     required this.id,
     this.nickname,
@@ -38,26 +41,37 @@ class User {
     this.totalGenerations,
     this.autoSave = true,
     this.theme = 'dark',
+    this.isVipServerHint = false,
   });
 
   /// 是否为VIP用户
-  bool get isVip => (vipLevel ?? 0) > 0 ||
+  bool get isVip =>
+      isVipServerHint ||
+      (vipLevel ?? 0) > 0 ||
       (vipExpireAt != null && vipExpireAt!.isAfter(DateTime.now()));
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final tier = json['subscription_tier']?.toString();
+    final vipFromTier =
+        tier == 'monthly' || tier == 'yearly' || tier == 'professional';
+    final expireAt = json['vipExpireAt'] != null
+        ? DateTime.tryParse(json['vipExpireAt'].toString())
+        : (json['subscription_expires_at'] != null
+            ? DateTime.tryParse(json['subscription_expires_at'].toString())
+            : null);
+    final rawVipLevel = _toInt(json['vipLevel']);
     return User(
       id: json['id']?.toString() ?? '',
       nickname: json['nickname']?.toString(),
       avatar: json['avatar']?.toString(),
       phone: json['phone']?.toString(),
-      vipLevel: _toInt(json['vipLevel']),
-      vipExpireAt: json['vipExpireAt'] != null
-          ? DateTime.tryParse(json['vipExpireAt'].toString())
-          : null,
+      vipLevel: rawVipLevel > 0 ? rawVipLevel : (vipFromTier ? 1 : 0),
+      vipExpireAt: expireAt,
       remainCredits: _toInt(json['remainCredits'] ?? json['remaining']),
       totalGenerations: _toInt(json['totalGenerations'] ?? json['total_generated']),
       autoSave: _toBool(json['auto_save'] ?? 1),
       theme: json['theme']?.toString() ?? 'dark',
+      isVipServerHint: json['isVip'] == true,
     );
   }
 

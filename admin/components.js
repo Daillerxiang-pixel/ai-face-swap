@@ -55,7 +55,25 @@ const API = {
   get(url) { return this.request('GET', url); },
   post(url, data) { return this.request('POST', url, data); },
   put(url, data) { return this.request('PUT', url, data); },
-  del(url) { return this.request('DELETE', url); }
+  del(url) { return this.request('DELETE', url); },
+  /** multipart/form-data（如 Excel+ZIP 导入），勿设 Content-Type，由浏览器带 boundary */
+  async postForm(url, formData) {
+    const res = await fetch(API_BASE + url, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + this.getToken() },
+      body: formData,
+    });
+    if (res.status === 401) {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_info');
+      Toast.error('登录已过期');
+      setTimeout(() => (location.href = 'login.html'), 800);
+      throw new Error('Unauthorized');
+    }
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || '请求失败');
+    return json.data;
+  },
 };
 
 // ---- Auth ----

@@ -141,6 +141,17 @@ class ApiService {
     return ApiResponse.fromJson(response.data, (data) => data);
   }
 
+  /// 全库按类型的模板数量（图片 / 视频），用于首页等展示
+  Future<ApiResponse<Map<String, dynamic>>> getTemplateTypeCounts() async {
+    final response = await _dio.get('/api/templates/meta/counts');
+    final map = response.data as Map<String, dynamic>;
+    return ApiResponse.fromJson(map, (data) {
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return <String, dynamic>{};
+    });
+  }
+
   /// 获取场景列表
   Future<ApiResponse> getScenes({String? type}) async {
     // 将英文 type 映射为后端中文值

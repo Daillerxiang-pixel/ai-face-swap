@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../utils/image_utils.dart';
 import '../models/template.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'template_media_thumb.dart';
 
 /// 模板卡片组件
 class TemplateCard extends StatelessWidget {
@@ -25,8 +24,7 @@ class TemplateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = ImageUtils.imgUrl(template.displayUrl);
-    final isVideo = template.isVideo;
+    final isVideo = template.isVideoWorkflow;
 
     return GestureDetector(
       onTap: onTap,
@@ -40,32 +38,7 @@ class TemplateCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // 网络图片加载
-                  CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: context.appColors.surfaceBackground,
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppTheme.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: context.appColors.surfaceBackground,
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: context.appColors.textTertiary,
-                        size: 32,
-                      ),
-                    ),
-                  ),
+                  TemplateMediaThumb(template: template, fit: BoxFit.cover),
 
                   // 视频播放图标
                   if (isVideo)

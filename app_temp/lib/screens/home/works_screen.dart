@@ -16,6 +16,7 @@ import '../../services/auth_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/share_sheet.dart';
+import '../../widgets/muted_autoplay_video_preview.dart';
 import '../../widgets/video_player_widget.dart';
 
 /// 作品页面 — iOS 相册风格：日期分组 + 3列网格
@@ -365,12 +366,14 @@ class _WorksScreenState extends State<WorksScreen> with WidgetsBindingObserver {
             fit: StackFit.expand,
             children: [
               if (resultUrl.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: resultUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: context.appColors.surfaceBackground, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)))),
-                  errorWidget: (_, __, ___) => Container(color: context.appColors.surfaceBackground, child: Icon(Icons.broken_image, color: context.appColors.textTertiary, size: 32)),
-                ),
+                isVideo
+                    ? MutedAutoplayVideoPreview(url: resultUrl, fit: BoxFit.cover)
+                    : CachedNetworkImage(
+                        imageUrl: resultUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(color: context.appColors.surfaceBackground, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)))),
+                        errorWidget: (_, __, ___) => Container(color: context.appColors.surfaceBackground, child: Icon(Icons.broken_image, color: context.appColors.textTertiary, size: 32)),
+                      ),
 
               // Video icon
               if (isVideo)

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 /// 用户状态管理
 class UserProvider with ChangeNotifier {
@@ -43,8 +44,8 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  /// 更新用户设置
-  Future<bool> updateSettings({
+  /// 更新用户设置；成功返回 null，失败返回错误文案（供 SnackBar 展示）。
+  Future<String?> updateSettings({
     String? nickname,
     String? avatar,
     bool? autoSave,
@@ -60,10 +61,19 @@ class UserProvider with ChangeNotifier {
       if (res.success && res.data != null) {
         _user = User.fromJson(res.data as Map<String, dynamic>);
         notifyListeners();
-        return true;
+        return null;
       }
-    } catch (_) {}
-    return false;
+      if (AuthService().token == null) {
+        _user = null;
+        notifyListeners();
+      }
+      return res.message ?? 'Failed to update setting';
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[UserProvider] updateSettings error: $e\n$st');
+      }
+      return 'Failed to update setting';
+    }
   }
 
   /// 退出登录

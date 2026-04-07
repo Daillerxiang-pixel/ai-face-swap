@@ -124,8 +124,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!res.success || res.data == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          final msg = (res.message != null && res.message!.isNotEmpty)
+              ? res.message!
+              : 'Failed to upload avatar';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload avatar')),
+            SnackBar(content: Text(msg)),
           );
         }
         return;
@@ -178,22 +181,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<bool> _updateSetting({String? nickname, String? avatar, bool? autoSave, String? theme}) async {
     setState(() => _isUpdating = true);
     try {
-      final success = await context.read<UserProvider>().updateSettings(
+      final err = await context.read<UserProvider>().updateSettings(
         nickname: nickname,
         avatar: avatar,
         autoSave: autoSave,
         theme: theme,
       );
-      if (mounted && !success) {
+      if (mounted && err != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update setting'),
-            backgroundColor: Color(0xFFFF3B30),
+          SnackBar(
+            content: Text(err),
+            backgroundColor: const Color(0xFFFF3B30),
             behavior: SnackBarBehavior.floating,
           ),
         );
+        return false;
       }
-      return success;
+      return true;
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }

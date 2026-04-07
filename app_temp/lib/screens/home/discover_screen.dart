@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/template.dart';
 import '../../services/api_service.dart';
-import '../../utils/image_utils.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/empty_state_widget.dart';
+import '../../widgets/template_media_thumb.dart';
 import '../detail/template_detail_screen.dart';
 
 /// 发现页面 — 搜索 + 分段选择器 + 列表展示
@@ -321,8 +320,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   /// 构建发现列表项
   Widget _buildDiscoverItem(Template template) {
-    final thumbUrl = ImageUtils.imgUrl(template.displayUrl);
-
     return InkWell(
       onTap: () => _navigateToDetail(context, template),
       child: Padding(
@@ -335,35 +332,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: SizedBox(
                 width: 56,
                 height: 56,
-                child: thumbUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: thumbUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          color: context.appColors.surfaceBackground,
-                          child: const Icon(
-                            Icons.image_outlined,
-                            color: context.appColors.textTertiary,
-                            size: 24,
-                          ),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: context.appColors.surfaceBackground,
-                          child: const Icon(
-                            Icons.image_not_supported_outlined,
-                            color: context.appColors.textTertiary,
-                            size: 24,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: context.appColors.surfaceBackground,
-                        child: Icon(
-                          Icons.auto_awesome,
-                          color: AppTheme.primary.withOpacity(0.5),
-                          size: 24,
-                        ),
-                      ),
+                child: TemplateMediaThumb(template: template, fit: BoxFit.cover),
               ),
             ),
 
@@ -377,7 +346,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   // 名称
                   Text(
                     template.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: context.appColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -414,8 +383,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ),
             ),
 
-            // 右箭头
-            const Icon(
+            Icon(
               Icons.chevron_right,
               color: context.appColors.textTertiary,
               size: 18,

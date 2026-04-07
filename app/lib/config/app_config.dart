@@ -2,11 +2,11 @@
 class AppConfig {
   AppConfig._();
 
-  /// API 基础地址（构建：`--dart-define=API_BASE=...` 可指向测试服 test1）
+  /// API 基础地址（默认 test1 测试 API；发版用 `--dart-define=API_BASE=...` 覆盖）
   static String get apiBaseUrl {
     const fromEnv = String.fromEnvironment('API_BASE', defaultValue: '');
     if (fromEnv.isNotEmpty) return fromEnv;
-    return 'https://test.kanashortplay.com';
+    return 'https://test1.kanashortplay.com';
   }
 
   /// OSS 图片基础地址

@@ -83,6 +83,21 @@ router.get('/meta/scenes', (req, res) => {
   res.json({ success: true, data: scenes });
 });
 
+// GET /api/templates/meta/counts — 全库图片/视频模板数（首页展示用，勿用分页列表推算）
+router.get('/meta/counts', (req, res) => {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT type, COUNT(*) AS c FROM templates WHERE is_active = 1 GROUP BY type'
+  ).all();
+  let image = 0;
+  let video = 0;
+  for (const r of rows) {
+    if (r.type === '图片') image = r.c;
+    if (r.type === '视频') video = r.c;
+  }
+  res.json({ success: true, data: { image, video } });
+});
+
 // GET /api/templates/:id — MUST be after named routes
 router.get('/:id', (req, res) => {
   const db = getDb();

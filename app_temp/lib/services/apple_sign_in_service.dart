@@ -43,7 +43,10 @@ class AppleSignInService {
       final data = response.data;
       if (data['success'] == true && data['data'] != null) {
         final token = data['data']['token'] as String?;
-        final userId = data['data']['userId']?.toString();
+        final userMap = data['data']['user'];
+        final userId = userMap is Map
+            ? userMap['id']?.toString()
+            : data['data']['userId']?.toString();
 
         if (token != null && token.isNotEmpty) {
           AuthService().setToken(token, userId: userId);

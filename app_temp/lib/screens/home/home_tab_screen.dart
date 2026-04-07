@@ -5,6 +5,7 @@ import '../../models/template.dart';
 import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
 import '../../widgets/shimmer_widget.dart';
+import '../../widgets/template_media_thumb.dart';
 import '../create/select_template_screen.dart';
 import '../detail/template_detail_screen.dart';
 import 'home_screen.dart';
@@ -27,6 +28,9 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   Template? _bannerTemplate;
   bool _isLoading = true;
   DateTime? _lastLoadTime;
+  /// 全库数量（来自 /api/templates/meta/counts）；为 null 表示接口失败，退回本地推算
+  int? _imageTotalCount;
+  int? _videoTotalCount;
 
   @override
   bool get wantKeepAlive => true;
@@ -58,7 +62,16 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final result = await _api.getTemplates(limit: 20);
+      final templatesFuture = _api.getTemplates(limit: 20);
+      final countsFuture = _api.getTemplateTypeCounts();
+      final result = await templatesFuture;
+      ApiResponse<Map<String, dynamic>>? countRes;
+      try {
+        countRes = await countsFuture;
+      } catch (_) {
+        countRes = null;
+      }
+
       final all = (result.data as List?)
               ?.map((e) => Template.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -66,11 +79,24 @@ class _HomeTabScreenState extends State<HomeTabScreen>
       final banner = all.isNotEmpty ? all.first : null;
       final rec = all.take(9).toList();
 
+      int? imgTotal;
+      int? vidTotal;
+      if (countRes != null &&
+          countRes.success &&
+          countRes.data != null &&
+          countRes.data!.isNotEmpty) {
+        final d = countRes.data!;
+        imgTotal = _parsePositiveInt(d['image']);
+        vidTotal = _parsePositiveInt(d['video']);
+      }
+
       if (mounted) {
         setState(() {
           _allTemplates = all;
           _recTemplates = rec;
           _bannerTemplate = banner;
+          _imageTotalCount = imgTotal;
+          _videoTotalCount = vidTotal;
           _lastLoadTime = DateTime.now();
         });
       }
@@ -86,6 +112,13 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     }
   }
 
+  int? _parsePositiveInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v < 0 ? null : v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString());
+  }
+
   String _formatCount(int? count) {
     if (count == null || count == 0) return '0';
     if (count >= 10000) return '${(count / 10000).toStringAsFixed(1)}K';
@@ -97,9 +130,11 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Count templates by type
-    final imageCount = _allTemplates.where((t) => t.type == 'image').length;
-    final videoCount = _allTemplates.where((t) => t.type == 'video').length;
+    // 全库数量优先；接口失败时退回当前页列表统计（仅作降级）
+    final imageCount = _imageTotalCount ??
+        _allTemplates.where((t) => t.type == 'image').length;
+    final videoCount = _videoTotalCount ??
+        _allTemplates.where((t) => t.type == 'video').length;
 
     return Scaffold(
       backgroundColor: context.appColors.background,
@@ -160,7 +195,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
 
   Widget _buildBanner() {
     final tpl = _bannerTemplate;
-    final previewUrl = tpl != null ? ImageUtils.imgUrl(tpl.displayUrl) : '';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
@@ -184,17 +218,13 @@ class _HomeTabScreenState extends State<HomeTabScreen>
           ),
           child: Stack(
             children: [
-              if (previewUrl.isNotEmpty)
+              if (tpl != null)
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Opacity(
                       opacity: 0.3,
-                      child: CachedNetworkImage(
-                        imageUrl: previewUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                      ),
+                      child: TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
                     ),
                   ),
                 ),
@@ -423,7 +453,6 @@ class _HomeTabScreenState extends State<HomeTabScreen>
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final tpl = items[index];
-          final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
           return GestureDetector(
             onTap: () {
               Navigator.of(context).push(
@@ -445,10 +474,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (thumbUrl.isNotEmpty)
-                          CachedNetworkImage(imageUrl: thumbUrl, fit: BoxFit.cover)
-                        else
-                          Container(color: context.appColors.surfaceBackground),
+                        TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
                         // BA labels
                         Positioned(
                           top: 8,
@@ -568,8 +594,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
       itemCount: _recTemplates.length,
       itemBuilder: (context, index) {
         final tpl = _recTemplates[index];
-        final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
-        final isVideo = tpl.isVideo;
+        final isVideo = tpl.isVideoWorkflow;
         return GestureDetector(
           onTap: () {
             Navigator.of(context).push(
@@ -589,10 +614,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      if (thumbUrl.isNotEmpty)
-                        CachedNetworkImage(imageUrl: thumbUrl, fit: BoxFit.cover)
-                      else
-                        Container(color: context.appColors.surfaceBackground),
+                      TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
                       if (isVideo)
                         Positioned(
                           bottom: 8,

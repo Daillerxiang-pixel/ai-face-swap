@@ -9,6 +9,7 @@
     "verify:oss": "node scripts/verify-oss.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "ali-oss": "^6.23.0",
     "apple-signin-auth": "^2.0.0",
     "bcrypt": "^6.0.0",
@@ -21,6 +22,7 @@
     "replicate": "^1.4.0",
     "tencentcloud-sdk-nodejs": "^4.1.199",
     "tencentcloud-sdk-nodejs-facefusion": "^4.1.191",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "xlsx": "^0.18.5"
   }
 }

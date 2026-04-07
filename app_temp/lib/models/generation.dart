@@ -1,3 +1,5 @@
+import '../utils/media_url_utils.dart';
+
 /// 生成记录数据模型
 class Generation {
   /// 安全地将 dynamic 值转为 int
@@ -50,7 +52,9 @@ class Generation {
   bool get isProcessing => status == 'pending' || status == 'processing';
   bool get isCompleted => status == 'completed';
   bool get isFailed => status == 'failed';
-  bool get isVideo => type == 'video';
+  /// 结果按视频展示/播放（type 或结果 URL 为视频）
+  bool get isVideo =>
+      type == 'video' || MediaUrlUtils.looksLikeVideoPath(resultImage);
 
   factory Generation.fromJson(Map<String, dynamic> json) {
     // 兼容 created_at (snake_case) 和 createdAt (camelCase)

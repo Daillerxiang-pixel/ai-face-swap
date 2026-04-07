@@ -22,32 +22,56 @@
     <div class="px-3 py-3 border-t border-white/10"><a href="#" onclick="event.preventDefault();localStorage.removeItem('admin_token');localStorage.removeItem('admin_info');location.href='login.html'" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg><span>退出登录</span></a></div>
   </aside>
 
-  <div class="flex-1 flex flex-col min-w-0">
+  <div class="flex-1 flex flex-col min-w-0" x-data="tplPage()">
     <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <h1 class="text-base font-semibold text-gray-800">模板管理</h1>
-      <button class="btn btn-primary" @click="openAdd()">+ 新增模板</button>
+      <button type="button" class="btn btn-primary" @click="openAdd()">+ 新增模板</button>
     </header>
 
-    <main class="flex-1 overflow-auto p-6 bg-gray-50" x-data="tplPage()">
+    <main class="flex-1 overflow-auto p-6 bg-gray-50">
       <div class="flex items-center gap-3 mb-4">
-        <input x-model="search" @keydown.enter="page=1;load()" placeholder="搜索名称/场景" class="w-56">
+        <input x-model="search" @keydown.enter="page=1;load()" placeholder="搜索名称 / 场景（分类）" class="w-56">
         <select x-model="typeFilter" @change="page=1;load()"><option value="">全部类型</option><option value="图片">图片</option><option value="视频">视频</option></select>
-        <select x-model="providerFilter" @change="page=1;load()"><option value="">全部Provider</option><option value="tencent">腾讯云</option><option value="replicate">Replicate</option><option value="akool">Akool</option></select>
+        <select x-model="providerFilter" @change="page=1;load()"><option value="">全部服务商</option><option value="tencent">腾讯云</option><option value="replicate">Replicate</option><option value="akool">Akool</option></select>
         <button class="btn btn-primary" @click="page=1;load()">搜索</button>
+      </div>
+
+      <div class="mb-4 p-4 bg-white rounded-lg border border-indigo-100 shadow-sm">
+        <div class="font-medium text-gray-800 mb-2">Excel + ZIP 批量导入</div>
+        <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+          0）先点 <strong>下载 Excel 模板</strong>，在「模板列表」工作表填写/增删行，另存为 .xlsx；另有「填写说明」工作表可阅读规则。<br>
+          1）<strong>预览图路径 / 视频路径</strong>须为 <strong>ZIP 包内相对路径</strong>（如 <code class="bg-gray-100 px-1 rounded">items/a/preview.jpg</code>），勿用本机盘符路径。<br>
+          2）按路径把文件打进 ZIP，与 Excel 一并上传；服务端写入 OSS 或 <code class="bg-gray-100 px-1">uploads/template-import/</code> 并入库。
+        </p>
+        <div class="flex flex-wrap items-end gap-3">
+          <button type="button" class="btn" style="border:1px solid #c7d2fe;color:#4f46e5;background:#eef2ff" @click="downloadExcelTemplate()">下载 Excel 模板</button>
+          <div><label class="block text-xs text-gray-500 mb-1">Excel（.xlsx / .xls）</label><input type="file" accept=".xlsx,.xls" @change="importExcelFile = $event.target.files[0]"></div>
+          <div><label class="block text-xs text-gray-500 mb-1">资源包（.zip）</label><input type="file" accept=".zip" @change="importZipFile = $event.target.files[0]"></div>
+          <button type="button" class="btn btn-primary" :disabled="importBusy" @click="runImport()" x-text="importBusy ? '导入中…' : '上传并导入'"></button>
+        </div>
+        <template x-if="importResult">
+          <div class="mt-3 text-sm border-t border-gray-100 pt-3">
+            <span class="text-green-600" x-text="'成功 ' + importResult.imported + ' 条'"></span>
+            <span class="text-amber-600 ml-2" x-show="importResult.failed > 0" x-text="'失败 ' + importResult.failed + ' 条'"></span>
+            <ul class="mt-2 text-xs text-red-600 max-h-32 overflow-auto" x-show="importResult.details && importResult.details.errors && importResult.details.errors.length">
+              <template x-for="e in (importResult.details && importResult.details.errors) || []" :key="e.row + (e.error||'')"><li>第 <span x-text="e.row"></span> 行：<span x-text="e.error"></span></li></template>
+            </ul>
+          </div>
+        </template>
       </div>
 
       <div class="bg-white rounded-lg border border-gray-200/80">
         <div x-show="loading" x-html="loadingSpinner()"></div>
         <div x-show="!loading && items.length===0" x-html="emptyState()"></div>
         <table x-show="!loading && items.length>0" class="w-full">
-          <thead><tr><th>ID</th><th>预览</th><th>名称</th><th>场景</th><th>类型</th><th>Provider</th><th>使用次数</th><th>评分</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>预览</th><th>名称</th><th>场景</th><th>类型</th><th>服务商</th><th>使用次数</th><th>评分</th><th>状态</th><th>操作</th></tr></thead>
           <tbody><template x-for="t in items" :key="t.id"><tr>
             <td class="text-gray-400" x-text="t.id"></td>
             <td><img :src="fixUrl(t.preview_url)" class="w-10 h-10 rounded object-cover bg-gray-100" onerror="this.style.display='none'"></td>
             <td class="font-medium" x-text="t.name"></td>
-            <td x-text="t.scene"></td>
+            <td class="text-gray-600 max-w-[120px] truncate" :title="t.scene" x-text="t.scene || '—'"></td>
             <td x-html="statusBadge(t.type)"></td>
-            <td><span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600" x-text="t.provider"></span></td>
+            <td><span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600" x-text="t.provider || '-'"></span></td>
             <td x-text="t.usage_count"></td>
             <td x-text="t.rating"></td>
             <td x-html="t.is_active ? statusBadge('active') : statusBadge('offline')"></td>
@@ -73,21 +97,31 @@
         <div class="modal-overlay" @click.self="showModal=false">
           <div class="modal" style="width:560px">
             <div class="p-5 border-b flex items-center justify-between"><span class="font-semibold" x-text="editId?'编辑模板':'新增模板'"></span><button @click="showModal=false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button></div>
+            <!-- 场景=分类；标签（badge）=推荐位标识，与分类不同。icon/bg_gradient 仍存库，后台不展示 -->
             <div class="p-5 grid grid-cols-2 gap-3">
               <div><label class="block text-sm text-gray-600 mb-1">名称 *</label><input x-model="form.name" class="w-full"></div>
-              <div><label class="block text-sm text-gray-600 mb-1">图标</label><input x-model="form.icon" class="w-full" placeholder="🎬"></div>
-              <div><label class="block text-sm text-gray-600 mb-1">场景</label><input x-model="form.scene" class="w-full"></div>
+              <div><label class="block text-sm text-gray-600 mb-1">场景（分类）</label><input x-model="form.scene" class="w-full" placeholder="如：电影、动漫、通用"></div>
               <div><label class="block text-sm text-gray-600 mb-1">类型</label><select x-model="form.type" class="w-full"><option value="图片">图片</option><option value="视频">视频</option></select></div>
-              <div><label class="block text-sm text-gray-600 mb-1">Provider</label><select x-model="form.provider" class="w-full"><option value="tencent">腾讯云</option><option value="replicate">Replicate</option><option value="akool">Akool</option></select></div>
-              <div><label class="block text-sm text-gray-600 mb-1">Model ID</label><input x-model="form.provider_model_id" class="w-full"></div>
-              <div class="col-span-2"><label class="block text-sm text-gray-600 mb-1">预览图 URL</label><input x-model="form.preview_url" class="w-full" placeholder="/uploads/previews/xxx.jpg"></div>
-              <div class="col-span-2"><label class="block text-sm text-gray-600 mb-1">视频 URL</label><input x-model="form.video_url" class="w-full"></div>
-              <div><label class="block text-sm text-gray-600 mb-1">标签</label><input x-model="form.badge" class="w-full" placeholder="hot/new/vip"></div>
+              <div><label class="block text-sm text-gray-600 mb-1">服务商</label><select x-model="form.provider" class="w-full"><option value="tencent">腾讯云</option><option value="replicate">Replicate</option><option value="akool">Akool</option></select></div>
+              <div class="col-span-2"><label class="block text-sm text-gray-600 mb-1">Model ID</label><input x-model="form.provider_model_id" class="w-full"></div>
+              <div class="col-span-2">
+                <label class="block text-sm text-gray-600 mb-1">预览图（本地上传，自动传 OSS 并入库字段）</label>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="w-full text-sm"
+                  @change="uploadPreviewFile($event)" :disabled="uploadPreviewBusy">
+                <p class="text-xs text-gray-400 mt-1" x-show="form.preview_url">已生成：<span class="break-all select-all" x-text="form.preview_url"></span></p>
+              </div>
+              <div class="col-span-2" x-show="form.type === '视频'">
+                <label class="block text-sm text-gray-600 mb-1">模板视频（本地上传）</label>
+                <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" class="w-full text-sm"
+                  @change="uploadVideoFile($event)" :disabled="uploadVideoBusy">
+                <p class="text-xs text-gray-400 mt-1" x-show="form.video_url">已生成：<span class="break-all select-all" x-text="form.video_url"></span></p>
+              </div>
+              <div><label class="block text-sm text-gray-600 mb-1">标签（推荐标识）</label><input x-model="form.badge" class="w-full" placeholder="如 hot、new、vip"></div>
               <div><label class="block text-sm text-gray-600 mb-1">描述</label><input x-model="form.description" class="w-full"></div>
             </div>
             <div class="p-4 border-t flex justify-end gap-2">
-              <button class="btn" style="border:1px solid #e5e7eb;color:#64748b" @click="showModal=false">取消</button>
-              <button class="btn btn-primary" @click="save()">保存</button>
+              <button type="button" class="btn" style="border:1px solid #e5e7eb;color:#64748b" @click="showModal=false">取消</button>
+              <button type="button" class="btn btn-primary" @click="save()">保存</button>
             </div>
           </div>
         </div>
@@ -104,6 +138,8 @@ function tplPage() {
     items: [], total: 0, page: 1, limit: 20,
     search: '', typeFilter: '', providerFilter: '',
     loading: true, showModal: false, form: {}, editId: null,
+    importExcelFile: null, importZipFile: null, importBusy: false, importResult: null,
+    uploadPreviewBusy: false, uploadVideoBusy: false,
 
     get totalPages() { return Math.ceil(this.total / this.limit) || 1; },
     get pageRange() {
@@ -131,21 +167,110 @@ function tplPage() {
 
     goPage(p) { this.page = p; this.load(); },
 
+    downloadExcelTemplate() {
+      fetch('/api/admin/templates/import-excel-template', { headers: { Authorization: 'Bearer ' + API.getToken() } })
+        .then(function(res) {
+          if (res.status === 401) {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_info');
+            location.href = 'login.html';
+            return Promise.reject(new Error('请重新登录'));
+          }
+          var ct = res.headers.get('content-type') || '';
+          if (ct.indexOf('spreadsheet') === -1 && ct.indexOf('octet-stream') === -1) {
+            return res.json().then(function(j) { throw new Error(j.error || '下载失败'); });
+          }
+          return res.blob();
+        })
+        .then(function(blob) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = '模板批量导入模板.xlsx';
+          a.click();
+          URL.revokeObjectURL(a.href);
+          Toast.success('已下载，修改「模板列表」表后另存，再与 ZIP 一起上传');
+        })
+        .catch(function(e) { Toast.error(e.message || '下载失败'); });
+    },
+
+    uploadPreviewFile(e) {
+      var self = this;
+      var f = e.target && e.target.files && e.target.files[0];
+      if (!f) return;
+      var fd = new FormData();
+      fd.append('file', f);
+      self.uploadPreviewBusy = true;
+      API.postForm('/upload/template-preview', fd).then(function(d) {
+        self.form.preview_url = d.url;
+        Toast.success('预览图已上传');
+      }).catch(function(err) { Toast.error(err.message); })
+        .finally(function() { self.uploadPreviewBusy = false; try { e.target.value = ''; } catch (_) {} });
+    },
+
+    uploadVideoFile(e) {
+      var self = this;
+      var f = e.target && e.target.files && e.target.files[0];
+      if (!f) return;
+      var fd = new FormData();
+      fd.append('file', f);
+      self.uploadVideoBusy = true;
+      API.postForm('/upload/template-video', fd).then(function(d) {
+        self.form.video_url = d.url;
+        Toast.success('模板视频已上传');
+      }).catch(function(err) { Toast.error(err.message); })
+        .finally(function() { self.uploadVideoBusy = false; try { e.target.value = ''; } catch (_) {} });
+    },
+
+    runImport() {
+      var self = this;
+      if (!self.importExcelFile || !self.importZipFile) { Toast.warning('请选择 Excel 与 ZIP 压缩包'); return; }
+      var fd = new FormData();
+      fd.append('excel', self.importExcelFile);
+      fd.append('archive', self.importZipFile);
+      self.importBusy = true;
+      self.importResult = null;
+      API.postForm('/templates/import-excel', fd).then(function(data) {
+        self.importResult = data;
+        if (data.failed > 0) Toast.warning('部分行失败，见下方明细');
+        else Toast.success('导入完成');
+        self.load();
+      }).catch(function(e) { Toast.error(e.message); })
+        .finally(function() { self.importBusy = false; });
+    },
+
     openAdd() {
       this.editId = null;
-      this.form = {name:'',icon:'',scene:'',type:'图片',provider:'akool',provider_model_id:'',preview_url:'',video_url:'',description:'',badge:''};
+      this.form = { name:'', scene:'通用', type:'图片', provider:'akool', provider_model_id:'', preview_url:'', video_url:'', description:'', badge:'' };
       this.showModal = true;
     },
 
     openEdit(t) {
       this.editId = t.id;
-      this.form = {name:t.name,icon:t.icon||'',scene:t.scene||'',type:t.type||'图片',provider:t.provider||'akool',provider_model_id:t.provider_model_id||'',preview_url:t.preview_url||'',video_url:t.video_url||'',description:t.description||'',badge:t.badge||''};
+      this.form = {
+        name: t.name,
+        scene: t.scene || '通用',
+        type: t.type || '图片',
+        provider: t.provider || 'akool',
+        provider_model_id: t.provider_model_id || '',
+        preview_url: t.preview_url || '',
+        video_url: t.video_url || '',
+        description: t.description || '',
+        badge: t.badge || '',
+      };
       this.showModal = true;
     },
 
     save() {
       var self = this;
       if (!self.form.name) { Toast.warning('请输入模板名称'); return; }
+      if (!self.form.preview_url || !String(self.form.preview_url).trim()) {
+        Toast.warning('请先选择并上传预览图');
+        return;
+      }
+      if (self.form.type === '视频' && (!self.form.video_url || !String(self.form.video_url).trim())) {
+        Toast.warning('视频模板请先上传模板视频');
+        return;
+      }
       if (self.editId) {
         API.put('/templates/' + self.editId, self.form).then(function() { Toast.success('模板已更新'); self.showModal = false; self.load(); }).catch(function(e) { Toast.error(e.message); });
       } else {

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/template.dart';
 import '../../providers/template_provider.dart';
 import '../../services/api_service.dart';
-import '../../utils/image_utils.dart';
 import '../../widgets/empty_state_widget.dart';
-import '../create/upload_photo_screen.dart';
+import '../../widgets/template_media_thumb.dart';
 import '../create/select_template_screen.dart';
+import '../detail/template_detail_screen.dart';
 
 /// 收藏页面 — 从 API 加载真实收藏列表
 class FavoritesScreen extends StatefulWidget {
@@ -215,12 +214,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final tpl = items[index];
-        final thumbUrl = ImageUtils.imgUrl(tpl.displayUrl);
         return GestureDetector(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => UploadPhotoScreen(template: tpl),
+                builder: (_) => TemplateDetailScreen(template: tpl),
               ),
             );
           },
@@ -232,16 +230,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             clipBehavior: Clip.antiAlias,
             child: Stack(
               children: [
-                // Thumbnail
-                if (thumbUrl.isNotEmpty)
-                  Positioned.fill(
-                    child: CachedNetworkImage(
-                      imageUrl: thumbUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: context.appColors.surfaceBackground),
-                      errorWidget: (_, __, ___) => Container(color: context.appColors.surfaceBackground),
-                    ),
-                  ),
+                Positioned.fill(
+                  child: TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
+                ),
                 // Heart button (tap to unfavorite)
                 Positioned(
                   top: 8,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
@@ -54,18 +55,28 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
 
     try {
       final api = ApiService();
-      late final Response response;
+      // 登录/注册单独拉长超时并允许一次重试，弱网/跨境 DNS 下更易成功
+      final authOptions = Options(
+        sendTimeout: const Duration(seconds: 120),
+        receiveTimeout: const Duration(seconds: 120),
+        connectTimeout: const Duration(seconds: 60),
+      );
 
+      late final Response response;
       if (_isSignUp) {
-        response = await api.dio.post('/api/auth/register', data: {
-          'email': email,
-          'password': password,
-        });
+        response = await _postAuthWithRetry(
+          api,
+          '/api/auth/register',
+          {'email': email, 'password': password},
+          authOptions,
+        );
       } else {
-        response = await api.dio.post('/api/auth/login', data: {
-          'email': email,
-          'password': password,
-        });
+        response = await _postAuthWithRetry(
+          api,
+          '/api/auth/login',
+          {'email': email, 'password': password},
+          authOptions,
+        );
       }
 
       final data = response.data;
@@ -85,17 +96,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
-        String msg = 'Network error';
-        if (e.type == DioExceptionType.connectionError) {
-          msg = 'Connection failed, check your network';
-        } else if (e.type == DioExceptionType.connectionTimeout) {
-          msg = 'Connection timed out';
-        } else if (e.response?.data != null) {
-          msg = (e.response!.data is Map) 
-              ? (e.response!.data['error'] ?? e.response!.data['message'] ?? 'Request failed').toString()
-              : 'Server error';
-        }
-        _showError(msg);
+        _showError(_dioErrorMessage(e));
       }
     } catch (e) {
       if (mounted) _showError('Error: ${e.toString()}');
@@ -108,6 +109,63 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: Colors.red.shade700),
     );
+  }
+
+  /// 登录/注册 POST，失败时在可恢复错误下自动重试 1 次。
+  Future<Response<dynamic>> _postAuthWithRetry(
+    ApiService api,
+    String path,
+    Map<String, dynamic> data,
+    Options options,
+  ) async {
+    DioException? last;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await api.dio.post<dynamic>(path, data: data, options: options);
+      } on DioException catch (e) {
+        last = e;
+        if (attempt == 0 && _isTransientAuthFailure(e)) {
+          await Future<void>.delayed(const Duration(milliseconds: 800));
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw last!;
+  }
+
+  bool _isTransientAuthFailure(DioException e) {
+    return e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.connectionError;
+  }
+
+  String _dioErrorMessage(DioException e) {
+    final base = AppConfig.apiBaseUrl;
+    String hint = ' (API: $base)';
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Request timed out. Check network or VPN.$hint';
+      case DioExceptionType.connectionError:
+        return 'Cannot reach server. Check network or firewall.$hint';
+      case DioExceptionType.badResponse:
+        break;
+      default:
+        if (e.response == null) {
+          return 'Network error.$hint';
+        }
+    }
+    if (e.response?.data != null) {
+      final d = e.response!.data;
+      if (d is Map) {
+        final m = d['error'] ?? d['message'];
+        if (m != null) return m.toString();
+      }
+    }
+    return 'Request failed: ${e.message ?? e.type}$hint';
   }
 
   @override

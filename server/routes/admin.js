@@ -8,7 +8,12 @@
 const { Router } = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../data/database');
+const { uploadToOSS, isOSSAvailable } = require('../utils/oss');
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'ai-face-swap-admin-jwt-secret-2026';
@@ -24,6 +29,112 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ success: false, error: '登录已过期，请重新登录' });
   }
 }
+
+function shouldTryOSSUpload() {
+  if (process.env.SKIP_OSS_UPLOAD === '1' || process.env.SKIP_OSS_UPLOAD === 'true') return false;
+  return isOSSAvailable();
+}
+
+function mimeFromExt(ext) {
+  const e = String(ext).toLowerCase();
+  const m = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mov': 'video/quicktime',
+  };
+  return m[e] || 'application/octet-stream';
+}
+
+/** 模板预览图 / 视频：OSS 优先，失败或未配置则写入本地 uploads */
+async function storeTemplateMedia(buffer, originalName, subfolder, mimeType) {
+  const ext = path.extname(originalName) || '.bin';
+  const filename = `${uuidv4()}${ext}`;
+  const ossKey = `uploads/${subfolder}/${filename}`;
+
+  if (shouldTryOSSUpload()) {
+    try {
+      const url = await uploadToOSS(buffer, ossKey, mimeType || mimeFromExt(ext));
+      return { url };
+    } catch (e) {
+      console.error('[AdminUpload] OSS 失败，改存本地:', e.message || e);
+    }
+  }
+
+  const uploadsRoot = path.join(__dirname, '..', '..', 'uploads', subfolder);
+  if (!fs.existsSync(uploadsRoot)) fs.mkdirSync(uploadsRoot, { recursive: true });
+  const abs = path.join(uploadsRoot, filename);
+  fs.writeFileSync(abs, buffer);
+  return { url: `/uploads/${subfolder}/${filename}` };
+}
+
+const uploadTemplatePreview = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)) return cb(null, true);
+    cb(new Error('请上传 JPG/PNG/WEBP/GIF 图片'));
+  },
+});
+
+const uploadTemplateVideo = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (['.mp4', '.webm', '.mov'].includes(ext)) return cb(null, true);
+    cb(new Error('请上传 MP4/WEBM/MOV 视频'));
+  },
+});
+
+// POST /api/admin/upload/template-preview — 本地上传预览图 → OSS 或本地，返回可写入 templates.preview_url 的地址
+router.post('/upload/template-preview', authMiddleware, (req, res, next) => {
+  uploadTemplatePreview.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, error: '图片不能超过 20MB' });
+      }
+      return res.status(400).json({ success: false, error: err.message || '上传失败' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: '请选择图片文件' });
+    const { url } = await storeTemplateMedia(req.file.buffer, req.file.originalname, 'template-previews', req.file.mimetype);
+    res.json({ success: true, data: { url } });
+  } catch (e) {
+    console.error('[AdminUpload] preview', e);
+    res.status(500).json({ success: false, error: e.message || '上传失败' });
+  }
+});
+
+// POST /api/admin/upload/template-video — 本地上传模板视频 → OSS 或本地
+router.post('/upload/template-video', authMiddleware, (req, res, next) => {
+  uploadTemplateVideo.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, error: '视频不能超过 200MB' });
+      }
+      return res.status(400).json({ success: false, error: err.message || '上传失败' });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: '请选择视频文件' });
+    const { url } = await storeTemplateMedia(req.file.buffer, req.file.originalname, 'template-videos', req.file.mimetype);
+    res.json({ success: true, data: { url } });
+  } catch (e) {
+    console.error('[AdminUpload] video', e);
+    res.status(500).json({ success: false, error: e.message || '上传失败' });
+  }
+});
 
 // ===== POST /api/admin/login =====
 router.post('/login', (req, res) => {
