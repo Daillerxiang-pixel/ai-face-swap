@@ -98,6 +98,33 @@ function isProbablyVideoUrl(url) {
 }
 
 /**
+ * 从 detect_faces 返回的 faces_obj 中取一帧有效人脸。
+ * 视频多帧时键为 "0","1","5"... 片头黑场/无脸时 "0" 可能无 landmarks，不能只读 faces_obj["0"]。
+ */
+function pickFaceFromFacesObj(facesObj) {
+  if (!facesObj || typeof facesObj !== 'object') return null;
+  const keys = Object.keys(facesObj).sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+    return String(a).localeCompare(String(b));
+  });
+  for (const k of keys) {
+    const frame = facesObj[k];
+    if (!frame || frame.landmarks_str == null) continue;
+    const ls = frame.landmarks_str;
+    let ok = false;
+    if (Array.isArray(ls)) {
+      ok = ls.length > 0 && String(ls[0] ?? '').trim().length > 0;
+    } else if (typeof ls === 'string') {
+      ok = ls.trim().length > 0;
+    }
+    if (ok) return frame;
+  }
+  return null;
+}
+
+/**
  * 人脸检测（用于 V3 API 获取 opts 参数）
  * @param {string} imageUrl - 图片或视频 URL（视频见 https://docs.akool.com/ai-tools-suite/face-detection/detect-faces）
  * @param {{ isVideo?: boolean, numFrames?: number }} [options]
@@ -110,19 +137,33 @@ async function detectFaces(imageUrl, options = {}) {
     return_face_url: true,
   };
   if (options.isVideo) {
-    body.num_frames = options.numFrames != null ? options.numFrames : 10;
+    // 多采几帧，避免正脸只在片中后段才出现
+    body.num_frames = options.numFrames != null ? options.numFrames : 24;
   }
 
   const result = await akoolRequest('POST', ENDPOINTS.faceDetect, body);
 
-  const faces = result.faces_obj?.['0'];
-  if (!faces || !faces.landmarks_str || faces.landmarks_str.length === 0) {
+  const faces = pickFaceFromFacesObj(result.faces_obj);
+  if (!faces) {
+    const keys = result.faces_obj && typeof result.faces_obj === 'object'
+      ? Object.keys(result.faces_obj).join(',')
+      : '';
+    console.warn(
+      '[Akool] detect_faces: no valid landmarks in any frame; keys=%s snippet=%s',
+      keys || '(none)',
+      JSON.stringify(result.faces_obj || {}).slice(0, 400)
+    );
     throw new Error('未检测到人脸');
   }
 
+  const lm = faces.landmarks_str;
+  const landmarksStr = Array.isArray(lm) ? lm[0] : lm;
+  const cl = faces.crop_landmarks;
+  const cropLm = Array.isArray(cl) ? cl[0] : cl;
+
   return {
-    landmarks_str: faces.landmarks_str?.[0],
-    crop_landmarks: faces.crop_landmarks?.[0],
+    landmarks_str: landmarksStr,
+    crop_landmarks: cropLm,
     face_url: faces.face_urls?.[0] ?? faces.face_url,
   };
 }
@@ -277,7 +318,7 @@ async function generateVideo(ctx) {
 
   if (!targetDetect) {
     console.log(`[Akool Video] Detecting target face from modifyVideo (video): ${videoUrl}`);
-    targetDetect = await detectFaces(videoUrl, { isVideo: true, numFrames: 10 });
+    targetDetect = await detectFaces(videoUrl, { isVideo: true, numFrames: 24 });
     console.log(`[Akool Video] Target landmarks (video): ${targetDetect.crop_landmarks || targetDetect.landmarks_str}`);
   }
 
