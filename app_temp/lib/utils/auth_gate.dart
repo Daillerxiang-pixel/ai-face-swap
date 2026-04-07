@@ -4,8 +4,8 @@ import '../config/theme.dart';
 import '../screens/auth/login_screen.dart';
 import '../services/auth_service.dart';
 
-/// 换脸 / 生成前需要登录。未登录时弹窗说明，确认后进入登录页。
-/// 返回 `true` 表示已登录（原本就登录或登录成功）。
+/// Require login before face swap / generation. Shows a dialog; opens login on confirm.
+/// Returns `true` if already logged in or login succeeded.
 Future<bool> ensureLoggedInForCreate(BuildContext context) async {
   if (AuthService().isLoggedIn) return true;
 
@@ -15,24 +15,24 @@ Future<bool> ensureLoggedInForCreate(BuildContext context) async {
     builder: (ctx) => AlertDialog(
       backgroundColor: ctx.appColors.cardBackground,
       title: Text(
-        '需要登录',
+        'Sign in required',
         style: TextStyle(
           color: ctx.appColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
       ),
       content: Text(
-        '使用模板换脸前请先登录账号。',
+        'Please sign in to use templates and create swaps.',
         style: TextStyle(color: ctx.appColors.textSecondary, fontSize: 15),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text('取消', style: TextStyle(color: ctx.appColors.textSecondary)),
+          child: Text('Cancel', style: TextStyle(color: ctx.appColors.textSecondary)),
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('去登录', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+          child: const Text('Sign in', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
         ),
       ],
     ),
@@ -52,5 +52,6 @@ bool isAuthErrorMessage(String? message) {
   final m = message.toLowerCase();
   return m.contains('not authenticated') ||
       m.contains('invalid or expired token') ||
+      m.contains('unauthorized') ||
       m.contains('未登录');
 }

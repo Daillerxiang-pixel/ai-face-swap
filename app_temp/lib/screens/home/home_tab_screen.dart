@@ -101,7 +101,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
         });
       }
     } catch (e, stack) {
-      debugPrint('[HomeTab] 数据加载失败: $e\n$stack');
+      debugPrint('[HomeTab] load failed: $e\n$stack');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to load data')),

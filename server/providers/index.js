@@ -19,7 +19,7 @@ const akool = require('./akool');
 
 const providers = {
   tencent: {
-    name: '腾讯云人脸融合',
+    name: 'Tencent Face Fusion',
     type: 'image',       // 支持: image, video, both
     async: false,
     module: tencent,
@@ -44,7 +44,7 @@ const providers = {
 function getProvider(name) {
   const p = providers[name];
   if (!p) {
-    throw new Error(`未知的 Provider: ${name}，可用: ${Object.keys(providers).join(', ')}`);
+    throw new Error(`Unknown provider: ${name}. Available: ${Object.keys(providers).join(', ')}`);
   }
   return p;
 }
@@ -75,7 +75,7 @@ async function callGenerate(providerName, ctx) {
 async function callPoll(providerName, predictionId) {
   const provider = getProvider(providerName);
   if (!provider.async) {
-    throw new Error(`Provider "${providerName}" 是同步模式，不支持 poll()`);
+    throw new Error(`Provider "${providerName}" is synchronous; poll() is not supported.`);
   }
   return provider.module.poll(predictionId);
 }

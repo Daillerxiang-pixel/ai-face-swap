@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
     if (monthlyUsage >= monthlyLimit) {
       return res.status(403).json({
         success: false,
-        error: '本月使用次数已达上限',
+        error: 'Monthly generation limit reached',
         errorCode: 'QUOTA_EXCEEDED',
         data: {
           monthlyUsage,
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
     // 2. 验证源文件
     const sourceRecord = db.prepare('SELECT * FROM upload_files WHERE id = ?').get(sourceFileId);
     if (!sourceRecord) {
-      return res.status(400).json({ success: false, error: '源照片文件不存在，请重新上传' });
+      return res.status(400).json({ success: false, error: 'Source photo not found. Please upload again.' });
     }
 
     // 判断源文件是 OSS 路径还是本地路径
@@ -73,13 +73,13 @@ router.post('/', async (req, res) => {
       // 本地绝对路径：直接使用
       console.log(`[Generate] 源文件在本地: ${sourceFilePath}`);
     } else {
-      return res.status(400).json({ success: false, error: '源照片文件不存在，请重新上传' });
+      return res.status(400).json({ success: false, error: 'Source photo not found. Please upload again.' });
     }
 
     // 3. 验证模板
     const template = db.prepare('SELECT * FROM templates WHERE id = ?').get(templateId);
     if (!template) {
-      return res.status(404).json({ success: false, error: '模板不存在' });
+      return res.status(404).json({ success: false, error: 'Template not found' });
     }
 
     const providerName = template.provider || 'tencent';
@@ -137,7 +137,7 @@ router.post('/', async (req, res) => {
           progress: 10,
           async: true,
           predictionId: result.predictionId,
-          text: '视频生成中，预计需要 1-3 分钟...'
+          text: 'Video processing, about 1–3 minutes...'
         }
       });
 
@@ -161,7 +161,7 @@ router.post('/', async (req, res) => {
           progress: 100,
           async: false,
           resultUrl: result.resultUrl,
-          text: '完成'
+          text: 'Done'
         }
       });
     }
@@ -171,7 +171,7 @@ router.post('/', async (req, res) => {
     if (autoSave) {
       db.prepare(
         "UPDATE generations SET status = 'failed', error_message = ?, progress = 0 WHERE id = ?"
-      ).run(error.message || '生成失败', genId);
+      ).run(error.message || 'Generation failed', genId);
     }
 
     res.json({
@@ -180,8 +180,8 @@ router.post('/', async (req, res) => {
         generationId: genId,
         status: 'failed',
         progress: 0,
-        error: error.message || '生成失败',
-        text: '生成失败'
+        error: error.message || 'Generation failed',
+        text: 'Generation failed'
       }
     });
   }
@@ -193,7 +193,7 @@ router.get('/:id', (req, res) => {
   const gen = db.prepare(
     'SELECT id, status, progress, result_image as resultUrl, error_message as error, type, prediction_id as predictionId, provider FROM generations WHERE id = ?'
   ).get(req.params.id);
-  if (!gen) return res.status(404).json({ success: false, error: '任务不存在' });
+  if (!gen) return res.status(404).json({ success: false, error: 'Job not found' });
   res.json({ success: true, data: gen });
 });
 
@@ -206,7 +206,7 @@ router.get('/:id/status', async (req, res) => {
     'SELECT id, status, progress, result_image as resultUrl, error_message as error, prediction_id as predictionId, provider FROM generations WHERE id = ?'
   ).get(genId);
 
-  if (!gen) return res.status(404).json({ success: false, error: '任务不存在' });
+  if (!gen) return res.status(404).json({ success: false, error: 'Job not found' });
 
   // 如果已经完成或失败，直接返回
   if (gen.status === 'completed' || gen.status === 'failed' || gen.status === 'cancelled') {

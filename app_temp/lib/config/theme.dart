@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// 自定义主题扩�?- 存储应用特有颜色
+/// Theme extension — app-specific colors (via ThemeExtension).
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   final Color background;
@@ -52,11 +52,11 @@ class AppColors extends ThemeExtension<AppColors> {
   }
 }
 
-/// 应用主题配置（iOS 风格�?
+/// App theme (iOS-style palette).
 class AppTheme {
   AppTheme._();
 
-  // ===== 暗色主题颜色（默认）=====
+  // ===== Dark palette (default) =====
   static const Color background = Color(0xFF000000);
   static const Color cardBackground = Color(0xFF1C1C1E);
   static const Color surfaceBackground = Color(0xFF2C2C2E);
@@ -68,7 +68,7 @@ class AppTheme {
   static const Color surface = surfaceBackground;
   static const Color card = cardBackground;
 
-  // ===== 亮色主题颜色 =====
+  // ===== Light theme =====
   static const Color lightBackground = Color(0xFFF2F2F7);
   static const Color lightCardBackground = Color(0xFFFFFFFF);
   static const Color lightSurfaceBackground = Color(0xFFE5E5EA);
@@ -76,7 +76,7 @@ class AppTheme {
   static const Color lightTextSecondary = Color(0xFF8E8E93);
   static const Color lightTextTertiary = Color(0xFFC7C7CC);
 
-  // ===== 通用颜色 =====
+  // ===== Brand / shared =====
   static const Color primary = Color(0xFF7C3AED);
   static const Color gradientStart = Color(0xFF7C3AED);
   static const Color gradientEnd = Color(0xFF3B82F6);
@@ -90,20 +90,20 @@ class AppTheme {
     colors: [gradientStart, gradientEnd],
   );
 
-  // ===== 圆角 =====
+  // ===== Radii =====
   static const double radiusSm = 10.0;
   static const double radiusMd = 14.0;
   static const double radiusLg = 20.0;
   static const double radiusXl = 24.0;
 
-  // ===== 间距 =====
+  // ===== Spacing =====
   static const double spacingXs = 4.0;
   static const double spacingSm = 8.0;
   static const double spacingMd = 16.0;
   static const double spacingLg = 24.0;
   static const double spacingXl = 32.0;
 
-  // ===== 暗色自定义颜�?=====
+  // ===== Dark ThemeExtension =====
   static const appColorsDark = AppColors(
     background: background,
     cardBackground: cardBackground,
@@ -113,7 +113,7 @@ class AppTheme {
     textTertiary: textTertiary,
   );
 
-  // ===== 亮色自定义颜�?=====
+  // ===== Light ThemeExtension =====
   static const appColorsLight = AppColors(
     background: lightBackground,
     cardBackground: lightCardBackground,
@@ -123,7 +123,7 @@ class AppTheme {
     textTertiary: lightTextTertiary,
   );
 
-  // ===== 暗黑主题 =====
+  // ===== Dark ThemeData =====
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
@@ -218,7 +218,7 @@ class AppTheme {
     );
   }
 
-  // ===== 亮色主题 =====
+  // ===== Light ThemeData =====
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
@@ -314,8 +314,8 @@ class AppTheme {
   }
 }
 
-/// BuildContext 扩展 - 通过 ThemeExtension 获取自定义颜色（Flutter 原生主题系统�?
+/// BuildContext helper — read [AppColors] from ThemeExtension.
 extension ThemeColors on BuildContext {
-  /// 获取自定义颜色（跟随主题自动切换，Flutter 原生机制高效更新�?
+  /// Custom colors; updates with theme via Flutter's inherited theme.
   AppColors get appColors => Theme.of(this).extension<AppColors>()!;
 }

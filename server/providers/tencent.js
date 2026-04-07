@@ -16,14 +16,14 @@ function assertTencentConfigured() {
   const sid = (process.env.TENCENT_SECRET_ID || '').trim();
   const sk = (process.env.TENCENT_SECRET_KEY || '').trim();
   if (!sid || !sk) {
-    throw new Error('腾讯云未配置：请在 .env 中设置 TENCENT_SECRET_ID 与 TENCENT_SECRET_KEY');
+    throw new Error('Tencent Cloud is not configured: set TENCENT_SECRET_ID and TENCENT_SECRET_KEY in .env.');
   }
   if (sid.includes('你的') || sk.includes('你的')) {
-    throw new Error('腾讯云密钥仍为占位符：请将 .env 中的 TENCENT_SECRET_ID / TENCENT_SECRET_KEY 替换为控制台真实值');
+    throw new Error('Tencent credentials are still placeholders: replace TENCENT_SECRET_ID / TENCENT_SECRET_KEY in .env.');
   }
   const act = process.env.TENCENT_ACTIVITY_ID || ACTIVITY_ID;
   if (act && (act.includes('xxxxxxxx') || act === 'at_xxxxxxxxxx')) {
-    throw new Error('腾讯云活动 ID 无效：请设置 TENCENT_ACTIVITY_ID 为控制台人脸融合活动 ID（非占位符）');
+    throw new Error('Invalid TENCENT_ACTIVITY_ID: set it to your Face Fusion activity id from the console.');
   }
 }
 
@@ -65,7 +65,7 @@ async function generate(ctx) {
 
   const resultBase64 = resp.Image;
   if (!resultBase64) {
-    throw new Error('腾讯云融合结果为空');
+    throw new Error('Tencent Face Fusion returned an empty result');
   }
 
   // 保存结果

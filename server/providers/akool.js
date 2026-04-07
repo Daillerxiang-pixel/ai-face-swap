@@ -18,10 +18,10 @@ const AKOOL_BASE_URL = 'openapi.akool.com';
 function assertAkoolConfigured() {
   const k = AKOOL_API_KEY.trim();
   if (!k) {
-    throw new Error('Akool 未配置：请在 .env 中设置 AKOOL_API_KEY（Akool 控制台 API Key）');
+    throw new Error('Akool is not configured: set AKOOL_API_KEY in .env (Akool console API key).');
   }
   if (k.includes('你的') || k.toLowerCase().includes('placeholder')) {
-    throw new Error('Akool API Key 仍为占位符：请替换为 Akool 开放平台真实 x-api-key');
+    throw new Error('Akool API key is still a placeholder: replace it with a real x-api-key from Akool.');
   }
 }
 
@@ -153,7 +153,7 @@ async function detectFaces(imageUrl, options = {}) {
       keys || '(none)',
       JSON.stringify(result.faces_obj || {}).slice(0, 400)
     );
-    throw new Error('未检测到人脸');
+    throw new Error('No face detected');
   }
 
   const lm = faces.landmarks_str;
@@ -188,7 +188,7 @@ async function uploadToPublicUrl(filePath, ctx) {
     console.warn('[Akool] OSS upload failed, trying base64 approach:', e.message);
   }
 
-  throw new Error('需要 OSS 存储来上传图片到公网 URL，请配置 OSS 环境变量');
+  throw new Error('OSS storage is required to expose images via a public URL. Configure OSS in .env.');
 }
 
 /**
@@ -218,7 +218,7 @@ async function generateImagePro(ctx) {
       const { getOSSBaseURL } = require('../utils/oss');
       targetUrl = getOSSBaseURL() + (targetUrl.startsWith('/') ? '' : '/') + targetUrl;
     } catch (e) {
-      throw new Error(`模板图片 URL 无效: ${targetUrl}`);
+      throw new Error(`Invalid template image URL: ${targetUrl}`);
     }
   }
   console.log(`[Akool Pro] Target URL: ${targetUrl}`);
@@ -237,7 +237,7 @@ async function generateImagePro(ctx) {
   const jobId = result.data?.job_id;
 
   if (!_id) {
-    throw new Error('Akool 未返回任务 _id，无法轮询结果（请检查接口返回）');
+    throw new Error('Akool did not return task _id; cannot poll for result. Check API response.');
   }
 
   console.log(`[Akool Pro] Submit success: _id=${_id}, job_id=${jobId}`);
@@ -272,7 +272,7 @@ async function generateVideo(ctx) {
   // 视频模板的 videoUrl 作为目标视频
   let videoUrl = template.video_url;
   if (!videoUrl) {
-    throw new Error('模板缺少 video_url 字段');
+    throw new Error('Template is missing video_url');
   }
   // 处理相对路径，拼接 OSS URL
   if (!videoUrl.startsWith('http://') && !videoUrl.startsWith('https://')) {
@@ -280,7 +280,7 @@ async function generateVideo(ctx) {
       const { getOSSBaseURL } = require('../utils/oss');
       videoUrl = getOSSBaseURL() + (videoUrl.startsWith('/') ? '' : '/') + videoUrl;
     } catch (e) {
-      throw new Error(`模板视频 URL 无效，OSS 未配置: ${videoUrl}`);
+      throw new Error(`Invalid template video URL or OSS not configured: ${videoUrl}`);
     }
   }
   console.log(`[Akool Video] Target Video URL: ${videoUrl}`);
@@ -330,7 +330,7 @@ async function generateVideo(ctx) {
 
   if (!targetDetect.face_url) {
     throw new Error(
-      '视频目标人脸检测未返回裁剪脸图 URL（face_urls）。请确认视频中人脸清晰、Detect 已开启 return_face_url，或稍后重试'
+      'Video target face detection did not return a cropped face URL (face_urls). Ensure the face is visible, return_face_url is enabled, or try again later.'
     );
   }
   const targetEntry = { path: targetDetect.face_url };
@@ -352,7 +352,7 @@ async function generateVideo(ctx) {
   const jobId = result.data?.job_id;
 
   if (!_id) {
-    throw new Error('Akool 未返回任务 _id，无法轮询结果（请检查接口返回）');
+    throw new Error('Akool did not return task _id; cannot poll for result. Check API response.');
   }
 
   console.log(`[Akool Video] Submit success: _id=${_id}, job_id=${jobId}`);
@@ -434,7 +434,7 @@ function akoolResultUrl(job) {
 
 async function poll(predictionId) {
   if (predictionId == null || String(predictionId).trim() === '') {
-    return { status: 'failed', error: '任务 ID 无效（prediction_id 为空），无法查询 Akool 结果' };
+    return { status: 'failed', error: 'Invalid task id (empty prediction_id); cannot query Akool result.' };
   }
 
   const result = await akoolRequest('GET', `${ENDPOINTS.getResult}?_ids=${encodeURIComponent(predictionId)}`);
@@ -457,7 +457,7 @@ async function poll(predictionId) {
       const outUrl = akoolResultUrl(job);
       if (!outUrl) {
         console.warn('[Akool] success but no URL in job:', JSON.stringify(job).slice(0, 800));
-        return { status: 'failed', error: 'Akool 返回成功但缺少结果 URL，请稍后重试或联系支持' };
+        return { status: 'failed', error: 'Akool reported success but no result URL. Try again or contact support.' };
       }
       return {
         status: 'completed',
@@ -468,8 +468,8 @@ async function poll(predictionId) {
     case 4: {
       const detail = akoolJobErrorMessage(job);
       const msg = detail
-        ? `Akool 处理失败：${detail}`
-        : 'Akool 换脸处理失败（任务已结束）。若控制台已扣费，多为任务受理后处理失败，请以 Akool 后台说明为准或联系其客服。';
+        ? `Akool processing failed: ${detail}`
+        : 'Akool face swap failed (job finished). If you were charged, check Akool console or contact their support.';
       console.warn('[Akool] faceswap_status=4', JSON.stringify(job).slice(0, 800));
       return { status: 'failed', error: msg };
     }

@@ -1,4 +1,4 @@
-/// 后端 [scene] 存中文；界面展示英文。筛选请求仍传原始 [scene] 值。
+/// Backend may store [scene] in Chinese; UI shows English. API filters still use the raw [scene] value.
 class SceneLabels {
   SceneLabels._();
 
@@ -20,9 +20,12 @@ class SceneLabels {
     '美食': 'Food',
   };
 
-  /// Tab / 标签上展示用文案
+  /// Label text for tabs (English only in UI).
   static String display(String scene) {
     if (scene == 'All') return 'All';
-    return _zhToEn[scene] ?? scene;
+    final en = _zhToEn[scene];
+    if (en != null) return en;
+    if (RegExp(r'[\u4e00-\u9fff]').hasMatch(scene)) return 'Other';
+    return scene;
   }
 }

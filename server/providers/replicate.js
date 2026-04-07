@@ -75,7 +75,7 @@ async function generate(ctx) {
     };
   } catch (error) {
     console.error(`[Replicate] Prediction creation failed:`, error.message);
-    throw new Error(`Replicate API 调用失败: ${error.message}`);
+    throw new Error(`Replicate API failed: ${error.message}`);
   }
 }
 
@@ -115,7 +115,7 @@ async function poll(predictionId) {
         return {
           status: 'failed',
           progress: 0,
-          error: '生成完成但未获取到结果',
+          error: 'Generation finished but no output URL was returned',
         };
       }
 

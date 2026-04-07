@@ -22,7 +22,7 @@ const upload = multer({
     const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.includes(ext)) cb(null, true);
-    else cb(new Error('不支持的文件格式，请上传 JPG/PNG/WEBP'));
+    else cb(new Error('Unsupported format. Please upload JPG, PNG, or WEBP.'));
   }
 });
 
@@ -31,18 +31,18 @@ router.post('/image', optionalAuthMiddleware, (req, res, next) => {
   upload.single('photo')(req, res, (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ success: false, error: '文件大小不能超过 10MB' });
+        return res.status(400).json({ success: false, error: 'File size must not exceed 10MB' });
       }
       if (err instanceof multer.MulterError) {
-        return res.status(400).json({ success: false, error: '上传失败：' + err.message });
+        return res.status(400).json({ success: false, error: 'Upload failed: ' + err.message });
       }
-      return res.status(400).json({ success: false, error: err.message || '上传失败' });
+      return res.status(400).json({ success: false, error: err.message || 'Upload failed' });
     }
     next();
   });
 }, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ success: false, error: '请选择文件' });
+    if (!req.file) return res.status(400).json({ success: false, error: 'Please choose a file' });
 
     const db = getDb();
     const fileId = uuidv4();
@@ -104,7 +104,7 @@ router.post('/image', optionalAuthMiddleware, (req, res, next) => {
     });
   } catch (err) {
     console.error('[Upload] 上传失败:', err);
-    res.status(500).json({ success: false, error: '上传失败，请稍后重试' });
+    res.status(500).json({ success: false, error: 'Upload failed. Please try again later.' });
   }
 });
 

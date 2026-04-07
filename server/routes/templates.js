@@ -103,7 +103,7 @@ router.get('/:id', (req, res) => {
   const db = getDb();
   const t = db.prepare('SELECT * FROM templates WHERE id = ? AND is_active = 1').get(req.params.id);
 
-  if (!t) return res.status(404).json({ success: false, error: '模板不存在' });
+  if (!t) return res.status(404).json({ success: false, error: 'Template not found' });
 
   res.json({
     success: true,

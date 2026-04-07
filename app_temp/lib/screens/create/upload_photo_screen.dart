@@ -768,7 +768,7 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               return;
             }
           }
-          msg = '请先登录后再试';
+          msg = 'Please sign in and try again.';
         }
       }
       setState(() {

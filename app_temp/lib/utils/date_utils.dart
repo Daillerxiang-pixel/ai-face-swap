@@ -1,9 +1,8 @@
-/// 日期格式化工具
+/// Date/time formatting helpers.
 class DateUtils {
   DateUtils._();
 
-  /// 格式化为友好时间显示
-  /// 刚刚、x分钟前、x小时前、昨天、x天前、MM-dd
+  /// Relative time, e.g. "Just now", "5m ago", "Yesterday", or MM-dd.
   static String formatRelative(DateTime? dateTime) {
     if (dateTime == null) return '';
     final now = DateTime.now();
@@ -18,20 +17,20 @@ class DateUtils {
     return '${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
   }
 
-  /// 格式化为完整日期时间
+  /// Full date and time (yyyy-MM-dd HH:mm).
   static String formatFull(DateTime? dateTime) {
     if (dateTime == null) return '';
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  /// 格式化为日期
+  /// Date only (yyyy-MM-dd).
   static String formatDate(DateTime? dateTime) {
     if (dateTime == null) return '';
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
   }
 
-  /// 格式化持续时间（秒 → mm:ss）
+  /// Duration as mm:ss from seconds.
   static String formatDuration(int seconds) {
     final m = seconds ~/ 60;
     final s = seconds % 60;
