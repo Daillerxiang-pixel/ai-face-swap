@@ -31,7 +31,7 @@ alwaysApply: true
 ## 双远程：GitHub + 私有化 Gitea
 
 - **GitHub**：`git remote` 一般为 `github` → `https://github.com/Daillerxiang-pixel/ai-face-swap.git`
-- **私有化 Gitea**（**仅此一份**，仅测试服）：`origin` → `https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap.git`；Web：`https://test1.kanashortplay.com:8443/aihuantu`。**正式服不部署 Gitea**；历史上复制到正式服的 Gitea 已全部销毁，**禁止**在正式机再装第二套 Gitea。本地 `git remote -v` 若仍指向已废弃地址，应改为上述测试服 URL。
+- **私有化 Gitea**（**仅此一份**，仅测试服）：HTTPS `https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap.git`；SSH 须 **`Port 2222`**（Gitea 内置 SSH，勿用主机 22）；Web：`https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap`。**正式服不部署 Gitea**；历史上复制到正式服的 Gitea 已全部销毁，**禁止**在正式机再装第二套 Gitea。本地 `git remote -v` 若仍指向已废弃地址，应改为上述测试服 URL。
 
 **每次**需要把代码同步到远端时，应 **同时** 推送到两个远程（示例）：
 

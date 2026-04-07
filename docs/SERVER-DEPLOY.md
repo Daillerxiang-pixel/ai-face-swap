@@ -19,7 +19,7 @@
 ### Git 远程（须同时同步）
 
 - **GitHub**：`git push github main`（或当前分支）。
-- **私有化 Gitea**（**仅此一台**，在 **测试服** §3）：`git push origin main`；规范地址为 `https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap.git`，Web：`https://test1.kanashortplay.com:8443/aihuantu`。**正式服无 Gitea**（曾复制到正式服的实例已全部销毁，勿再重复部署）。若 `git remote -v` 仍指向正式机或其它已废弃 Gitea 地址，请改为测试服 URL。  
+- **私有化 Gitea**（**仅此一台**，在 **测试服** §3）：`git push origin main`；HTTPS：`https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap.git`；Web：[https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap](https://test1.kanashortplay.com:8443/aihuantu/ai-face-swap)。**SSH 克隆/推送**须走 Gitea 内置端口 **`2222`**（勿用系统 **22**，否则连到主机 sshd，Gitea 上登记的公钥不会生效）；示例：`ssh://git@test1.kanashortplay.com:2222/aihuantu/ai-face-swap.git`，或在 `~/.ssh/config` 里为 `Host` 配置 `Port 2222` + `User git`。**正式服无 Gitea**（曾复制到正式服的实例已全部销毁，勿再重复部署）。若 `git remote -v` 仍指向已废弃地址，请改为上述 URL。  
 每次需要更新远端时，应 **GitHub 与 Gitea 都推送**，避免两边漂移。
 
 客户端与脚本：本地测试 APK 见 §3.5；正式包须使用**未**带测试域 `API_BASE` 的构建。
