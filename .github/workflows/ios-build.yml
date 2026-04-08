@@ -16,23 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Xcode & iOS Platform
+      - name: Select Xcode 16.4
         run: |
-          # List available Xcode versions
-          ls /Applications/Xcode*.app 2>/dev/null || true
-          
-          # Use Xcode 16.3
-          sudo xcode-select -s /Applications/Xcode_16.3.app
+          sudo xcode-select -s /Applications/Xcode_16.4.app
           xcodebuild -version
-          
-          # Download and install iOS platform (needed for device builds)
-          echo "Downloading iOS platform..."
-          sudo xcodebuild -downloadPlatform iOS
-          
-          # Verify iOS platform is available
-          xcrun simctl list devices available 2>/dev/null | head -5 || true
-          ls /Applications/Xcode_16.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ 2>/dev/null || echo "Checking alternate path..."
-          find /Applications/Xcode_16.3.app -name "iPhoneOS*" -type d 2>/dev/null | head -5
+          # Verify iOS SDK is available
+          xcodebuild -showsdks | grep -i ios || true
+          ls /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ 2>/dev/null || true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -98,5 +88,5 @@ jobs:
           name: app-ipa
           path: |
             app_temp/build/ios/ipa/*.ipa
-            app_temp/build/ios/archive/*.xcarchive
+            app_temp/build.log
           retention-days: 30
