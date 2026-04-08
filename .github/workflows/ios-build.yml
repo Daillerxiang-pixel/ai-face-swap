@@ -62,40 +62,52 @@ jobs:
           echo "Profile Name: $PROFILE_NAME"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
           echo "Profile UUID: $PROFILE_UUID"
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
+          echo "Team ID: $TEAM_ID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
 
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+          echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build IPA (Xcode archive + manual export)
+      - name: Build Archive & Export IPA
         run: |
-          cd app_temp
-          
-          # Step 1: Build archive
-          flutter build ipa --release 2>&1 | tee build.log || true
-          
-          # Check if archive was created
-          if [ -d "build/ios/archive/Runner.xcarchive" ]; then
-            echo "✓ Archive created successfully"
-            ls -la build/ios/archive/Runner.xcarchive/
-          else
-            echo "✗ Archive not found"
-            cat build.log
-            exit 1
-          fi
-          
-          # Step 2: Export IPA manually using development method
-          cat > ExportOptions.plist << 'PLIST'
+          cd app_temp/ios
+
+          # Step 1: Build Xcode archive directly (skip flutter build ipa)
+          ARCHIVE_PATH="$GITHUB_WORKSPACE/app_temp/build/ios/archive/Runner.xcarchive"
+          mkdir -p "$(dirname "$ARCHIVE_PATH")"
+
+          xcodebuild archive \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath "$ARCHIVE_PATH" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            | tee "$GITHUB_WORKSPACE/app_temp/build.log"
+
+          echo "=== Archive done ==="
+          ls -la "$ARCHIVE_PATH" || exit 1
+
+          # Step 2: Export IPA
+          EXPORT_PATH="$GITHUB_WORKSPACE/app_temp/build/ios/ipa"
+          mkdir -p "$EXPORT_PATH"
+
+          cat > "$EXPORT_PATH/ExportOptions.plist" << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>development</string>
+            <string>app-store-connect</string>
             <key>teamID</key>
-            <string>FDA4AA9W96</string>
+            <string>${TEAM_ID}</string>
             <key>signingStyle</key>
             <string>manual</string>
             <key>provisioningProfiles</key>
@@ -111,21 +123,20 @@ jobs:
             <true/>
           </dict>
           </plist>
-          PLIST
-          
-          echo "=== ExportOptions.plist ==="
-          cat ExportOptions.plist
-          
-          mkdir -p build/ios/ipa
+          EOF
+
+          echo "=== ExportOptions ==="
+          cat "$EXPORT_PATH/ExportOptions.plist"
+
           xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ios/ipa \
-            -allowProvisioningUpdates 2>&1 | tee -a build.log
-          
-          echo "=== IPA output ==="
-          ls -la build/ios/ipa/ || true
-          find build/ios/ipa -name "*.ipa" -exec ls -la {} \; || true
+            -archivePath "$ARCHIVE_PATH" \
+            -exportOptionsPlist "$EXPORT_PATH/ExportOptions.plist" \
+            -exportPath "$EXPORT_PATH" \
+            | tee -a "$GITHUB_WORKSPACE/app_temp/build.log"
+
+          echo "=== Export result ==="
+          ls -la "$EXPORT_PATH" || true
+          find "$EXPORT_PATH" -name "*.ipa" -exec ls -la {} \; || true
         timeout-minutes: 30
 
       - name: Upload IPA
