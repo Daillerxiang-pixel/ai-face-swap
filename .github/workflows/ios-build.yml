@@ -16,18 +16,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode & Install iOS Platform
+      - name: Setup Xcode & iOS Platform
         run: |
+          # List available Xcode versions
+          ls /Applications/Xcode*.app 2>/dev/null || true
+          
+          # Use Xcode 16.3
           sudo xcode-select -s /Applications/Xcode_16.3.app
           xcodebuild -version
-          # Install iOS platform if needed
-          XCODE_PLATFORMS_DIR="/Applications/Xcode_16.3.app/Contents/Developer/Platforms"
-          if [ ! -d "$XCODE_PLATFORMS_DIR/iPhoneOS.platform" ]; then
-            echo "Installing iOS platform..."
-            sudo xcodebuild -downloadPlatform iOS
-          fi
-          # Verify
-          xcrun simctl list devices available | head -5
+          
+          # Download and install iOS platform (needed for device builds)
+          echo "Downloading iOS platform..."
+          sudo xcodebuild -downloadPlatform iOS
+          
+          # Verify iOS platform is available
+          xcrun simctl list devices available 2>/dev/null | head -5 || true
+          ls /Applications/Xcode_16.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ 2>/dev/null || echo "Checking alternate path..."
+          find /Applications/Xcode_16.3.app -name "iPhoneOS*" -type d 2>/dev/null | head -5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -91,5 +96,7 @@ jobs:
         if: always()
         with:
           name: app-ipa
-          path: app_temp/build/ios/ipa/*.ipa
+          path: |
+            app_temp/build/ios/ipa/*.ipa
+            app_temp/build/ios/archive/*.xcarchive
           retention-days: 30
