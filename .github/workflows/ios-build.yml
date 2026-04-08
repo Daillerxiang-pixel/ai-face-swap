@@ -79,7 +79,7 @@ jobs:
           cd app_temp
           flutter build ipa \
             --release \
-            --export-method app-store-connect \
+            --export-method app-store \
             2>&1 | tee build.log
 
           echo "=== Output ==="
