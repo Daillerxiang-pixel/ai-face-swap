@@ -42,7 +42,6 @@ jobs:
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
           echo "$APPLE_CERTIFICATE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o certificate.p12
-          file certificate.p12
 
           security create-keychain -p build ~/Library/Keychains/build.keychain-db
           security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain-db
@@ -51,84 +50,41 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k build -s ~/Library/Keychains/build.keychain-db
           security default-keychain -s ~/Library/Keychains/build.keychain-db
           security list-keychains -s ~/Library/Keychains/build.keychain-db
-
           security find-identity -v ~/Library/Keychains/build.keychain-db
 
           printf '%s' "$APPLE_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
-          file provisioning.mobileprovision
 
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
-          echo "Profile Name: $PROFILE_NAME"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
-          echo "Profile UUID: $PROFILE_UUID"
           TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
-          echo "Team ID: $TEAM_ID"
-          
-          # Get profile entitlements to check if Sign in with Apple is included
-          echo "=== Profile entitlements ==="
-          /usr/libexec/PlistBuddy -c "Print :Entitlements" provisioning.plist 2>/dev/null || echo "No entitlements key"
+          echo "Profile: $PROFILE_NAME | UUID: $PROFILE_UUID | Team: $TEAM_ID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
 
+          # Update Xcode project to use the correct profile name
+          cd app_temp/ios
+          # Replace FaceSwap-AI with actual profile name in project.pbxproj
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
+          # Also set for all configurations
+          grep -n "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj || echo "No PROVISIONING_PROFILE_SPECIFIER found"
+          
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build IPA (automatic signing)
+      - name: Build IPA
         run: |
           cd app_temp
-          
-          # Use flutter build ipa with automatic signing
-          # Flutter will handle archive + export
           flutter build ipa \
             --release \
             --export-method ad-hoc \
-            2>&1 | tee build.log || true
-          
-          echo "=== Build result ==="
-          ls -la build/ios/ipa/ 2>/dev/null || echo "No ipa dir"
-          ls -la build/ios/archive/ 2>/dev/null || echo "No archive dir"
+            2>&1 | tee build.log
+
+          echo "=== Output ==="
           find build/ios -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA found"
-          
-          # If flutter build ipa failed to produce IPA but archive exists,
-          # try manual export with ad-hoc method
-          if [ ! -f "build/ios/ipa/*.ipa" ] && [ -d "build/ios/archive/Runner.xcarchive" ]; then
-            echo "=== Archive exists, trying manual export ==="
-            mkdir -p build/ios/ipa
-            
-            # Try with ad-hoc (no profile needed for ad-hoc)
-            cat > build/ios/ipa/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>ad-hoc</string>
-            <key>teamID</key>
-            <string>${TEAM_ID}</string>
-            <key>signingStyle</key>
-            <string>automatic</string>
-            <key>stripSwiftSymbols</key>
-            <true/>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-            
-            xcodebuild -exportArchive \
-              -archivePath build/ios/archive/Runner.xcarchive \
-              -exportOptionsPlist build/ios/ipa/ExportOptions.plist \
-              -exportPath build/ios/ipa \
-              -allowProvisioningUpdates 2>&1 | tee -a build.log
-            
-            echo "=== Manual export result ==="
-            ls -la build/ios/ipa/
-          fi
         timeout-minutes: 30
 
       - name: Upload IPA
