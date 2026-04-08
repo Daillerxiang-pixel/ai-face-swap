@@ -12,6 +12,9 @@ class TemplateCard extends StatelessWidget {
   final VoidCallback? onFavorite;
   final bool showInfo;
 
+  /// When set, tile uses [AspectRatio] instead of [Expanded] (for masonry / unbounded height parents).
+  final double? masonryAspectRatio;
+
   const TemplateCard({
     super.key,
     required this.template,
@@ -20,28 +23,22 @@ class TemplateCard extends StatelessWidget {
     this.onTap,
     this.onFavorite,
     this.showInfo = true,
+    this.masonryAspectRatio,
   });
 
   @override
   Widget build(BuildContext context) {
     final isVideo = template.isVideoWorkflow;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final media = ClipRRect(
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          // 图片区域
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  TemplateMediaThumb(template: template, fit: BoxFit.cover),
+          TemplateMediaThumb(template: template, fit: BoxFit.cover),
 
-                  // 视频播放图标
-                  if (isVideo)
+          // 视频播放图标
+          if (isVideo)
                     Positioned(
                       bottom: 8,
                       right: 8,
@@ -119,10 +116,20 @@ class TemplateCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
+        ],
+      ),
+    );
+
+    final mediaBlock = masonryAspectRatio != null
+        ? AspectRatio(aspectRatio: masonryAspectRatio!, child: media)
+        : Expanded(child: media);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          mediaBlock,
           // 标题信息
           if (showInfo && template.name.isNotEmpty) ...[
             const SizedBox(height: 6),

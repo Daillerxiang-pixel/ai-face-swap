@@ -51,5 +51,7 @@
 	<string>我们需要使用相机拍摄照片进行AI换脸</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>我们需要保存生成的照片到您的相册</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

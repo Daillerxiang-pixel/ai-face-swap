@@ -1,6 +1,7 @@
 name: iOS Build
 
 # 仅构建 iOS IPA（需 macOS + 证书）。Android APK 不在此仓库 CI 中构建，一律本地 flutter build apk。
+# 主仓库已迁 GitLab：iOS 正式 CI 见根目录 .gitlab-ci.yml；本 workflow 仅在有 GitHub 镜像时可选使用。
 on:
   push:
     branches: [main]

@@ -11,4 +11,11 @@ class MediaUrlUtils {
         base.endsWith('.m4v') ||
         base.endsWith('.avi');
   }
+
+  /// Animated GIF poster/cover (query string stripped before extension check).
+  static bool looksLikeGifPath(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final base = path.split('?').first.trim().toLowerCase();
+    return base.endsWith('.gif');
+  }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'auth_service.dart';
 import '../config/app_config.dart';
+import '../models/recharge_plan.dart';
 
 /// API 统一响应模型
 class ApiResponse<T> {
@@ -322,6 +323,27 @@ class ApiService {
   Future<ApiResponse> getSubscriptionStatus() async {
     final response = await _dio.get('/api/subscription/status');
     return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
+  /// 充值套餐列表（公开接口，无需登录；与后台「套餐管理」同源）
+  Future<ApiResponse<List<RechargePlan>>> getRechargePlans() async {
+    try {
+      final response = await _dio.get('/api/plans');
+      final map = response.data as Map<String, dynamic>;
+      return ApiResponse.fromJson(map, (data) {
+        if (data is! List) return <RechargePlan>[];
+        return data
+            .map((e) => RechargePlan.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+      });
+    } on DioException catch (e) {
+      final r = _responseFromDioException(e);
+      return ApiResponse<List<RechargePlan>>(
+        success: r.success,
+        message: r.message,
+        data: null,
+      );
+    }
   }
 
   bool _isWriteMethod(String method) {

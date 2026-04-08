@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../config/app_config.dart';
 import '../models/template.dart';
 import '../services/api_service.dart';
 
@@ -6,28 +7,14 @@ import '../services/api_service.dart';
 class TemplateProvider with ChangeNotifier {
   final ApiService _api = ApiService();
 
-  /// 推荐模板列表
   List<Template> _templates = [];
-
-  /// 热门模板列表
   List<Template> _hotTemplates = [];
-
-  /// 收藏模板列表
   List<Template> _favorites = [];
 
-  /// 是否正在加载
   bool _isLoading = false;
-
-  /// 是否正在加载更多
   bool _isLoadingMore = false;
-
-  /// 当前页码
   int _currentPage = 1;
-
-  /// 是否还有更多数据
   bool _hasMore = true;
-
-  /// 错误信息
   String? _error;
 
   List<Template> get templates => _templates;
@@ -38,28 +25,35 @@ class TemplateProvider with ChangeNotifier {
   bool get hasMore => _hasMore;
   String? get error => _error;
 
-  /// 加载推荐模板
+  /// Load first page or replace list ([refresh] = true).
   Future<void> loadTemplates({
     bool refresh = false,
     String? scene,
     String? search,
     String? type,
   }) async {
-    if (_isLoading) return;
+    if (refresh) {
+      if (_isLoading) return;
+    } else {
+      if (_isLoadingMore || !_hasMore) return;
+    }
 
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
+      _isLoading = true;
+    } else {
+      _isLoadingMore = true;
     }
-
-    _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      final page = refresh ? 1 : _currentPage;
       final res = await _api.getTemplates(
         sort: 'recommend',
-        page: _currentPage,
+        page: page,
+        limit: AppConfig.pageSize,
         scene: scene,
         search: search,
         type: type,
@@ -75,17 +69,17 @@ class TemplateProvider with ChangeNotifier {
         _templates.addAll(list);
       }
 
-      _hasMore = list.length >= 20;
-      _currentPage++;
+      _hasMore = list.length >= AppConfig.pageSize;
+      _currentPage = page + 1;
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
+      _isLoadingMore = false;
       notifyListeners();
     }
   }
 
-  /// 加载热门模板
   Future<void> loadHotTemplates() async {
     try {
       final res = await _api.getTemplates(
@@ -97,12 +91,9 @@ class TemplateProvider with ChangeNotifier {
               .toList() ??
           [];
       notifyListeners();
-    } catch (_) {
-      // 热门加载失败不影响主流程
-    }
+    } catch (_) {}
   }
 
-  /// 加载收藏列表
   Future<void> loadFavorites() async {
     try {
       final res = await _api.getFavorites();
@@ -114,12 +105,10 @@ class TemplateProvider with ChangeNotifier {
     } catch (_) {}
   }
 
-  /// 收藏/取消收藏
   Future<void> toggleFavorite(String templateId) async {
     try {
       final res = await _api.toggleFavorite(templateId);
       if (res.success) {
-        // 更新本地列表中的收藏状态
         final data = res.data;
         final isFav = data is Map && data['favorited'] == true;
 
@@ -134,15 +123,16 @@ class TemplateProvider with ChangeNotifier {
     } catch (_) {}
   }
 
-  /// 加载更多
-  Future<void> loadMore() async {
-    if (_isLoadingMore || !_hasMore) return;
-    _isLoadingMore = true;
-    notifyListeners();
-
-    await loadTemplates();
-
-    _isLoadingMore = false;
-    notifyListeners();
+  Future<void> loadMore({
+    String? scene,
+    String? search,
+    String? type,
+  }) async {
+    await loadTemplates(
+      refresh: false,
+      scene: scene,
+      search: search,
+      type: type,
+    );
   }
 }

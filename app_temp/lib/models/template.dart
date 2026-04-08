@@ -97,6 +97,16 @@ class Template {
   /// 获取显示用图片URL（优先 previewUrl）
   String get displayUrl => previewUrl ?? preview ?? cover ?? '';
 
+  /// Static image URL for list/grid thumbs (skip .mp4 etc.). Empty if only video URLs exist.
+  String get thumbnailImageUrl {
+    for (final p in [previewUrl, preview, cover]) {
+      final t = p?.trim();
+      if (t == null || t.isEmpty) continue;
+      if (!MediaUrlUtils.looksLikeVideoPath(t)) return t;
+    }
+    return '';
+  }
+
   factory Template.fromJson(Map<String, dynamic> json) {
     return Template(
       id: json['id']?.toString() ?? '',

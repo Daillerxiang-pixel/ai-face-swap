@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/template.dart';
@@ -10,7 +11,16 @@ import '../detail/template_detail_screen.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../utils/scene_labels.dart';
 
-/// Template browser — All/Photo/Video toggle + scene category tabs + grid
+double _masonryAspectForId(String id) {
+  var h = 0;
+  for (final c in id.codeUnits) {
+    h = (h * 31 + c) & 0x7fffffff;
+  }
+  const ratios = [0.68, 0.74, 0.80, 0.86];
+  return ratios[h % ratios.length];
+}
+
+/// Template browser — masonry grid + pull-to-refresh + infinite scroll
 class SelectTemplateScreen extends StatefulWidget {
   final String? initialType;
 
@@ -22,12 +32,13 @@ class SelectTemplateScreen extends StatefulWidget {
 
 class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   final ApiService _api = ApiService();
+  final ScrollController _scrollController = ScrollController();
 
   String _currentScene = 'All';
   String? _currentType;
   List<String> _scenes = ['All'];
   bool _isLoadingScenes = true;
-  bool _isRefreshing = false;
+  DateTime? _lastLoadMoreAt;
 
   @override
   void initState() {
@@ -35,6 +46,34 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
     _currentType = widget.initialType;
     _loadScenes();
     _loadTemplates();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.pixels < pos.maxScrollExtent - 480) return;
+
+    final now = DateTime.now();
+    if (_lastLoadMoreAt != null &&
+        now.difference(_lastLoadMoreAt!).inMilliseconds < 400) {
+      return;
+    }
+    _lastLoadMoreAt = now;
+
+    if (!mounted) return;
+    final p = context.read<TemplateProvider>();
+    if (!p.hasMore || p.isLoadingMore || p.isLoading) return;
+
+    final scene = _currentScene == 'All' ? null : _currentScene;
+    p.loadMore(scene: scene, type: _currentType);
   }
 
   Future<void> _loadScenes() async {
@@ -67,10 +106,8 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   }
 
   Future<void> _onRefresh() async {
-    setState(() => _isRefreshing = true);
     await _loadScenes();
     _loadTemplates();
-    if (mounted) setState(() => _isRefreshing = false);
   }
 
   @override
@@ -90,19 +127,15 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
           ),
         ),
         title: const Text('Templates'),
-        actions: [],
+        actions: const [],
       ),
       body: Column(
         children: [
-          // All / Photo / Video toggle
           _buildTypeToggle(),
-          // Scene category tabs
           _buildSceneTabs(),
-          // Sort row
           Consumer<TemplateProvider>(
             builder: (context, provider, _) => _buildSortRow(provider.templates.length),
           ),
-          // Grid
           Expanded(
             child: Consumer<TemplateProvider>(
               builder: (context, provider, _) {
@@ -150,23 +183,44 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
                   );
                 }
 
+                final list = provider.templates;
+                final showFooter =
+                    provider.hasMore || (provider.isLoadingMore && list.isNotEmpty);
+
                 return RefreshIndicator(
                   color: AppTheme.primary,
                   backgroundColor: context.appColors.cardBackground,
                   onRefresh: _onRefresh,
-                  child: GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemCount: provider.templates.length,
+                  child: MasonryGridView.count(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    itemCount: list.length + (showFooter ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final template = provider.templates[index];
+                      if (index >= list.length) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: provider.isLoadingMore
+                                ? const SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.primary,
+                                    ),
+                                  )
+                                : const SizedBox(height: 8),
+                          ),
+                        );
+                      }
+                      final template = list[index];
                       return TemplateCard(
                         template: template,
+                        masonryAspectRatio: _masonryAspectForId(template.id),
                         onTap: () => _onTemplateSelected(template),
                         onFavorite: () => provider.toggleFavorite(template.id),
                       );
@@ -182,7 +236,6 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
   }
 
   Widget _buildTypeToggle() {
-    const labels = ['All', 'Photo', 'Video'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       child: Container(
@@ -193,8 +246,7 @@ class _SelectTemplateScreenState extends State<SelectTemplateScreen> {
         ),
         child: Row(
           children: [
-            for (int i = 0; i < 3; i++)
-              _buildTypeToggleItem(i),
+            for (int i = 0; i < 3; i++) _buildTypeToggleItem(i),
           ],
         ),
       ),

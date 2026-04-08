@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../models/template.dart';
 import '../../services/api_service.dart';
 import '../../utils/image_utils.dart';
+import '../../utils/media_url_utils.dart';
 import '../../widgets/shimmer_widget.dart';
 import '../../widgets/template_media_thumb.dart';
 import '../create/select_template_screen.dart';
@@ -20,6 +21,10 @@ class HomeTabScreen extends StatefulWidget {
 
 class _HomeTabScreenState extends State<HomeTabScreen>
     with AutomaticKeepAliveClientMixin {
+  static const int _homeFeedLimit = 48;
+  static const int _trendingCount = 10;
+  static const int _featuredCount = 18;
+
   final ApiService _api = ApiService();
   final ScrollController _scrollController = ScrollController();
 
@@ -62,7 +67,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final templatesFuture = _api.getTemplates(limit: 20);
+      final templatesFuture = _api.getTemplates(limit: _homeFeedLimit);
       final countsFuture = _api.getTemplateTypeCounts();
       final result = await templatesFuture;
       ApiResponse<Map<String, dynamic>>? countRes;
@@ -77,7 +82,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
               .toList() ??
           [];
       final banner = all.isNotEmpty ? all.first : null;
-      final rec = all.take(9).toList();
+      final rec = all.take(_featuredCount).toList();
 
       int? imgTotal;
       int? vidTotal;
@@ -124,6 +129,43 @@ class _HomeTabScreenState extends State<HomeTabScreen>
     if (count >= 10000) return '${(count / 10000).toStringAsFixed(1)}K';
     if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
     return count.toString();
+  }
+
+  /// Quick-entry background: GIF must not sit under [Opacity] (freezes animation).
+  Widget _quickEntryCoverImage(String url) {
+    if (url.isEmpty) return const SizedBox.shrink();
+    if (MediaUrlUtils.looksLikeGifPath(url)) {
+      return Image(
+        image: CachedNetworkImageProvider(url),
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Poster URL for Photo / Video quick-entry backgrounds (hot by usage; may be GIF cover).
+  String _hotEntryPreviewUrl({required bool video}) {
+    final typed = _allTemplates.where((t) => video ? t.type == 'video' : t.type == 'image').toList()
+      ..sort((a, b) => (b.useCount ?? 0).compareTo(a.useCount ?? 0));
+    for (final t in typed) {
+      final u = ImageUtils.imgUrl(t.thumbnailImageUrl);
+      if (u.isNotEmpty) return u;
+    }
+    for (final t in typed) {
+      final raw = t.displayUrl;
+      if (raw.isNotEmpty && !MediaUrlUtils.looksLikeVideoPath(raw)) {
+        final u = ImageUtils.imgUrl(raw);
+        if (u.isNotEmpty) return u;
+      }
+    }
+    return '';
   }
 
   @override
@@ -222,9 +264,24 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Opacity(
-                      opacity: 0.3,
-                      child: TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Full-opacity thumb so GIF posters animate ([Opacity] would freeze frames).
+                        TemplateMediaThumb(template: tpl, fit: BoxFit.cover),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: const Alignment(-1, -1),
+                              end: const Alignment(1, 1),
+                              colors: [
+                                const Color(0xFF5B21B6).withOpacity(0.82),
+                                const Color(0xFF1D4ED8).withOpacity(0.82),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -302,27 +359,27 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                   MaterialPageRoute(builder: (_) => const SelectTemplateScreen(initialType: 'image')),
                 );
               },
-              child: Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppTheme.primary.withOpacity(0.8), const Color(0xFF3B82F6).withOpacity(0.8)],
-                  ),
-                ),
-                child: Stack(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  height: 80,
+                  child: Stack(
+                  fit: StackFit.expand,
                   children: [
                     Positioned.fill(
-                      child: Opacity(
-                        opacity: 0.2,
-                        child: CachedNetworkImage(
-                          imageUrl: _allTemplates.where((t) => t.type == 'image').firstOrNull != null
-                              ? ImageUtils.imgUrl(_allTemplates.where((t) => t.type == 'image').first.displayUrl)
-                              : '',
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      child: _quickEntryCoverImage(_hotEntryPreviewUrl(video: false)),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primary.withOpacity(0.88),
+                              const Color(0xFF3B82F6).withOpacity(0.88),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -352,6 +409,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                     ),
                   ],
                 ),
+                ),
               ),
             ),
           ),
@@ -364,27 +422,27 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                   MaterialPageRoute(builder: (_) => const SelectTemplateScreen(initialType: 'video')),
                 );
               },
-              child: Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [const Color(0xFFFF3B30).withOpacity(0.8), const Color(0xFFF59E0B).withOpacity(0.8)],
-                  ),
-                ),
-                child: Stack(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  height: 80,
+                  child: Stack(
+                  fit: StackFit.expand,
                   children: [
                     Positioned.fill(
-                      child: Opacity(
-                        opacity: 0.2,
-                        child: CachedNetworkImage(
-                          imageUrl: _allTemplates.where((t) => t.type == 'video').firstOrNull != null
-                              ? ImageUtils.imgUrl(_allTemplates.where((t) => t.type == 'video').first.displayUrl)
-                              : '',
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                      child: _quickEntryCoverImage(_hotEntryPreviewUrl(video: true)),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFFFF3B30).withOpacity(0.88),
+                              const Color(0xFFF59E0B).withOpacity(0.88),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -413,6 +471,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
                       ),
                     ),
                   ],
+                ),
                 ),
               ),
             ),
@@ -443,7 +502,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
   }
 
   Widget _buildTrendingScroll() {
-    final items = _allTemplates.take(5).toList();
+    final items = _allTemplates.take(_trendingCount).toList();
     return SizedBox(
       height: 220,
       child: ListView.separated(
@@ -574,7 +633,7 @@ class _HomeTabScreenState extends State<HomeTabScreen>
         crossAxisSpacing: 12,
         childAspectRatio: 0.75,
       ),
-      itemCount: 6,
+      itemCount: 8,
       itemBuilder: (_, __) => ShimmerWidget.rectangular(borderRadius: 14),
     );
   }
