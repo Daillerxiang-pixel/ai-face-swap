@@ -58,90 +58,32 @@ jobs:
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
           TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
-          echo "Profile: $PROFILE_NAME | UUID: $PROFILE_UUID | Team: $TEAM_ID"
+          echo "Profile: $PROFILE_NAME | Team: $TEAM_ID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
 
-          # Patch Xcode project: replace old profile name with actual one
+          # Patch Xcode project to use correct profile name
           cd app_temp/ios
           sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          
-          echo "=== Profile specifiers in project ==="
+          echo "Profile specifiers:"
           grep "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj
-          
-          # Also ensure manual signing style with correct profile
-          # Set CODE_SIGN_STYLE = Manual and link profile UUID
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' Runner.xcodeproj/project.pbxproj
-          
-          # Add PROVISIONING_PROFILE_UUID for each config if not present
-          grep -c "PROVISIONING_PROFILE" Runner.xcodeproj/project.pbxproj || echo "No PROVISIONING_PROFILE entries"
-          
+
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build IPA (archive + manual export)
+      - name: Build IPA
         run: |
           cd app_temp
-          
-          # Step 1: Build archive only (skip Flutter's export which has wrong method)
-          flutter build ios --release --no-codesign 2>&1 | tee build.log || true
-          
-          # Actually, flutter build ios doesn't make xcarchive. Use xcodebuild directly.
-          cd ios
-          xcodebuild archive \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath ../build/ios/archive/Runner.xcarchive \
-            -destination "generic/platform=iOS" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            | tee -a ../build.log
-          
-          echo "=== Archive ==="
-          ls -la ../build/ios/archive/Runner.xcarchive/ 2>/dev/null || { echo "NO ARCHIVE"; exit 1; }
-          
-          # Step 2: Export IPA
-          mkdir -p ../build/ios/ipa
-          
-          cat > ../build/ios/ipa/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store-connect</string>
-            <key>teamID</key>
-            <string>${TEAM_ID}</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.aihuantu.faceswap</key>
-              <string>${PROFILE_NAME}</string>
-            </dict>
-            <key>stripSwiftSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-          
-          echo "=== ExportOptions ==="
-          cat ../build/ios/ipa/ExportOptions.plist
-          
-          xcodebuild -exportArchive \
-            -archivePath ../build/ios/archive/Runner.xcarchive \
-            -exportOptionsPlist ../build/ios/ipa/ExportOptions.plist \
-            -exportPath ../build/ios/ipa \
-            | tee -a ../build.log
-          
-          echo "=== IPA Output ==="
-          find ../build/ios/ipa -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "NO IPA"
+          flutter build ipa \
+            --release \
+            --export-method app-store-connect \
+            2>&1 | tee build.log
+
+          echo "=== Output ==="
+          find build/ios -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA found"
         timeout-minutes: 30
 
       - name: Upload IPA
