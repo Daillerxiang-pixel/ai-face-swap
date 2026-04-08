@@ -1,7 +1,5 @@
 name: iOS Build
 
-# 仅构建 iOS IPA（需 macOS + 证书）。Android APK 不在此仓库 CI 中构建，一律本地 flutter build apk。
-# 主仓库已迁 GitLab：iOS 正式 CI 见根目录 .gitlab-ci.yml；本 workflow 仅在有 GitHub 镜像时可选使用。
 on:
   push:
     branches: [main]
@@ -18,10 +16,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode version
+      - name: Select Xcode & Install iOS Platform
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.0.app
+          sudo xcode-select -s /Applications/Xcode_16.3.app
           xcodebuild -version
+          # Install iOS platform if needed
+          XCODE_PLATFORMS_DIR="/Applications/Xcode_16.3.app/Contents/Developer/Platforms"
+          if [ ! -d "$XCODE_PLATFORMS_DIR/iPhoneOS.platform" ]; then
+            echo "Installing iOS platform..."
+            sudo xcodebuild -downloadPlatform iOS
+          fi
+          # Verify
+          xcrun simctl list devices available | head -5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -56,10 +62,8 @@ jobs:
 
           security find-identity -v ~/Library/Keychains/build.keychain-db
 
-          echo "APPLE_PROVISIONING_PROFILE length: ${#APPLE_PROVISIONING_PROFILE}"
           printf '%s' "$APPLE_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
           file provisioning.mobileprovision
-          ls -la provisioning.mobileprovision
 
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
@@ -68,47 +72,24 @@ jobs:
           echo "Profile UUID: $PROFILE_UUID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
 
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-
-      - name: Prepare export options
-        run: |
-          cd app_temp
-          python3 -c "
-          import plistlib, os
-          plist = {
-              'method': 'app-store',
-              'teamID': 'FDA4AA9W96',
-              'signingStyle': 'manual',
-              'compileBitcode': False,
-              'stripSwiftSymbols': True,
-              'provisioningProfiles': {
-                  'com.aihuantu.faceswap': os.environ['PROFILE_NAME']
-              },
-              'signingCertificate': 'Apple Distribution'
-          }
-          with open('ios/export_options.plist', 'wb') as f:
-              plistlib.dump(plist, f)
-          "
-          cat ios/export_options.plist
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
 
       - name: Build IPA
         run: |
-          security list-keychains -s ~/Library/Keychains/build.keychain-db
-          security default-keychain -s ~/Library/Keychains/build.keychain-db
-          security unlock-keychain -p build ~/Library/Keychains/build.keychain-db
-          security find-identity -v
-
           cd app_temp
-          flutter build ipa --release \
-            --build-number=${{ github.run_number }} \
-            --export-options-plist=ios/export_options.plist
+          flutter build ipa \
+            --release \
+            --export-method ad-hoc \
+            2>&1 | tee build.log
+        timeout-minutes: 30
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: face-swap-ipa
+          name: app-ipa
           path: app_temp/build/ios/ipa/*.ipa
-          retention-days: 14
+          retention-days: 30
