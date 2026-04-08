@@ -58,33 +58,77 @@ jobs:
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
           TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
-          echo "Profile: $PROFILE_NAME | Team: $TEAM_ID"
+          echo "Profile: $PROFILE_NAME | UUID: $PROFILE_UUID | Team: $TEAM_ID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
-
-          # Patch Xcode project to use correct profile name
-          cd app_temp/ios
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          echo "Profile specifiers:"
-          grep "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj
+          
+          # Verify profile installed
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+          
+          # List all installed profiles
+          echo "=== Installed profiles ==="
+          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            security cms -D -i "$f" 2>/dev/null | grep -A1 "<key>Name</key>" | tail -1 | sed 's/.*<string>//;s/<.*//'
+          done
 
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build IPA
+      - name: Build Archive (Flutter automatic signing)
         run: |
           cd app_temp
-          flutter build ipa \
-            --release \
-            --export-method app-store \
-            2>&1 | tee build.log
+          # Build archive only - let Flutter handle archive with automatic signing
+          flutter build ipa --export-method app-store 2>&1 | tee build.log || true
 
-          echo "=== Output ==="
-          find build/ios -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA found"
-        timeout-minutes: 30
+          if [ ! -d "build/ios/archive/Runner.xcarchive" ]; then
+            echo "ERROR: Archive not created!"
+            cat build.log
+            exit 1
+          fi
+          echo "✓ Archive created: $(du -sh build/ios/archive/Runner.xcarchive)"
+
+      - name: Export IPA (manual signing with profile)
+        run: |
+          cd app_temp
+          mkdir -p build/ios/ipa
+
+          # Create ExportOptions.plist with manual signing
+          cat > build/ios/ipa/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.aihuantu.faceswap</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
+            <key>stripSwiftSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+          echo "=== ExportOptions ==="
+          cat build/ios/ipa/ExportOptions.plist
+
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist build/ios/ipa/ExportOptions.plist \
+            -exportPath build/ios/ipa \
+            2>&1 | tee -a build.log
+
+          echo "=== IPA Output ==="
+          find build/ios/ipa -name "*.ipa" -exec ls -lh {} \; 2>/dev/null || echo "NO IPA FOUND"
+        timeout-minutes: 15
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
