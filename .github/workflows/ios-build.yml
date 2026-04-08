@@ -20,9 +20,6 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_16.4.app
           xcodebuild -version
-          # Verify iOS SDK is available
-          xcodebuild -showsdks | grep -i ios || true
-          ls /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ 2>/dev/null || true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -72,13 +69,63 @@ jobs:
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
 
-      - name: Build IPA
+      - name: Build IPA (Xcode archive + manual export)
         run: |
           cd app_temp
-          flutter build ipa \
-            --release \
-            --export-method ad-hoc \
-            2>&1 | tee build.log
+          
+          # Step 1: Build archive
+          flutter build ipa --release 2>&1 | tee build.log || true
+          
+          # Check if archive was created
+          if [ -d "build/ios/archive/Runner.xcarchive" ]; then
+            echo "✓ Archive created successfully"
+            ls -la build/ios/archive/Runner.xcarchive/
+          else
+            echo "✗ Archive not found"
+            cat build.log
+            exit 1
+          fi
+          
+          # Step 2: Export IPA manually using development method
+          cat > ExportOptions.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>teamID</key>
+            <string>FDA4AA9W96</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.aihuantu.faceswap</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          
+          echo "=== ExportOptions.plist ==="
+          cat ExportOptions.plist
+          
+          mkdir -p build/ios/ipa
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ios/ipa \
+            -allowProvisioningUpdates 2>&1 | tee -a build.log
+          
+          echo "=== IPA output ==="
+          ls -la build/ios/ipa/ || true
+          find build/ios/ipa -name "*.ipa" -exec ls -la {} \; || true
         timeout-minutes: 30
 
       - name: Upload IPA
