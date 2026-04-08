@@ -72,6 +72,14 @@ jobs:
             security cms -D -i "$f" 2>/dev/null | grep -A1 "<key>Name</key>" | tail -1 | sed 's/.*<string>//;s/<.*//'
           done
 
+          # Patch Xcode project profile name
+          cd app_temp/ios
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
+          echo "=== Profile specifiers ==="
+          grep "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj
+          cd $GITHUB_WORKSPACE
+
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
