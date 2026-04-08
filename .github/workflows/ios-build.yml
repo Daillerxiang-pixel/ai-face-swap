@@ -64,6 +64,10 @@ jobs:
           echo "Profile UUID: $PROFILE_UUID"
           TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
           echo "Team ID: $TEAM_ID"
+          
+          # Get profile entitlements to check if Sign in with Apple is included
+          echo "=== Profile entitlements ==="
+          /usr/libexec/PlistBuddy -c "Print :Entitlements" provisioning.plist 2>/dev/null || echo "No entitlements key"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
@@ -72,49 +76,40 @@ jobs:
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build Archive & Export IPA
+      - name: Build IPA (automatic signing)
         run: |
-          cd app_temp/ios
-
-          # Step 1: Build Xcode archive directly (skip flutter build ipa)
-          ARCHIVE_PATH="$GITHUB_WORKSPACE/app_temp/build/ios/archive/Runner.xcarchive"
-          mkdir -p "$(dirname "$ARCHIVE_PATH")"
-
-          xcodebuild archive \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath "$ARCHIVE_PATH" \
-            -destination "generic/platform=iOS" \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            | tee "$GITHUB_WORKSPACE/app_temp/build.log"
-
-          echo "=== Archive done ==="
-          ls -la "$ARCHIVE_PATH" || exit 1
-
-          # Step 2: Export IPA
-          EXPORT_PATH="$GITHUB_WORKSPACE/app_temp/build/ios/ipa"
-          mkdir -p "$EXPORT_PATH"
-
-          cat > "$EXPORT_PATH/ExportOptions.plist" << EOF
+          cd app_temp
+          
+          # Use flutter build ipa with automatic signing
+          # Flutter will handle archive + export
+          flutter build ipa \
+            --release \
+            --export-method ad-hoc \
+            2>&1 | tee build.log || true
+          
+          echo "=== Build result ==="
+          ls -la build/ios/ipa/ 2>/dev/null || echo "No ipa dir"
+          ls -la build/ios/archive/ 2>/dev/null || echo "No archive dir"
+          find build/ios -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA found"
+          
+          # If flutter build ipa failed to produce IPA but archive exists,
+          # try manual export with ad-hoc method
+          if [ ! -f "build/ios/ipa/*.ipa" ] && [ -d "build/ios/archive/Runner.xcarchive" ]; then
+            echo "=== Archive exists, trying manual export ==="
+            mkdir -p build/ios/ipa
+            
+            # Try with ad-hoc (no profile needed for ad-hoc)
+            cat > build/ios/ipa/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store-connect</string>
+            <string>ad-hoc</string>
             <key>teamID</key>
             <string>${TEAM_ID}</string>
             <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.aihuantu.faceswap</key>
-              <string>${PROFILE_NAME}</string>
-            </dict>
+            <string>automatic</string>
             <key>stripSwiftSymbols</key>
             <true/>
             <key>uploadBitcode</key>
@@ -124,19 +119,16 @@ jobs:
           </dict>
           </plist>
           EOF
-
-          echo "=== ExportOptions ==="
-          cat "$EXPORT_PATH/ExportOptions.plist"
-
-          xcodebuild -exportArchive \
-            -archivePath "$ARCHIVE_PATH" \
-            -exportOptionsPlist "$EXPORT_PATH/ExportOptions.plist" \
-            -exportPath "$EXPORT_PATH" \
-            | tee -a "$GITHUB_WORKSPACE/app_temp/build.log"
-
-          echo "=== Export result ==="
-          ls -la "$EXPORT_PATH" || true
-          find "$EXPORT_PATH" -name "*.ipa" -exec ls -la {} \; || true
+            
+            xcodebuild -exportArchive \
+              -archivePath build/ios/archive/Runner.xcarchive \
+              -exportOptionsPlist build/ios/ipa/ExportOptions.plist \
+              -exportPath build/ios/ipa \
+              -allowProvisioningUpdates 2>&1 | tee -a build.log
+            
+            echo "=== Manual export result ==="
+            ls -la build/ios/ipa/
+          fi
         timeout-minutes: 30
 
       - name: Upload IPA
