@@ -5,16 +5,23 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'api_service.dart';
 
-/// 订阅套餐常量
+/// 订阅套餐 / 商店商品 ID（iOS 为 App Store Connect ID）
 class SubscriptionProducts {
   SubscriptionProducts._();
 
-  static const String weekly = 'face_swap_weekly';
-  static const String monthly = 'face_swap_monthly';
-  static const String yearly = 'face_swap_yearly';
-  static const String lifetime = '1001';
+  /// App Store：周 / 月 / 年（与后台 plans.apple_product_id、验单 PRODUCT_MAP 一致）
+  static const String weeklyApple = '10001';
+  static const String monthlyApple = '10002';
+  static const String yearlyApple = '10003';
 
-  static const List<String> all = [weekly, monthly, yearly, lifetime];
+  static const List<String> appleStoreIds = [weeklyApple, monthlyApple, yearlyApple];
+
+  /// Google Play 占位（未配置前与旧 ID 对齐，需后台与 Play Console 一致后替换）
+  static const String weeklyAndroid = 'face_swap_weekly';
+  static const String monthlyAndroid = 'face_swap_monthly';
+  static const String yearlyAndroid = 'face_swap_yearly';
+
+  static const List<String> androidStoreIds = [weeklyAndroid, monthlyAndroid, yearlyAndroid];
 }
 
 /// 订阅状态
@@ -54,14 +61,15 @@ class SubscriptionPlanInfo {
   /// 套餐名称
   String get displayName {
     switch (productId) {
-      case SubscriptionProducts.weekly:
-        return 'Weekly';
-      case SubscriptionProducts.monthly:
-        return 'Monthly';
-      case SubscriptionProducts.yearly:
-        return 'Yearly';
-      case SubscriptionProducts.lifetime:
-        return 'Lifetime';
+      case SubscriptionProducts.weeklyApple:
+      case SubscriptionProducts.weeklyAndroid:
+        return 'Weekly Plan';
+      case SubscriptionProducts.monthlyApple:
+      case SubscriptionProducts.monthlyAndroid:
+        return 'Monthly Plan';
+      case SubscriptionProducts.yearlyApple:
+      case SubscriptionProducts.yearlyAndroid:
+        return 'Annual Plan';
       default:
         return title;
     }
@@ -70,12 +78,12 @@ class SubscriptionPlanInfo {
   /// 标签文案
   String? get badge {
     switch (productId) {
-      case SubscriptionProducts.monthly:
+      case SubscriptionProducts.monthlyApple:
+      case SubscriptionProducts.monthlyAndroid:
         return 'Most Popular';
-      case SubscriptionProducts.yearly:
+      case SubscriptionProducts.yearlyApple:
+      case SubscriptionProducts.yearlyAndroid:
         return 'Best Value';
-      case SubscriptionProducts.lifetime:
-        return 'One-time';
       default:
         return null;
     }
@@ -114,10 +122,9 @@ class SubscriptionService with ChangeNotifier {
   bool get isPurchasing => _isPurchasing;
   bool get isAvailable => _storeAvailable ?? false;
 
-  SubscriptionPlanInfo? get weekly => _products[SubscriptionProducts.weekly];
-  SubscriptionPlanInfo? get monthly => _products[SubscriptionProducts.monthly];
-  SubscriptionPlanInfo? get yearly => _products[SubscriptionProducts.yearly];
-  SubscriptionPlanInfo? get lifetime => _products[SubscriptionProducts.lifetime];
+  SubscriptionPlanInfo? get weeklyApple => _products[SubscriptionProducts.weeklyApple];
+  SubscriptionPlanInfo? get monthlyApple => _products[SubscriptionProducts.monthlyApple];
+  SubscriptionPlanInfo? get yearlyApple => _products[SubscriptionProducts.yearlyApple];
 
   /// 初始化：加载产品 + 监听购买更新
   Future<void> initialize() async {
@@ -164,9 +171,16 @@ class SubscriptionService with ChangeNotifier {
     }
   }
 
-  /// 从 App Store 加载产品信息
+  Set<String> get _storeProductIds {
+    if (Platform.isIOS) {
+      return SubscriptionProducts.appleStoreIds.toSet();
+    }
+    return SubscriptionProducts.androidStoreIds.toSet();
+  }
+
+  /// 从应用商店加载产品信息（iOS 仅查询 App Store 商品 ID）
   Future<void> _loadProducts() async {
-    final response = await _iap.queryProductDetails(SubscriptionProducts.all.toSet());
+    final response = await _iap.queryProductDetails(_storeProductIds);
 
     if (response.notFoundIDs.isNotEmpty) {
       debugPrint('[IAP] Products not found: ${response.notFoundIDs}');
@@ -318,7 +332,7 @@ class SubscriptionService with ChangeNotifier {
       final response = await _api.getSubscriptionStatus();
       if (response.success && response.data != null) {
         final data = response.data as Map<String, dynamic>;
-        final isActive = data['active'] == true;
+        final isActive = data['isActive'] == true;
         _status = isActive ? SubscriptionStatus.active : SubscriptionStatus.notSubscribed;
       }
     } catch (_) {

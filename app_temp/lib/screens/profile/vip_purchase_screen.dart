@@ -25,8 +25,9 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   static final List<RechargePlan> _kFallbackPlans = [
     RechargePlan(
       id: 0,
-      name: '周会员',
-      priceWeekly: 9.99,
+      name: 'Weekly Plan',
+      appleProductId: '10001',
+      priceWeekly: 19.99,
       priceMonthly: 0,
       priceYearly: 0,
       monthlyLimit: 80,
@@ -35,7 +36,8 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     ),
     RechargePlan(
       id: 0,
-      name: '月会员',
+      name: 'Monthly Plan',
+      appleProductId: '10002',
       priceWeekly: 0,
       priceMonthly: 39.99,
       priceYearly: 0,
@@ -45,7 +47,8 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     ),
     RechargePlan(
       id: 0,
-      name: '年会员',
+      name: 'Annual Plan',
+      appleProductId: '10003',
       priceWeekly: 0,
       priceMonthly: 0,
       priceYearly: 99.99,
