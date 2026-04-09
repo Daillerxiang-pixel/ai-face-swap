@@ -106,6 +106,7 @@ jobs:
           echo "iOS build number: ${BN}"
           cd ..
           flutter build ipa --release \
+            --dart-define=API_BASE=https://api.deepfaceswap.tech \
             --build-number="${BN}" \
             --export-options-plist=ios/export_options.plist
 
