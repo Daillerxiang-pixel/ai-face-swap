@@ -62,32 +62,20 @@ jobs:
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
           cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
-          
-          # Verify profile installed
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
-          
-          # List all installed profiles
-          echo "=== Installed profiles ==="
-          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            security cms -D -i "$f" 2>/dev/null | grep -A1 "<key>Name</key>" | tail -1 | sed 's/.*<string>//;s/<.*//'
-          done
 
           # Patch Xcode project profile name
           cd app_temp/ios
           sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          echo "=== Profile specifiers ==="
-          grep "PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj
           cd $GITHUB_WORKSPACE
 
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
 
-      - name: Build Archive (Flutter automatic signing)
+      - name: Build Archive
         run: |
           cd app_temp
-          # Build archive only - let Flutter handle archive with automatic signing
           flutter build ipa --export-method app-store 2>&1 | tee build.log || true
 
           if [ ! -d "build/ios/archive/Runner.xcarchive" ]; then
@@ -95,14 +83,13 @@ jobs:
             cat build.log
             exit 1
           fi
-          echo "✓ Archive created: $(du -sh build/ios/archive/Runner.xcarchive)"
+          echo "✓ Archive: $(du -sh build/ios/archive/Runner.xcarchive)"
 
-      - name: Export IPA (manual signing with profile)
+      - name: Export IPA
         run: |
           cd app_temp
           mkdir -p build/ios/ipa
 
-          # Create ExportOptions.plist with manual signing
           cat > build/ios/ipa/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -125,20 +112,44 @@ jobs:
           </plist>
           EOF
 
-          echo "=== ExportOptions ==="
-          cat build/ios/ipa/ExportOptions.plist
-
           xcodebuild -exportArchive \
             -archivePath build/ios/archive/Runner.xcarchive \
             -exportOptionsPlist build/ios/ipa/ExportOptions.plist \
             -exportPath build/ios/ipa \
             2>&1 | tee -a build.log
 
-          echo "=== IPA Output ==="
-          find build/ios/ipa -name "*.ipa" -exec ls -lh {} \; 2>/dev/null || echo "NO IPA FOUND"
-        timeout-minutes: 15
+          echo "=== IPA ==="
+          find build/ios/ipa -name "*.ipa" -exec ls -lh {} \; 2>/dev/null || echo "NO IPA"
 
-      - name: Upload IPA
+      - name: Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: |
+          # Decode API key
+          mkdir -p ~/private_keys
+          echo "$APP_STORE_CONNECT_KEY" | base64 -d > ~/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8
+
+          # Find IPA
+          IPA_PATH=$(find app_temp/build/ios/ipa -name "*.ipa" | head -1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found, skipping upload"
+            exit 0
+          fi
+          echo "Uploading: $IPA_PATH ($(du -sh "$IPA_PATH"))"
+
+          # Upload via altool
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER" \
+            2>&1 | tee -a app_temp/build.log
+
+          echo "✅ Upload complete! Check App Store Connect > TestFlight"
+
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
