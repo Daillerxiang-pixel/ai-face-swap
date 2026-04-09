@@ -97,11 +97,11 @@ jobs:
           security unlock-keychain -p build ~/Library/Keychains/build.keychain-db
           security find-identity -v
 
-          # Fix profile name mismatch: Xcode project uses FaceSwap-AI but profile is faceswap-ai
+          # Fix profile name mismatch
           cd app_temp/ios
           find . -name '*.pbxproj' -exec sed -i '' 's/FaceSwap-AI/faceswap-ai/g' {} +
 
-          # Auto-increment build number using GitHub run_number (unique per run)
+          # Auto-increment build number
           BN="${{ github.run_number }}"
           echo "iOS build number: ${BN}"
           cd ..
@@ -115,11 +115,16 @@ jobs:
           APP_STORE_CONNECT_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
         run: |
-          # Write API key to ALL possible locations altool checks
+          # Decode base64 p8 key and write to all locations altool checks
           mkdir -p ~/.appstoreconnect/private_keys
           mkdir -p ./private_keys
-          echo "$APP_STORE_CONNECT_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
-          echo "$APP_STORE_CONNECT_KEY" > ./private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_KEY" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_KEY" | base64 -d > ./private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+
+          # Verify file
+          echo "Key file content check:"
+          head -1 ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
           IPA=$(find app_temp/build/ios/ipa -name '*.ipa' | head -1)
           echo "Uploading: $IPA"
@@ -133,8 +138,9 @@ jobs:
           if grep -q "No errors uploading" upload.log; then
             echo "✅ Upload successful!"
           else
-            echo "⚠️ Upload may have issues, check log above"
+            echo "❌ Upload failed, full log:"
             cat upload.log
+            exit 1
           fi
 
       - name: Upload IPA artifact
