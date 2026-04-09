@@ -101,7 +101,8 @@ jobs:
           cd app_temp/ios
           find . -name '*.pbxproj' -exec sed -i '' 's/FaceSwap-AI/faceswap-ai/g' {} +
 
-          BN="${IOS_BUILD_NUMBER:-$(date +%s)}"
+          # Auto-increment build number using GitHub run_number (unique per run)
+          BN="${{ github.run_number }}"
           echo "iOS build number: ${BN}"
           cd ..
           flutter build ipa --release \
@@ -114,8 +115,11 @@ jobs:
           APP_STORE_CONNECT_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER }}
           APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
         run: |
+          # Write API key to ALL possible locations altool checks
           mkdir -p ~/.appstoreconnect/private_keys
+          mkdir -p ./private_keys
           echo "$APP_STORE_CONNECT_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          echo "$APP_STORE_CONNECT_KEY" > ./private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
           IPA=$(find app_temp/build/ios/ipa -name '*.ipa' | head -1)
           echo "Uploading: $IPA"
@@ -124,13 +128,13 @@ jobs:
             --type ios \
             --file "$IPA" \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER" \
-            --verbose 2>&1 | tee upload.log
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER" 2>&1 | tee upload.log
 
           if grep -q "No errors uploading" upload.log; then
             echo "✅ Upload successful!"
           else
             echo "⚠️ Upload may have issues, check log above"
+            cat upload.log
           fi
 
       - name: Upload IPA artifact
