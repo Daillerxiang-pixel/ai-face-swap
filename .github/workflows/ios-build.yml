@@ -1,5 +1,7 @@
 name: iOS Build
 
+# 仅构建 iOS IPA（需 macOS + 证书）。Android APK 不在此仓库 CI 中构建，一律本地 flutter build apk。
+# 主仓库已迁 GitLab：iOS 正式 CI 见根目录 .gitlab-ci.yml；本 workflow 仅在有 GitHub 镜像时可选使用。
 on:
   push:
     branches: [main]
@@ -16,9 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16.4
+      - name: Select Xcode version
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.4.app
+          sudo xcode-select -s /Applications/Xcode_16.0.app
           xcodebuild -version
 
       - name: Setup Flutter
@@ -42,6 +44,7 @@ jobs:
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
           echo "$APPLE_CERTIFICATE" | grep -v "^-----" | tr -d '\r' | base64 --decode -o certificate.p12
+          file certificate.p12
 
           security create-keychain -p build ~/Library/Keychains/build.keychain-db
           security set-keychain-settings -lut 21600 ~/Library/Keychains/build.keychain-db
@@ -50,111 +53,65 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k build -s ~/Library/Keychains/build.keychain-db
           security default-keychain -s ~/Library/Keychains/build.keychain-db
           security list-keychains -s ~/Library/Keychains/build.keychain-db
+
           security find-identity -v ~/Library/Keychains/build.keychain-db
 
+          echo "APPLE_PROVISIONING_PROFILE length: ${#APPLE_PROVISIONING_PROFILE}"
           printf '%s' "$APPLE_PROVISIONING_PROFILE" | base64 -d -o provisioning.mobileprovision
+          file provisioning.mobileprovision
+          ls -la provisioning.mobileprovision
 
           security cms -D -i provisioning.mobileprovision -o provisioning.plist
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" provisioning.plist)
+          echo "Profile Name: $PROFILE_NAME"
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" provisioning.plist)
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" provisioning.plist)
-          echo "Profile: $PROFILE_NAME | UUID: $PROFILE_UUID | Team: $TEAM_ID"
+          echo "Profile UUID: $PROFILE_UUID"
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
-          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          cp provisioning.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
 
-          # Patch Xcode project profile name
-          cd app_temp/ios
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = "FaceSwap-AI"/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = FaceSwap-AI/PROVISIONING_PROFILE_SPECIFIER = "'"$PROFILE_NAME"'"/g' Runner.xcodeproj/project.pbxproj
-          cd $GITHUB_WORKSPACE
-
-          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-          echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
 
-      - name: Build Archive
+      - name: Prepare export options
         run: |
           cd app_temp
-          flutter build ipa --export-method app-store 2>&1 | tee build.log || true
+          python3 -c "
+          import plistlib, os
+          plist = {
+              'method': 'app-store',
+              'teamID': 'FDA4AA9W96',
+              'signingStyle': 'manual',
+              'compileBitcode': False,
+              'stripSwiftSymbols': True,
+              'provisioningProfiles': {
+                  'com.aihuantu.faceswap': os.environ['PROFILE_NAME']
+              },
+              'signingCertificate': 'Apple Distribution'
+          }
+          with open('ios/export_options.plist', 'wb') as f:
+              plistlib.dump(plist, f)
+          "
+          cat ios/export_options.plist
 
-          if [ ! -d "build/ios/archive/Runner.xcarchive" ]; then
-            echo "ERROR: Archive not created!"
-            cat build.log
-            exit 1
-          fi
-          echo "✓ Archive: $(du -sh build/ios/archive/Runner.xcarchive)"
-
-      - name: Export IPA
+      - name: Build IPA
         run: |
+          security list-keychains -s ~/Library/Keychains/build.keychain-db
+          security default-keychain -s ~/Library/Keychains/build.keychain-db
+          security unlock-keychain -p build ~/Library/Keychains/build.keychain-db
+          security find-identity -v
+
+          # TestFlight: build 号必须递增；run_number 在新 workflow 上可能小于线上已有 build。默认用 Unix 秒时间戳。
+          BN="${IOS_BUILD_NUMBER:-$(date +%s)}"
+          echo "iOS build number: ${BN}"
           cd app_temp
-          mkdir -p build/ios/ipa
+          flutter build ipa --release \
+            --build-number="${BN}" \
+            --export-options-plist=ios/export_options.plist
 
-          cat > build/ios/ipa/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>${TEAM_ID}</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.aihuantu.faceswap</key>
-              <string>${PROFILE_NAME}</string>
-            </dict>
-            <key>stripSwiftSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-
-          xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportOptionsPlist build/ios/ipa/ExportOptions.plist \
-            -exportPath build/ios/ipa \
-            2>&1 | tee -a build.log
-
-          echo "=== IPA ==="
-          find build/ios/ipa -name "*.ipa" -exec ls -lh {} \; 2>/dev/null || echo "NO IPA"
-
-      - name: Upload to App Store Connect
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER }}
-          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
-        run: |
-          # Decode API key
-          mkdir -p ~/private_keys
-          echo "$APP_STORE_CONNECT_KEY" | base64 -d > ~/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8
-
-          # Find IPA
-          IPA_PATH=$(find app_temp/build/ios/ipa -name "*.ipa" | head -1)
-          if [ -z "$IPA_PATH" ]; then
-            echo "No IPA found, skipping upload"
-            exit 0
-          fi
-          echo "Uploading: $IPA_PATH ($(du -sh "$IPA_PATH"))"
-
-          # Upload via altool
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER" \
-            2>&1 | tee -a app_temp/build.log
-
-          echo "✅ Upload complete! Check App Store Connect > TestFlight"
-
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: app-ipa
-          path: |
-            app_temp/build/ios/ipa/*.ipa
-            app_temp/build.log
-          retention-days: 30
+          name: face-swap-ipa
+          path: app_temp/build/ios/ipa/*.ipa
+          retention-days: 14
