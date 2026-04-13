@@ -15,6 +15,7 @@ class AppleSignInService {
     connectTimeout: AppConfig.apiConnectTimeout,
     receiveTimeout: AppConfig.apiReceiveTimeout,
     sendTimeout: AppConfig.apiSendTimeout,
+    headers: {'X-Client-App': AppConfig.clientApp},
   ));
 
   /// Perform Apple Sign In flow
@@ -35,6 +36,7 @@ class AppleSignInService {
       final response = await _dio.post('/api/auth/apple', data: {
         'identityToken': identityToken,
         'authorizationCode': credential.authorizationCode,
+        'client_app': AppConfig.clientApp,
         if (credential.givenName != null) 'firstName': credential.givenName,
         if (credential.familyName != null) 'lastName': credential.familyName,
         if (credential.email != null) 'email': credential.email,
