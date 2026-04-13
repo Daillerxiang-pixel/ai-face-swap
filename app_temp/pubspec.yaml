@@ -2,7 +2,7 @@ name: face_swap
 description: AI Face Swap — face swap templates and generation
 publish_to: 'none'
 # iOS CFBundleVersion：本地打包会取 + 号后数字；CI 用 --build-number 覆盖。上传 TestFlight 须严格递增。
-version: 1.5.13+55
+version: 1.5.13+58
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -34,6 +34,7 @@ dependencies:
     path: ../packages/auth_suite
   iap_suite:
     path: ../packages/iap_suite
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
