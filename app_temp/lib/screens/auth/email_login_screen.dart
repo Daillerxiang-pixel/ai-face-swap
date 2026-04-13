@@ -67,14 +67,22 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
         response = await _postAuthWithRetry(
           api,
           '/api/auth/register',
-          {'email': email, 'password': password},
+          {
+            'email': email,
+            'password': password,
+            'clientApp': AppConfig.clientApp,
+          },
           authOptions,
         );
       } else {
         response = await _postAuthWithRetry(
           api,
           '/api/auth/login',
-          {'email': email, 'password': password},
+          {
+            'email': email,
+            'password': password,
+            'clientApp': AppConfig.clientApp,
+          },
           authOptions,
         );
       }
