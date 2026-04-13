@@ -215,6 +215,7 @@ class SubscriptionService with ChangeNotifier {
         case PurchaseStatus.pending:
           debugPrint('[IAP] Purchase pending: ${purchaseDetails.productID}');
           _isPurchasing = true;
+          _errorMessage = null;
           notifyListeners();
           break;
 
@@ -222,11 +223,11 @@ class SubscriptionService with ChangeNotifier {
         case PurchaseStatus.restored:
           debugPrint('[IAP] Purchase successful: ${purchaseDetails.productID} (status: ${purchaseDetails.status})');
 
-          // 发送 receipt 到后端验证
           final success = await _verifyReceipt(purchaseDetails);
 
           if (success) {
             _status = SubscriptionStatus.active;
+            _errorMessage = null;
           } else {
             _errorMessage = 'Receipt verification failed';
           }
@@ -234,6 +235,9 @@ class SubscriptionService with ChangeNotifier {
           if (purchaseDetails.pendingCompletePurchase) {
             await _iap.completePurchase(purchaseDetails);
           }
+
+          _isPurchasing = false;
+          notifyListeners();
           break;
 
         case PurchaseStatus.error:
@@ -249,17 +253,16 @@ class SubscriptionService with ChangeNotifier {
         case PurchaseStatus.canceled:
           debugPrint('[IAP] Purchase canceled: ${purchaseDetails.productID}');
           _isPurchasing = false;
+          _errorMessage = null;
           notifyListeners();
           break;
       }
     }
-    _isPurchasing = false;
-    notifyListeners();
   }
 
   /// 购买订阅（非消耗品 / 订阅）
   Future<bool> purchase(String productId) async {
-    if (!_storeAvailable!) {
+    if (_storeAvailable != true) {
       _errorMessage = 'In-App Purchase is not available';
       notifyListeners();
       return false;
@@ -267,7 +270,8 @@ class SubscriptionService with ChangeNotifier {
 
     final plan = _products[productId];
     if (plan == null) {
-      _errorMessage = 'Product not found: $productId';
+      _errorMessage = 'Product not found: $productId. Please check your network and try again.';
+      debugPrint('[IAP] Product "$productId" not in loaded products: ${_products.keys.toList()}');
       notifyListeners();
       return false;
     }
@@ -293,9 +297,14 @@ class SubscriptionService with ChangeNotifier {
     }
   }
 
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   /// 恢复购买
   Future<void> restorePurchases() async {
-    if (!_storeAvailable!) {
+    if (_storeAvailable != true) {
       _errorMessage = 'In-App Purchase is not available';
       return;
     }
