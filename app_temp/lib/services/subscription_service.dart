@@ -128,6 +128,8 @@ class SubscriptionService with ChangeNotifier {
 
   /// 初始化：加载产品 + 监听购买更新
   Future<void> initialize() async {
+    debugPrint('[IAP] initialize() called, platform=${Platform.operatingSystem}');
+
     if (!Platform.isIOS && !Platform.isAndroid) {
       _storeAvailable = false;
       _status = SubscriptionStatus.notSubscribed;
@@ -139,9 +141,10 @@ class SubscriptionService with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 检查 StoreKit 可用性
       _storeAvailable = await _iap.isAvailable();
-      if (!_storeAvailable!) {
+      debugPrint('[IAP] Store available: $_storeAvailable');
+      if (_storeAvailable != true) {
+        debugPrint('[IAP] StoreKit not available — check IAP capability in Xcode and App Store Connect');
         _status = SubscriptionStatus.notSubscribed;
         _isLoading = false;
         notifyListeners();
@@ -153,6 +156,7 @@ class SubscriptionService with ChangeNotifier {
         _handlePurchaseUpdates,
         onDone: () => _subscription = null,
         onError: (error) {
+          debugPrint('[IAP] Purchase stream error: $error');
           _errorMessage = 'Purchase stream error: $error';
           notifyListeners();
         },
@@ -160,10 +164,12 @@ class SubscriptionService with ChangeNotifier {
 
       // 加载产品信息
       await _loadProducts();
+      debugPrint('[IAP] Products loaded: ${_products.keys.toList()}');
 
       // 恢复已有购买
       await restorePurchases();
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[IAP] Initialization failed: $e\n$st');
       _errorMessage = 'Initialization failed: $e';
     } finally {
       _isLoading = false;
