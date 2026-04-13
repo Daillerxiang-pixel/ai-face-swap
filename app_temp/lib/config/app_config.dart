@@ -2,19 +2,22 @@
 class AppConfig {
   AppConfig._();
 
-  /// API 基础地址（**仅由客户端构建时决定环境**，与服务端是否测试/正式无关）。
+  /// API 根地址（**仅由构建时 `dart-define` 决定**；**不要**为测试/正式建 Git 分支）。
   ///
-  /// **推荐做法（两套 APK，服务端同一套代码）：**
-  /// - **测试包**：不设 `API_BASE` 或设为测试 API → 默认 `https://test1.kanashortplay.com`
-  /// - **正式包**：构建时必带  
-  ///   `--dart-define=API_BASE=https://test.kanashortplay.com`
+  /// - **日常 / 测试包**：不传 `API_BASE` → 默认 `https://test1.kanashortplay.com`
+  /// - **正式包（APK / IPA）**：  
+  ///   `--dart-define=API_BASE=https://api.deepfaceswap.tech`
   ///
-  /// 服务端部署测试机 / 正式机时仍用**同一 Git 仓库**；差异只在各机 `server/.env` 与 Nginx，不在 Flutter 里写死「环境名」。
+  /// 与服务端同一套仓库；环境差异只在部署与构建参数，不在客户端分分支。
   static String get apiBaseUrl {
     const fromEnv = String.fromEnvironment('API_BASE', defaultValue: '');
     if (fromEnv.isNotEmpty) return fromEnv;
     return 'https://test1.kanashortplay.com';
   }
+
+  /// 后端 `users.app_code`：与 PhotoKit 等共用 API 时隔离账号；FaceSwap 默认 `faceswap`
+  static const String clientApp =
+      String.fromEnvironment('CLIENT_APP', defaultValue: 'faceswap');
 
   /// 与 [apiBaseUrl] 无关：OSS 公网 Bucket 基址，用于相对路径拼 URL（与后端、控制台 Bucket 一致即可）
   static const String ossBaseUrl = 'https://aihuantu.oss-cn-beijing.aliyuncs.com';
