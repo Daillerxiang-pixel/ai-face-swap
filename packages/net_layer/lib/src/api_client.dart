@@ -24,6 +24,8 @@ class ApiClient {
   ApiClient({
     required String baseUrl,
     TokenGetter? tokenGetter,
+    /// 每个请求附加 `X-Client-App`，与后端 `users.app_code` 对齐（faceswap / photokit / …）
+    String? clientApp,
     Duration connectTimeout = const Duration(seconds: 15),
     Duration receiveTimeout = const Duration(seconds: 30),
   }) {
@@ -32,6 +34,15 @@ class ApiClient {
       connectTimeout: connectTimeout,
       receiveTimeout: receiveTimeout,
     ));
+
+    if (clientApp != null && clientApp.isNotEmpty) {
+      _dio.interceptors.add(InterceptorsWrapper(
+        onRequest: (options, handler) {
+          options.headers['X-Client-App'] = clientApp;
+          handler.next(options);
+        },
+      ));
+    }
 
     // Token 注入拦截器
     if (tokenGetter != null) {
