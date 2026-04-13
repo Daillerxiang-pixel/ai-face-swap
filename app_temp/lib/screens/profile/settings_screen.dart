@@ -3,12 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api_service.dart';
 
 /// 设置页面 — 昵称/头像/自动保存/主题切换
+class _LegalUrls {
+  _LegalUrls._();
+  static String get _base => '${AppConfig.apiBaseUrl}/legal';
+  static String get privacy => '$_base/privacy.html';
+  static String get support => '$_base/support.html';
+  static String get faq => '$_base/support.html#faq';
+  static String get terms => '$_base/privacy.html';
+}
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -34,6 +45,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadVersion() async {
     final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _appVersion = '${info.version}+${info.buildNumber}');
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open: $url')),
+      );
+    }
   }
 
   /// Show edit nickname dialog
@@ -203,6 +225,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.appColors.cardBackground,
+        title: Text('Delete Account', style: TextStyle(color: context.appColors.textPrimary)),
+        content: Text(
+          'This action is irreversible. All your data, history, and subscription will be permanently deleted.',
+          style: TextStyle(color: context.appColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: context.appColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final res = await _api.deleteAccount();
+                if (!mounted) return;
+                if (res.success) {
+                  context.read<UserProvider>().logout();
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res.message ?? 'Failed to delete account')),
+                  );
+                }
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeProvider>();
@@ -280,16 +345,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Support
           _buildGroupTitle('SUPPORT'),
           _buildMenuList([
-            _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6)),
-            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED)),
-            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: context.appColors.textSecondary, iconBg: Color(0x1E8E8E93)),
-            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: context.appColors.textSecondary, iconBg: Color(0x1E8E8E93)),
+            _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6), onTap: () => _openUrl(_LegalUrls.faq)),
+            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED), onTap: () => _openUrl(_LegalUrls.support)),
+            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openUrl(_LegalUrls.terms)),
+            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openUrl(_LegalUrls.privacy)),
+          ]),
+          const SizedBox(height: 24),
+
+          // About
+          _buildGroupTitle('ABOUT'),
+          _buildMenuList([
+            _MenuItem(
+              icon: Icons.info_outline,
+              label: 'About Us',
+              iconColor: const Color(0xFF3B82F6),
+              iconBg: const Color(0x1E3B82F6),
+              onTap: () => _openUrl(_LegalUrls.support),
+            ),
           ]),
           const SizedBox(height: 24),
 
           // Danger
           _buildMenuList([
-            _MenuItem(icon: Icons.delete_outline, label: 'Delete Account', isDanger: true, iconColor: const Color(0xFFFF3B30), iconBg: const Color(0x1EFF3B30)),
+            _MenuItem(icon: Icons.delete_outline, label: 'Delete Account', isDanger: true, iconColor: const Color(0xFFFF3B30), iconBg: const Color(0x1EFF3B30), onTap: _showDeleteAccountDialog),
           ]),
           const SizedBox(height: 16),
 
