@@ -1,0 +1,34 @@
+---
+description: CI/CD workflow files are maintained by ops — do not modify
+globs: ["**/.github/workflows/**", "**/.gitlab-ci.yml", "**/codemagic.yaml", "**/Fastfile", "**/Appfile", "**/fastlane/**"]
+alwaysApply: true
+---
+
+# CI/CD 工作流文件（运维专人维护，禁止修改）
+
+## 核心原则
+
+开发新版本时，**只做 Flutter 代码层面的修改**。如无必要，不要修改任何 CI/CD 工作流文件。
+
+## 禁止修改的文件
+
+- `.github/workflows/` 下所有文件
+- `.gitlab-ci.yml`
+- `codemagic.yaml`
+- `fastlane/` 下所有文件
+
+这些文件由**运维团队专人维护**，日常功能开发**不得修改**。
+
+## 开发者职责范围
+
+- `lib/` — Flutter/Dart 业务代码 ✅
+- `pubspec.yaml` — 依赖管理 ✅
+- `ios/Runner/` — Info.plist、entitlements 等 iOS 项目配置 ✅（需谨慎）
+- `android/app/` — AndroidManifest 等 Android 项目配置 ✅（需谨慎）
+- `public/` — 静态资源和法律文件 ✅
+
+## 遇到 CI/CD 问题时
+
+- 不要自行修改 workflow 文件
+- 记录需要的变更内容，提交给运维团队处理
+- 在代码提交信息中标注「CI 需运维配合调整」
