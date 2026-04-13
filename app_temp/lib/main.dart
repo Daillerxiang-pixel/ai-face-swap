@@ -36,43 +36,6 @@ class FaceSwapApp extends StatefulWidget {
 }
 
 class _FaceSwapAppState extends State<FaceSwapApp> {
-  UserProvider? _userProvider;
-  SubscriptionService? _subscriptionService;
-
-  @override
-  void initState() {
-    super.initState();
-    // One-time theme sync from user settings after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = context.read<UserProvider>();
-      final themeProvider = context.read<ThemeProvider>();
-      final subscriptionService = context.read<SubscriptionService>();
-      _userProvider = userProvider;
-      _subscriptionService = subscriptionService;
-      if (userProvider.user != null) {
-        themeProvider.initFromUser(userProvider.user?.theme);
-      }
-      // Also listen for future user loads (e.g., after login)
-      userProvider.addListener(_onUserChanged);
-      // Initialize IAP service
-      subscriptionService.initialize();
-    });
-  }
-
-  void _onUserChanged() {
-    final userProvider = _userProvider;
-    if (userProvider != null && userProvider.user != null) {
-      context.read<ThemeProvider>().initFromUser(userProvider.user?.theme);
-    }
-  }
-
-  @override
-  void dispose() {
-    _userProvider?.removeListener(_onUserChanged);
-    _subscriptionService?.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -81,7 +44,11 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
         ChangeNotifierProvider(create: (_) => TemplateProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => GenerationProvider()),
-        ChangeNotifierProvider(create: (_) => SubscriptionService()),
+        ChangeNotifierProvider(create: (_) {
+          final svc = SubscriptionService();
+          svc.initialize();
+          return svc;
+        }),
       ],
       child: const _ThemedApp(),
     );
@@ -91,14 +58,47 @@ class _FaceSwapAppState extends State<FaceSwapApp> {
 /// Handles theme mode binding without rebuilding the entire widget tree on every notification.
 /// Only MaterialApp rebuilds when themeMode changes, and Flutter's internal theme system
 /// efficiently propagates color changes to child widgets via inheritedTheme.
-class _ThemedApp extends StatelessWidget {
+class _ThemedApp extends StatefulWidget {
   const _ThemedApp();
 
   @override
+  State<_ThemedApp> createState() => _ThemedAppState();
+}
+
+class _ThemedAppState extends State<_ThemedApp> {
+  UserProvider? _userProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final userProvider = context.read<UserProvider>();
+      final themeProvider = context.read<ThemeProvider>();
+      _userProvider = userProvider;
+      if (userProvider.user != null) {
+        themeProvider.initFromUser(userProvider.user?.theme);
+      }
+      userProvider.addListener(_onUserChanged);
+    });
+  }
+
+  void _onUserChanged() {
+    if (!mounted) return;
+    final user = _userProvider?.user;
+    if (user != null) {
+      context.read<ThemeProvider>().initFromUser(user.theme);
+    }
+  }
+
+  @override
+  void dispose() {
+    _userProvider?.removeListener(_onUserChanged);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This is the ONLY widget that rebuilds on themeMode change.
-    // Child widgets using Theme.of(context) or context.appColors will
-    // also rebuild efficiently through Flutter's inherited widget mechanism.
     final themeMode = context.select<ThemeProvider, ThemeMode>(
       (provider) => provider.themeMode,
     );
