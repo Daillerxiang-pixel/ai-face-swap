@@ -327,6 +327,17 @@ class ApiService {
     return ApiResponse.fromJson(response.data, (data) => data);
   }
 
+  /// 向后端发送 IAP 诊断日志（TestFlight 看不到 debugPrint，通过此接口上报）
+  Future<void> iapDiagnose(String step, {String detail = '', String error = ''}) async {
+    try {
+      await _dio.post('/api/subscription/diagnose', data: {
+        'step': step,
+        'detail': detail,
+        'error': error,
+      });
+    } catch (_) {}
+  }
+
   /// 获取当前订阅状态
   Future<ApiResponse> getSubscriptionStatus() async {
     final response = await _dio.get('/api/subscription/status');

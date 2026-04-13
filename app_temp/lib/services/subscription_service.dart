@@ -339,41 +339,92 @@ class SubscriptionService with ChangeNotifier {
   }
 
   /// 将 receipt 发送到后端验证
+  /// 关键步骤通过 /api/subscription/diagnose 上报到服务端日志（TestFlight 看不到 debugPrint）
   Future<_VerifyResult> _verifyReceipt(PurchaseDetails purchaseDetails) async {
+    final productId = purchaseDetails.productID;
+    final txId = purchaseDetails.purchaseID ?? '';
+
+    await _api.iapDiagnose('verify_start',
+        detail: 'product=$productId, txId=$txId');
+
     try {
-      String receiptData;
+      String receiptData = '';
+      String receiptSource = 'none';
 
       if (Platform.isIOS) {
-        // in_app_purchase 3.x 默认使用 StoreKit 2，localVerificationData 是 JWS token，
-        // Apple verifyReceipt 端点不接受 JWS。通过 SKReceiptManager 获取标准 App Store receipt。
+        // ── 来源 1: SKReceiptManager（标准 App Store receipt，兼容 verifyReceipt 端点）
         try {
-          receiptData = await SKReceiptManager.retrieveReceiptData();
-          debugPrint('[IAP] Got receipt from SKReceiptManager, length=${receiptData.length}');
+          final skReceipt = await SKReceiptManager.retrieveReceiptData();
+          if (skReceipt.isNotEmpty) {
+            receiptData = skReceipt;
+            receiptSource = 'SKReceiptManager';
+          }
+          await _api.iapDiagnose('sk_receipt',
+              detail: 'length=${skReceipt.length}, empty=${skReceipt.isEmpty}');
         } catch (e) {
-          debugPrint('[IAP] SKReceiptManager failed ($e), falling back to localVerificationData');
-          receiptData = purchaseDetails.verificationData.localVerificationData;
+          await _api.iapDiagnose('sk_receipt_error', error: '$e');
+        }
+
+        // ── 来源 2: serverVerificationData
+        if (receiptData.isEmpty) {
+          try {
+            final svd = purchaseDetails.verificationData.serverVerificationData;
+            if (svd.isNotEmpty) {
+              receiptData = svd;
+              receiptSource = 'serverVerificationData';
+            }
+            await _api.iapDiagnose('server_vd',
+                detail: 'length=${svd.length}, empty=${svd.isEmpty}');
+          } catch (e) {
+            await _api.iapDiagnose('server_vd_error', error: '$e');
+          }
+        }
+
+        // ── 来源 3: localVerificationData（StoreKit 2 下是 JWS，StoreKit 1 下是 receipt）
+        if (receiptData.isEmpty) {
+          try {
+            final lvd = purchaseDetails.verificationData.localVerificationData;
+            if (lvd.isNotEmpty) {
+              receiptData = lvd;
+              receiptSource = 'localVerificationData';
+            }
+            await _api.iapDiagnose('local_vd',
+                detail: 'length=${lvd.length}, empty=${lvd.isEmpty}');
+          } catch (e) {
+            await _api.iapDiagnose('local_vd_error', error: '$e');
+          }
         }
       } else {
         receiptData = purchaseDetails.verificationData.localVerificationData;
+        receiptSource = 'localVerificationData';
       }
+
+      await _api.iapDiagnose('receipt_resolved',
+          detail: 'source=$receiptSource, length=${receiptData.length}');
 
       if (receiptData.isEmpty) {
-        return _VerifyResult(false, 'Receipt data is empty');
+        await _api.iapDiagnose('receipt_empty', error: 'All sources returned empty');
+        return _VerifyResult(false, 'Receipt data is empty from all sources');
       }
 
+      // ── 发送到后端验证
       final response = await _api.verifySubscription(
-        productId: purchaseDetails.productID,
+        productId: productId,
         receiptData: receiptData,
-        transactionId: purchaseDetails.purchaseID ?? '',
+        transactionId: txId,
       );
+
+      await _api.iapDiagnose('verify_response',
+          detail: 'success=${response.success}, msg=${response.message ?? ""}');
 
       if (response.success == true) {
         return _VerifyResult(true, null);
       }
       return _VerifyResult(false, response.message ?? 'Server rejected receipt');
     } catch (e) {
+      await _api.iapDiagnose('verify_exception', error: '$e');
       debugPrint('[IAP] Receipt verification error: $e');
-      return _VerifyResult(false, 'Network error: $e');
+      return _VerifyResult(false, 'Verify error: $e');
     }
   }
 
