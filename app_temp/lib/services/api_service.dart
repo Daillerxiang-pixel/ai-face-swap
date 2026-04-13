@@ -60,12 +60,20 @@ class ApiService {
       validateStatus: (status) => status != null && status < 500,
     ));
 
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.headers['X-Client-App'] = AppConfig.clientApp;
+        handler.next(options);
+      },
+    ));
+
     // 请求拦截器 — 自动附加 token（登录/注册不得带旧 Token，否则部分环境下会 401 导致无法登录）
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final p = options.uri.path;
         final isAnonymousAuth = p.contains('/api/auth/login') ||
-            p.contains('/api/auth/register');
+            p.contains('/api/auth/register') ||
+            p.contains('/api/auth/apple');
         if (isAnonymousAuth) {
           options.headers.remove('Authorization');
         } else {
