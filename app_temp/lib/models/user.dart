@@ -52,8 +52,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     final tier = json['subscription_tier']?.toString();
-    final vipFromTier =
-        tier == 'monthly' || tier == 'yearly' || tier == 'professional';
+    final vipFromTier = tier != null && tier != 'free' && tier.isNotEmpty;
     final expireAt = json['vipExpireAt'] != null
         ? DateTime.tryParse(json['vipExpireAt'].toString())
         : (json['subscription_expires_at'] != null

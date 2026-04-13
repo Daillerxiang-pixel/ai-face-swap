@@ -34,7 +34,7 @@ dependencies:
     path: ../packages/auth_suite
   iap_suite:
     path: ../packages/iap_suite
-  url_launcher: ^6.3.1
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
@@ -45,3 +45,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/legal/

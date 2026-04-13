@@ -3,21 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../config/app_config.dart';
 import '../../config/theme.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api_service.dart';
+import '../common/webview_screen.dart';
 
 /// 设置页面 — 昵称/头像/自动保存/主题切换
-class _LegalUrls {
-  _LegalUrls._();
-  static String get _base => '${AppConfig.apiBaseUrl}/legal';
-  static String get privacy => '$_base/privacy.html';
-  static String get support => '$_base/support.html';
-  static String get faq => '$_base/support.html#faq';
-  static String get terms => '$_base/privacy.html';
+class _LegalAssets {
+  _LegalAssets._();
+  static const privacy = 'assets/legal/privacy.html';
+  static const support = 'assets/legal/support.html';
 }
 
 class SettingsScreen extends StatefulWidget {
@@ -47,15 +43,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) setState(() => _appVersion = '${info.version}+${info.buildNumber}');
   }
 
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open: $url')),
-      );
-    }
+  void _openPage(String title, {String? assetPath, String? url}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WebViewScreen(
+          title: title,
+          assetPath: assetPath,
+          url: url,
+        ),
+      ),
+    );
   }
 
   /// Show edit nickname dialog
@@ -345,10 +343,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Support
           _buildGroupTitle('SUPPORT'),
           _buildMenuList([
-            _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6), onTap: () => _openUrl(_LegalUrls.faq)),
-            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED), onTap: () => _openUrl(_LegalUrls.support)),
-            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openUrl(_LegalUrls.terms)),
-            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openUrl(_LegalUrls.privacy)),
+            _MenuItem(icon: Icons.help_outline, label: 'FAQ', iconColor: const Color(0xFF3B82F6), iconBg: const Color(0x1E3B82F6), onTap: () => _openPage('FAQ', assetPath: _LegalAssets.support)),
+            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Contact Us', iconColor: AppTheme.primary, iconBg: const Color(0x1E7C3AED), onTap: () => _openPage('Contact Us', assetPath: _LegalAssets.support)),
+            _MenuItem(icon: Icons.description_outlined, label: 'Terms of Service', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openPage('Terms of Service', assetPath: _LegalAssets.privacy)),
+            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', iconColor: context.appColors.textSecondary, iconBg: const Color(0x1E8E8E93), onTap: () => _openPage('Privacy Policy', assetPath: _LegalAssets.privacy)),
           ]),
           const SizedBox(height: 24),
 
@@ -360,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'About Us',
               iconColor: const Color(0xFF3B82F6),
               iconBg: const Color(0x1E3B82F6),
-              onTap: () => _openUrl(_LegalUrls.support),
+              onTap: () => _openPage('About Us', assetPath: _LegalAssets.support),
             ),
           ]),
           const SizedBox(height: 24),

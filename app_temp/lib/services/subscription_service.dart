@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'api_service.dart';
 
@@ -295,6 +296,19 @@ class SubscriptionService with ChangeNotifier {
         notifyListeners();
       }
       return success;
+    } on PlatformException catch (e) {
+      // StoreKit 2: user tapped Cancel on the payment sheet
+      if (e.code == 'storekit2_purchase_cancelled') {
+        debugPrint('[IAP] User cancelled purchase for $productId');
+        _isPurchasing = false;
+        _errorMessage = null;
+        notifyListeners();
+        return false;
+      }
+      _errorMessage = 'Purchase error: ${e.message ?? e.code}';
+      _isPurchasing = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _errorMessage = 'Purchase error: $e';
       _isPurchasing = false;

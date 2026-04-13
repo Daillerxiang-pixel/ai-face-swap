@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/recharge_plan.dart';
+import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/subscription_service.dart';
 
@@ -121,9 +122,11 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
           if (!mounted) return;
           if (iap.status != _lastStatus) {
             if (iap.status == SubscriptionStatus.active) {
+              // 刷新用户信息（同步 isVip / remainCredits 等）
+              context.read<UserProvider>().loadUserProfile();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🎉 Subscription activated!'),
+                  content: Text('Subscription activated!'),
                   backgroundColor: Color(0xFF34C759),
                 ),
               );
