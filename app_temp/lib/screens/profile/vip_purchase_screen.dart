@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
@@ -58,8 +61,26 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     ),
   ];
 
-  List<RechargePlan> get _effectivePlans =>
-      (_serverPlans != null && _serverPlans!.isNotEmpty) ? _serverPlans! : _kFallbackPlans;
+  static List<RechargePlan> _plansForDisplay(List<RechargePlan> base) {
+    if (kIsWeb) return base;
+    try {
+      if (Platform.isIOS) {
+        final apple = base
+            .where((p) =>
+                p.appleProductId != null && p.appleProductId!.trim().isNotEmpty)
+            .toList();
+        if (apple.isNotEmpty) return apple;
+      }
+    } catch (_) {}
+    return base;
+  }
+
+  /// iOS 仅展示带 `apple_product_id` 的套餐（与 App Store 一一对应）；其它平台用全部套餐。
+  List<RechargePlan> get _effectivePlans => _plansForDisplay(
+        (_serverPlans != null && _serverPlans!.isNotEmpty)
+            ? _serverPlans!
+            : _kFallbackPlans,
+      );
 
   @override
   void initState() {
@@ -76,11 +97,12 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     if (!mounted) return;
     if (res.success && res.data != null && res.data!.isNotEmpty) {
       final list = res.data!;
+      final display = _plansForDisplay(list);
       setState(() {
         _serverPlans = list;
         _plansLoading = false;
-        if (_selectedPlan >= list.length) {
-          _selectedPlan = list.length > 1 ? 1 : 0;
+        if (_selectedPlan >= display.length) {
+          _selectedPlan = display.length > 1 ? 1 : 0;
         }
       });
     } else {
@@ -96,6 +118,7 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
     return Consumer<SubscriptionService>(
       builder: (context, iap, _) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           if (iap.status != _lastStatus) {
             if (iap.status == SubscriptionStatus.active) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -108,9 +131,11 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
             _lastStatus = iap.status;
           }
           if (iap.errorMessage != null && !iap.isPurchasing) {
+            final msg = iap.errorMessage!;
+            iap.clearError();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Purchase failed: ${iap.errorMessage}'),
+                content: Text('Purchase failed: $msg'),
                 backgroundColor: Colors.red,
               ),
             );
