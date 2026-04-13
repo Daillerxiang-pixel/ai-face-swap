@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_storekit/store_kit_wrappers.dart';
 import 'api_service.dart';
 
 /// 订阅套餐 / 商店商品 ID（iOS 为 App Store Connect ID）
@@ -230,13 +231,14 @@ class SubscriptionService with ChangeNotifier {
         case PurchaseStatus.restored:
           debugPrint('[IAP] Purchase successful: ${purchaseDetails.productID} (status: ${purchaseDetails.status})');
 
-          final success = await _verifyReceipt(purchaseDetails);
+          final verifyResult = await _verifyReceipt(purchaseDetails);
 
-          if (success) {
+          if (verifyResult.success) {
             _status = SubscriptionStatus.active;
             _errorMessage = null;
           } else {
-            _errorMessage = 'Receipt verification failed';
+            _errorMessage = verifyResult.errorMessage ?? 'Receipt verification failed';
+            debugPrint('[IAP] Verify failed: ${verifyResult.errorMessage}');
           }
 
           if (purchaseDetails.pendingCompletePurchase) {
@@ -337,10 +339,27 @@ class SubscriptionService with ChangeNotifier {
   }
 
   /// 将 receipt 发送到后端验证
-  Future<bool> _verifyReceipt(PurchaseDetails purchaseDetails) async {
+  Future<_VerifyResult> _verifyReceipt(PurchaseDetails purchaseDetails) async {
     try {
-      // iOS: localVerificationData = base64-encoded App Store receipt
-      final receiptData = purchaseDetails.verificationData.localVerificationData;
+      String receiptData;
+
+      if (Platform.isIOS) {
+        // in_app_purchase 3.x 默认使用 StoreKit 2，localVerificationData 是 JWS token，
+        // Apple verifyReceipt 端点不接受 JWS。通过 SKReceiptManager 获取标准 App Store receipt。
+        try {
+          receiptData = await SKReceiptManager.retrieveReceiptData();
+          debugPrint('[IAP] Got receipt from SKReceiptManager, length=${receiptData.length}');
+        } catch (e) {
+          debugPrint('[IAP] SKReceiptManager failed ($e), falling back to localVerificationData');
+          receiptData = purchaseDetails.verificationData.localVerificationData;
+        }
+      } else {
+        receiptData = purchaseDetails.verificationData.localVerificationData;
+      }
+
+      if (receiptData.isEmpty) {
+        return _VerifyResult(false, 'Receipt data is empty');
+      }
 
       final response = await _api.verifySubscription(
         productId: purchaseDetails.productID,
@@ -348,10 +367,13 @@ class SubscriptionService with ChangeNotifier {
         transactionId: purchaseDetails.purchaseID ?? '',
       );
 
-      return response.success == true;
+      if (response.success == true) {
+        return _VerifyResult(true, null);
+      }
+      return _VerifyResult(false, response.message ?? 'Server rejected receipt');
     } catch (e) {
       debugPrint('[IAP] Receipt verification error: $e');
-      return false;
+      return _VerifyResult(false, 'Network error: $e');
     }
   }
 
@@ -375,4 +397,10 @@ class SubscriptionService with ChangeNotifier {
     _subscription?.cancel();
     super.dispose();
   }
+}
+
+class _VerifyResult {
+  final bool success;
+  final String? errorMessage;
+  _VerifyResult(this.success, this.errorMessage);
 }
