@@ -30,6 +30,9 @@ class User {
   /// 后端直接返回的 isVip（与 subscription_* 并存时优先参考）
   final bool isVipServerHint;
 
+  /// 订阅层级：free / weekly / monthly / yearly
+  final String subscriptionTier;
+
   User({
     required this.id,
     this.nickname,
@@ -42,6 +45,7 @@ class User {
     this.autoSave = true,
     this.theme = 'dark',
     this.isVipServerHint = false,
+    this.subscriptionTier = 'free',
   });
 
   /// 是否为VIP用户
@@ -49,6 +53,22 @@ class User {
       isVipServerHint ||
       (vipLevel ?? 0) > 0 ||
       (vipExpireAt != null && vipExpireAt!.isAfter(DateTime.now()));
+
+  /// 会员级别显示名称
+  String get tierDisplayName {
+    switch (subscriptionTier) {
+      case 'weekly':
+        return 'Weekly VIP';
+      case 'monthly':
+        return 'Monthly VIP';
+      case 'yearly':
+        return 'Annual VIP';
+      case 'lifetime':
+        return 'Lifetime VIP';
+      default:
+        return isVip ? 'VIP Member' : 'Free Plan';
+    }
+  }
 
   factory User.fromJson(Map<String, dynamic> json) {
     final tier = json['subscription_tier']?.toString();
@@ -71,6 +91,7 @@ class User {
       autoSave: _toBool(json['auto_save'] ?? 1),
       theme: json['theme']?.toString() ?? 'dark',
       isVipServerHint: json['isVip'] == true,
+      subscriptionTier: tier ?? 'free',
     );
   }
 

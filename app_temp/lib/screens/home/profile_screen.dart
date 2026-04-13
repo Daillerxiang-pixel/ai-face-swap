@@ -36,6 +36,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     HomeScreen.tabController?.animateTo(index);
   }
 
+  static Color _tierColor(String tier) {
+    switch (tier) {
+      case 'weekly':
+        return const Color(0xFFF59E0B);
+      case 'monthly':
+        return const Color(0xFFEC4899);
+      case 'yearly':
+      case 'lifetime':
+        return const Color(0xFF8B5CF6);
+      default:
+        return const Color(0xFF3B82F6);
+    }
+  }
+
   Future<void> _handleSignIn() async {
     final result = await Navigator.pushNamed(context, '/login');
     if (result == true) {
@@ -133,19 +147,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             }),
                             const SizedBox(height: 4),
                             Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+                              final user = userProvider.user;
                               final isVip = userProvider.isVip;
+                              final tierLabel = user?.tierDisplayName ?? 'Free Plan';
+                              final tierColor = _tierColor(user?.subscriptionTier ?? 'free');
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: isVip
-                                      ? const Color(0xFFF59E0B).withOpacity(0.15)
-                                      : const Color(0xFF3B82F6).withOpacity(0.15),
+                                  color: tierColor.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  isVip ? 'VIP Member' : 'Free Plan',
+                                  tierLabel,
                                   style: TextStyle(
-                                    color: isVip ? const Color(0xFFF59E0B) : const Color(0xFF3B82F6),
+                                    color: tierColor,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -280,65 +295,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildVipCard(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const VipPurchaseScreen()),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            begin: Alignment(-1, -1),
-            end: Alignment(1, 1),
-            colors: [Color(0xFF4A2D7A), Color(0xFF2D1B4E)],
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.workspace_premium, color: Color(0xFFF59E0B), size: 22),
+    return Consumer<UserProvider>(builder: (ctx, userProvider, _) {
+      final isVip = userProvider.isVip;
+      final user = userProvider.user;
+      final tierLabel = user?.tierDisplayName ?? 'Free Plan';
+
+      return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const VipPurchaseScreen()),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: const Alignment(-1, -1),
+              end: const Alignment(1, 1),
+              colors: isVip
+                  ? [const Color(0xFF7C3AED), const Color(0xFF4A2D7A)]
+                  : [const Color(0xFF4A2D7A), const Color(0xFF2D1B4E)],
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Upgrade to VIP',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.workspace_premium, color: Color(0xFFF59E0B), size: 22),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isVip ? tierLabel : 'Upgrade to VIP',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Unlimited swaps & premium templates',
-                      style: TextStyle(
-                        color: Color(0x99FFFFFF),
-                        fontSize: 12,
+                      const SizedBox(height: 2),
+                      Text(
+                        isVip
+                            ? 'Manage your subscription'
+                            : 'Unlimited swaps & premium templates',
+                        style: const TextStyle(
+                          color: Color(0x99FFFFFF),
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.white54),
-          ],
+              const Icon(Icons.chevron_right, color: Colors.white54),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildMenu(BuildContext context) {
