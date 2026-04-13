@@ -117,6 +117,9 @@ class SubscriptionService with ChangeNotifier {
   /// 购买中标识
   bool _isPurchasing = false;
 
+  /// 已处理的 transactionId 集合（防止 purchaseStream + restorePurchases 重复触发验证）
+  final Set<String> _processedTxIds = {};
+
   Map<String, SubscriptionPlanInfo> get products => _products;
   SubscriptionStatus get status => _status;
   bool get isLoading => _isLoading;
@@ -219,6 +222,8 @@ class SubscriptionService with ChangeNotifier {
   /// 处理购买状态更新
   Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchaseDetailsList) async {
     for (final purchaseDetails in purchaseDetailsList) {
+      final txId = purchaseDetails.purchaseID ?? '';
+
       switch (purchaseDetails.status) {
         case PurchaseStatus.pending:
           debugPrint('[IAP] Purchase pending: ${purchaseDetails.productID}');
@@ -229,7 +234,17 @@ class SubscriptionService with ChangeNotifier {
 
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
-          debugPrint('[IAP] Purchase successful: ${purchaseDetails.productID} (status: ${purchaseDetails.status})');
+          // 防重: purchaseStream 和 restorePurchases 可能对同一笔交易多次回调
+          if (txId.isNotEmpty && _processedTxIds.contains(txId)) {
+            debugPrint('[IAP] Skipping duplicate txId=$txId');
+            if (purchaseDetails.pendingCompletePurchase) {
+              await _iap.completePurchase(purchaseDetails);
+            }
+            break;
+          }
+          if (txId.isNotEmpty) _processedTxIds.add(txId);
+
+          debugPrint('[IAP] Purchase successful: ${purchaseDetails.productID} (status: ${purchaseDetails.status}, txId: $txId)');
 
           final verifyResult = await _verifyReceipt(purchaseDetails);
 
@@ -403,11 +418,11 @@ class SubscriptionService with ChangeNotifier {
           detail: 'source=$receiptSource, length=${receiptData.length}');
 
       if (receiptData.isEmpty) {
-        await _api.iapDiagnose('receipt_empty', error: 'All sources returned empty');
-        return _VerifyResult(false, 'Receipt data is empty from all sources');
+        await _api.iapDiagnose('receipt_empty_using_txid',
+            detail: 'txId=$txId, product=$productId — will use Server API v2');
       }
 
-      // ── 发送到后端验证
+      // 发送到后端验证（receipt 为空时后端走 transactionId Server API v2 验证）
       final response = await _api.verifySubscription(
         productId: productId,
         receiptData: receiptData,
