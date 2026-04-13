@@ -354,6 +354,11 @@ class ApiService {
     }
   }
 
+  Future<ApiResponse> deleteAccount() async {
+    final response = await _dio.delete('/api/user/account');
+    return ApiResponse.fromJson(response.data, (data) => data);
+  }
+
   bool _isWriteMethod(String method) {
     return method == 'POST' || method == 'PUT' || method == 'DELETE' || method == 'PATCH';
   }
