@@ -7,6 +7,7 @@ import '../../config/theme.dart';
 import '../../models/recharge_plan.dart';
 import '../../providers/user_provider.dart';
 import '../../services/api_service.dart';
+import '../../screens/common/webview_screen.dart';
 import '../../services/subscription_service.dart';
 
 /// VIP 购买页面（套餐文案与标价来自服务端 `/api/plans`，支付仍走 App Store IAP）
