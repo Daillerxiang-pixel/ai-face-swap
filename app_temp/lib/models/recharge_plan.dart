@@ -81,18 +81,18 @@ class RechargePlan {
     return 'face_swap_monthly';
   }
 
-  /// 服务端标价展示（App Store 有本地化价格时优先用商店价）。
+  /// Fallback price label when the store price is not yet loaded (English UI).
   String get referencePriceLabel {
-    if (priceWeekly > 0) return '¥${priceWeekly.toStringAsFixed(2)}';
-    if (priceMonthly > 0) return '¥${priceMonthly.toStringAsFixed(2)}';
-    if (priceYearly > 0) return '¥${priceYearly.toStringAsFixed(2)}';
+    if (priceWeekly > 0) return '\$${priceWeekly.toStringAsFixed(2)}';
+    if (priceMonthly > 0) return '\$${priceMonthly.toStringAsFixed(2)}';
+    if (priceYearly > 0) return '\$${priceYearly.toStringAsFixed(2)}';
     return '—';
   }
 
   String get periodHint {
-    if (priceWeekly > 0) return '/周';
-    if (priceMonthly > 0) return '/月';
-    if (priceYearly > 0) return '/年';
+    if (priceWeekly > 0) return '/wk';
+    if (priceMonthly > 0) return '/mo';
+    if (priceYearly > 0) return '/yr';
     return '';
   }
 

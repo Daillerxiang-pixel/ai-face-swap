@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
@@ -21,6 +22,9 @@ class VipPurchaseScreen extends StatefulWidget {
 class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   int _selectedPlan = 1;
   SubscriptionStatus _lastStatus = SubscriptionStatus.unknown;
+
+  late final TapGestureRecognizer _termsTap;
+  late final TapGestureRecognizer _privacyTap;
 
   List<RechargePlan>? _serverPlans;
   bool _plansLoading = true;
@@ -87,7 +91,18 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
   @override
   void initState() {
     super.initState();
+    _termsTap = TapGestureRecognizer()
+      ..onTap = () => _openLegalAsset('Terms of Service', 'assets/legal/terms.html');
+    _privacyTap = TapGestureRecognizer()
+      ..onTap = () => _openLegalAsset('Privacy Policy', 'assets/legal/privacy.html');
     _loadServerPlans();
+  }
+
+  @override
+  void dispose() {
+    _termsTap.dispose();
+    _privacyTap.dispose();
+    super.dispose();
   }
 
   Future<void> _loadServerPlans() async {
@@ -327,94 +342,124 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
               ),
             )
           else
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: List.generate(plans.length, (i) {
-                final cfg = plans[i];
-                final productId = cfg.iapProductId;
-                final store = iap.products[productId];
-                final isSelected = _selectedPlan == i;
-                final isYearly = cfg.priceYearly > 0;
-
-                final name = cfg.name.isNotEmpty ? cfg.name : (store?.displayName ?? '');
-                final price = store?.price ?? cfg.referencePriceLabel;
-                final badgeFromServer = cfg.badgeForIndex(i, plans.length);
-                final badge = badgeFromServer.isNotEmpty
-                    ? badgeFromServer
-                    : (store?.badge ?? '');
-
-                return SizedBox(
-                  width: (MediaQuery.of(context).size.width - 50) / 2,
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedPlan = i),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.primary
-                              : context.appColors.surfaceBackground,
-                          width: 1.5,
-                        ),
-                        color: isYearly
-                            ? const Color(0xFFF59E0B).withOpacity(0.1)
-                            : isSelected
-                                ? AppTheme.primary.withOpacity(0.15)
-                                : context.appColors.cardBackground,
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 13,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            price,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            cfg.periodHint,
-                            style: const TextStyle(
-                              color: AppTheme.textTertiary,
-                              fontSize: 11,
-                            ),
-                          ),
-                          if (badge.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              badge,
-                              style: TextStyle(
-                                color: isYearly
-                                    ? const Color(0xFFF59E0B)
-                                    : isSelected
-                                        ? AppTheme.primary
-                                        : const Color(0xFF34C759),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < plans.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildPlanTile(
+                      context: context,
+                      cfg: plans[i],
+                      iap: iap,
+                      index: i,
+                      planCount: plans.length,
                     ),
                   ),
-                );
-              }),
+                ],
+              ],
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlanTile({
+    required BuildContext context,
+    required RechargePlan cfg,
+    required SubscriptionService iap,
+    required int index,
+    required int planCount,
+  }) {
+    final productId = cfg.iapProductId;
+    final store = iap.products[productId];
+    final isSelected = _selectedPlan == index;
+    final isYearly = cfg.priceYearly > 0;
+
+    final name = cfg.name.isNotEmpty ? cfg.name : (store?.displayName ?? '');
+    final price = store?.price ?? cfg.referencePriceLabel;
+    final badgeFromServer = cfg.badgeForIndex(index, planCount);
+    final badge = badgeFromServer.isNotEmpty
+        ? badgeFromServer
+        : (store?.badge ?? '');
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPlan = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? AppTheme.primary
+                : context.appColors.surfaceBackground,
+            width: 1.5,
+          ),
+          color: isYearly
+              ? const Color(0xFFF59E0B).withOpacity(0.1)
+              : isSelected
+                  ? AppTheme.primary.withOpacity(0.15)
+                  : context.appColors.cardBackground,
+        ),
+        child: Column(
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                price,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Text(
+              cfg.periodHint,
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 10,
+              ),
+            ),
+            if (badge.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                badge,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isYearly
+                      ? const Color(0xFFF59E0B)
+                      : isSelected
+                          ? AppTheme.primary
+                          : const Color(0xFF34C759),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openLegalAsset(String title, String assetPath) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => WebViewScreen(title: title, assetPath: assetPath),
       ),
     );
   }
@@ -483,13 +528,41 @@ class _VipPurchaseScreenState extends State<VipPurchaseScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Auto-renews. Cancel anytime in settings.',
+          const SizedBox(height: 8),
+          RichText(
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textTertiary,
-              fontSize: 11,
+            text: TextSpan(
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 11,
+                height: 1.35,
+              ),
+              children: [
+                const TextSpan(
+                  text:
+                      'Subscription auto-renews until canceled. By subscribing, you agree to our ',
+                ),
+                TextSpan(
+                  text: 'Terms of Service',
+                  style: const TextStyle(
+                    color: AppTheme.primary,
+                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: _termsTap,
+                ),
+                const TextSpan(text: ' and '),
+                TextSpan(
+                  text: 'Privacy Policy',
+                  style: const TextStyle(
+                    color: AppTheme.primary,
+                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  recognizer: _privacyTap,
+                ),
+                const TextSpan(text: '. Manage or cancel in App Store settings.'),
+              ],
             ),
           ),
         ],
